@@ -1,89 +1,78 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Ký - Việt À la carte</title>
-    <link rel="stylesheet" href="css/register-style.css">
+    <title>Đăng ký - Việt À la carte</title>
+    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/auth.css">
 </head>
 <body>
-    <div class="register-container">
-        <div class="register-wrapper">
-            <!-- Form Container -->
-            <div class="form-box">
-                <h1 class="form-title">Đăng ký</h1>
-                <p class="form-subtitle">Trở thành thực khách thân thiết</p>
 
-                <!-- Error Messages -->
+    <div class="auth-container">
+        <!-- Nửa trái: Ảnh món ăn & Slogan -->
+        <div class="auth-banner" style="background-image: url('${pageContext.request.contextPath}/images/login.jpg');">
+            <div class="banner-content">
+                <p class="banner-subtitle">ẨM THỰC BA MIỀN</p>
+                <h1 class="banner-title">“Hương vị quê nhà,<br>trọn vẹn từng món.”</h1>
+            </div>
+        </div>
+
+        <!-- Nửa phải: Form đăng ký -->
+        <div class="auth-content">
+            <h1 class="brand-logo">Việt <span>À la carte</span></h1>
+
+            <div class="auth-card">
+                <div class="card-header">
+                    <h2 class="card-title">Đăng ký</h2>
+                    <p class="card-subtitle">Trở thành thực khách thân thiết</p>
+                </div>
+
                 <% if (request.getAttribute("error") != null) { %>
-                    <div class="alert alert-error">
+                    <div class="alert-error">
                         <%= request.getAttribute("error") %>
                     </div>
                 <% } %>
 
-                <!-- Register Form -->
-                <form action="register" method="post" class="register-form">
-                    <!-- Full Name -->
+                <form action="register" method="post">
                     <div class="form-group">
-                        <label for="fullName">Họ và tên</label>
-                        <input type="text" id="fullName" name="fullName" class="form-input" 
-                               placeholder="Nhập họ và tên" required>
+                        <label>Họ và tên</label>
+                        <input type="text" name="fullName" value="${param.fullName}" class="form-input" required />
                     </div>
 
-                    <!-- Username -->
                     <div class="form-group">
-                        <label for="username">Tên tài khoản</label>
-                        <input type="text" id="username" name="username" class="form-input" 
-                               placeholder="Chọn tên tài khoản" required>
+                        <label>Tên tài khoản</label>
+                        <input type="text" name="username" value="${param.username}" class="form-input" required />
                     </div>
 
-                    <!-- Email -->
                     <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" name="email" class="form-input" 
-                               placeholder="Nhập email của bạn" required>
+                        <label>Email</label>
+                        <input type="email" name="email" value="${param.email}" class="form-input" required />
                     </div>
 
-                    <!-- Phone -->
                     <div class="form-group">
-                        <label for="phone">Số điện thoại</label>
-                        <input type="tel" id="phone" name="phone" class="form-input" 
-                               placeholder="Nhập số điện thoại" required>
+                        <label>Số điện thoại</label>
+                        <input type="tel" name="phone" value="${param.phone}" class="form-input" required />
                     </div>
 
-                    <!-- Password -->
                     <div class="form-group">
-                        <label for="password">Mật khẩu</label>
-                        <input type="password" id="password" name="password" class="form-input" 
-                               placeholder="Tạo mật khẩu mạnh" required>
+                        <label>Mật khẩu</label>
+                        <input type="password" name="password" class="form-input" required />
                     </div>
 
-                    <!-- Confirm Password -->
                     <div class="form-group">
-                        <label for="confirmPassword">Nhập lại mật khẩu</label>
-                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" 
-                               placeholder="Xác nhận mật khẩu" required>
+                        <label>Nhập lại mật khẩu</label>
+                        <input type="password" name="confirmPassword" class="form-input" required />
                     </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit" class="btn-register">Tạo tài khoản</button>
+                    <button type="submit" class="btn-submit">Tạo tài khoản</button>
                 </form>
 
-                <!-- Login Link -->
-                <p class="login-prompt">
-                    Đã có tài khoản? 
-                    <a href="login" class="login-link">Đăng nhập</a>
-                </p>
-            </div>
-
-            <!-- Decorative Elements -->
-            <div class="register-decoration">
-                <div class="decoration-circle circle-1"></div>
-                <div class="decoration-circle circle-2"></div>
-                <div class="decoration-circle circle-3"></div>
+                <div class="auth-footer">
+                    Đã có tài khoản? <a href="login.jsp">Đăng nhập</a>
+                </div>
             </div>
         </div>
     </div>
+
 </body>
 </html>

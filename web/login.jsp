@@ -1,79 +1,61 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Nhập - Việt À la carte</title>
-    <link rel="stylesheet" href="css/login-style.css">
+    <title>Đăng nhập - Việt À la carte</title>
+    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/auth.css">
 </head>
 <body>
-    <div class="login-container">
-        <!-- Left Section - Banner -->
-        <div class="login-left">
+
+    <div class="auth-container">
+        <!-- Nửa trái: Ảnh món ăn & Slogan -->
+        <div class="auth-banner" style="background-image: url('${pageContext.request.contextPath}/images/login.jpg');">
             <div class="banner-content">
-                <h1 class="tagline">Hương vị quê nhà, <span>trọn vẹn từng món.</span></h1>
-                <p class="subtitle">Ẩm THỰC BA MIỀN</p>
-                <div class="decoration"></div>
-            </div>
-            <div class="banner-image">
-                <img src="images/login.jpg" alt="Vietnamese Cuisine" class="banner-img">
+                <p class="banner-subtitle">ẨM THỰC BA MIỀN</p>
+                <h1 class="banner-title">“Hương vị quê nhà,<br>trọn vẹn từng món.”</h1>
             </div>
         </div>
 
-        <!-- Right Section - Login Form -->
-        <div class="login-right">
-            <div class="form-container">
-                <h2 class="form-title">Việt À la carte</h2>
-                <p class="form-subtitle">Mời quý khách vào bàn</p>
+        <!-- Nửa phải: Form đăng nhập -->
+        <div class="auth-content">
+            <h1 class="brand-logo">Việt <span>À la carte</span></h1>
 
-                <!-- Error/Success Messages -->
+            <div class="auth-card">
+                <div class="card-header">
+                    <h2 class="card-title">Đăng nhập</h2>
+                    <p class="card-subtitle">Mời quý khách vào bàn</p>
+                </div>
+
                 <% if (request.getAttribute("error") != null) { %>
-                    <div class="alert alert-error">
+                    <div class="alert-error">
                         <%= request.getAttribute("error") %>
                     </div>
                 <% } %>
-                
-                <% if (request.getAttribute("success") != null) { %>
-                    <div class="alert alert-success">
-                        <%= request.getAttribute("success") %>
-                    </div>
-                <% } %>
 
-                <!-- Login Form -->
-                <form action="login" method="post" class="login-form">
+                <form action="login" method="post">
                     <div class="form-group">
-                        <label for="account">Email hoặc tên tài khoản</label>
-                        <input type="text" id="account" name="account" class="form-input" 
-                               placeholder="Nhập email hoặc tài khoản" required>
+                        <label>Email hoặc tên tài khoản</label>
+                        <input type="text" name="account" class="form-input" required />
                     </div>
 
                     <div class="form-group">
-                        <div class="label-row">
-                            <label for="password">Mật khẩu</label>
-                            <a href="forgot-password" class="forgot-password">Quên mật khẩu?</a>
+                        <div class="form-label-row">
+                            <label style="margin-bottom:0;">Mật khẩu</label>
+                            <a href="#" class="forgot-link">Quên mật khẩu?</a>
                         </div>
-                        <input type="password" id="password" name="password" class="form-input" 
-                               placeholder="Nhập mật khẩu" required>
+                        <input type="password" name="password" class="form-input" required />
                     </div>
 
-                    <button type="submit" class="btn-login">Đăng nhập</button>
+                    <button type="submit" class="btn-submit">Đăng nhập</button>
                 </form>
 
-                <!-- Divider -->
-                <div class="divider">
-
+                <div class="auth-footer">
+                    Chưa có tài khoản? <a href="register.jsp">Đăng ký ngay</a>
                 </div>
-
-                <!-- Social Login (Optional) -->
-                
-                <!-- Register Link -->
-                <p class="register-prompt">
-                    Chưa có tài khoản? 
-                    <a href="register" class="register-link">Đăng ký ngay</a>
-                </p>
             </div>
         </div>
     </div>
+
 </body>
 </html>

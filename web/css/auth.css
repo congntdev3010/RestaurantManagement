@@ -1,0 +1,211 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    height: 100%;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #fbf7f2;
+}
+
+.auth-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* Nửa trái: Hình ảnh món ăn & Slogan */
+.auth-banner {
+    flex: 1.1;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: flex-end;
+    padding: 60px;
+}
+
+.auth-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(35, 10, 10, 0.85) 100%);
+}
+
+.banner-content {
+    position: relative;
+    z-index: 2;
+    color: #ffffff;
+    max-width: 480px;
+}
+
+.banner-subtitle {
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #dcb386;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.banner-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 34px;
+    line-height: 1.35;
+    font-weight: 600;
+}
+
+/* Nửa phải: Card Form */
+.auth-content {
+    flex: 1;
+    background-color: #fbf7f2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+}
+
+.brand-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: #9e2a2b;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.brand-logo span {
+    font-style: italic;
+    font-weight: 400;
+}
+
+.auth-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 420px;
+    padding: 35px 32px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(158, 42, 43, 0.04);
+    border: 1px solid #f2e9e1;
+}
+
+.card-header {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    color: #2b2b2b;
+    margin-bottom: 6px;
+}
+
+.card-subtitle {
+    font-size: 13px;
+    color: #777777;
+}
+
+/* Form inputs & buttons */
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4a4a4a;
+    margin-bottom: 6px;
+}
+
+.form-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.forgot-link {
+    font-size: 12px;
+    color: #8c8c8c;
+    text-decoration: none;
+}
+
+.forgot-link:hover {
+    color: #9e2a2b;
+}
+
+.form-input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #9e2a2b;
+    box-shadow: 0 0 0 3px rgba(158, 42, 43, 0.08);
+}
+
+.btn-submit {
+    width: 100%;
+    height: 42px;
+    background-color: #9e2a2b;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s;
+}
+
+.btn-submit:hover {
+    background-color: #801f20;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #666666;
+}
+
+.auth-footer a {
+    color: #9e2a2b;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.alert-error {
+    background-color: #fdf2f2;
+    color: #9e2a2b;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 15px;
+    border: 1px solid #f8d7da;
+    text-align: center;
+}
+
+/* Response cho màn hình nhỏ */
+@media (max-width: 900px) {
+    .auth-banner {
+        display: none;
+    }
+}

@@ -37,6 +37,20 @@ public class UserDAO extends DBContext {
         return null;
     }
 
+    // Kiểm tra Tên tài khoản đã tồn tại chưa
+    public boolean checkUsernameExists(String username) {
+        String sql = "SELECT 1 FROM Users WHERE username = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     // 2. Kiểm tra Email đã tồn tại chưa
     public boolean checkEmailExists(String email) {
         String sql = "SELECT user_id FROM Users WHERE email = ?";
@@ -51,16 +65,17 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-    // 3. Tạo tài khoản Customer mới (mặc định is_active = 0)
+    // Lưu tài khoản chính thức vào DB với is_active = 1
     public boolean registerCustomer(User user) {
-        String sql = "INSERT INTO Users (username, email, password, full_name, phone, role_id, is_active) VALUES (?, ?, ?, ?, ?, 1, 0)";
+        String sql = "INSERT INTO Users (username, email, password, full_name, phone, role_id, is_active) VALUES (?, ?, ?, ?, ?, 1, 1)";
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
-            ps.setString(1, user.getEmail());
+            ps.setString(1, user.getUsername());
             ps.setString(2, user.getEmail());
             ps.setString(3, user.getPassword());
             ps.setNString(4, user.getFullName());
             ps.setString(5, user.getPhone());
+
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
