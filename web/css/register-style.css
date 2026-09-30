@@ -1,0 +1,293 @@
+/* ============================================
+   VIETNAMESE RESTAURANT REGISTER PAGE - STYLES
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5e6d3 0%, #e8dcc8 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.register-container {
+    width: 100%;
+    max-width: 750px;
+}
+
+.register-wrapper {
+    position: relative;
+}
+
+/* ============================================
+   FORM BOX
+   ============================================ */
+
+.form-box {
+    background: white;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(139, 58, 46, 0.1);
+    position: relative;
+    z-index: 2;
+}
+
+.form-title {
+    font-size: 2.5rem;
+    color: #333;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.form-subtitle {
+    text-align: center;
+    color: #C17A5F;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================
+   FORM ELEMENTS
+   ============================================ */
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    color: #333;
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.5px;
+}
+
+.form-input {
+    padding: 12px 16px;
+    border: 1px solid #d4c5b0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background-color: #fdfcfb;
+    color: #333;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #C17A5F;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(193, 122, 95, 0.1);
+}
+
+.form-input::placeholder {
+    color: #aaa;
+}
+
+/* ============================================
+   ALERTS
+   ============================================ */
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    animation: slideDown 0.3s ease-out;
+}
+
+.alert-error {
+    background-color: #fee;
+    color: #c33;
+    border-left: 4px solid #c33;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   SUBMIT BUTTON
+   ============================================ */
+
+.btn-register {
+    padding: 14px;
+    background: linear-gradient(135deg, #A84D3E, #8B3A2E);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 1rem;
+}
+
+.btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(139, 58, 46, 0.3);
+}
+
+.btn-register:active {
+    transform: translateY(0);
+}
+
+/* ============================================
+   LOGIN LINK
+   ============================================ */
+
+.login-prompt {
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 2rem;
+}
+
+.login-link {
+    color: #A84D3E;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+    cursor: pointer;
+}
+
+.login-link:hover {
+    color: #8B3A2E;
+    text-decoration: underline;
+}
+
+/* ============================================
+   DECORATIVE ELEMENTS
+   ============================================ */
+
+.register-decoration {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.decoration-circle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.1;
+    background: linear-gradient(135deg, #8B3A2E, #C17A5F);
+}
+
+.circle-1 {
+    width: 150px;
+    height: 150px;
+    top: -50px;
+    right: -30px;
+}
+
+.circle-2 {
+    width: 200px;
+    height: 200px;
+    bottom: -80px;
+    left: -50px;
+}
+
+.circle-3 {
+    width: 100px;
+    height: 100px;
+    top: 50%;
+    right: -40px;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 600px) {
+    .form-box {
+        padding: 2rem 1.5rem;
+    }
+
+    .form-title {
+        font-size: 2rem;
+    }
+
+    .form-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .form-input {
+        font-size: 0.9rem;
+        padding: 10px 14px;
+    }
+
+    label {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 400px) {
+    body {
+        padding: 1rem;
+    }
+
+    .form-box {
+        padding: 1.5rem 1rem;
+    }
+
+    .form-title {
+        font-size: 1.5rem;
+    }
+
+    .form-subtitle {
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .register-form {
+        gap: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-register {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    .login-prompt {
+        font-size: 0.85rem;
+    }
+}
+
+@media print {
+    body, .register-container {
+        display: none;
+    }
+}
