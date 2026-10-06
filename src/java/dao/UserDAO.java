@@ -132,4 +132,23 @@ public class UserDAO extends DBContext {
         }
         return false;
     }
+
+    // Cập nhật mật khẩu mới theo Email
+    public boolean updatePasswordByEmail(String email, String newPassword) {
+        String sql = "UPDATE Users SET password = ? WHERE email = ?";
+        try {
+            if (connection == null) {
+                return false;
+            }
+
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, newPassword);
+            ps.setString(2, email);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

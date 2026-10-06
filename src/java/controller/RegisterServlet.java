@@ -93,7 +93,9 @@ public class RegisterServlet extends HttpServlet {
             
             HttpSession session = request.getSession();
             session.setAttribute("tempUser", tempUser);
+            session.setAttribute("registerEmail", email);
             session.setAttribute("registerOTP", otp);
+            session.setAttribute("otpTime", System.currentTimeMillis());
 
             response.sendRedirect("verify-otp.jsp");
         } else {
