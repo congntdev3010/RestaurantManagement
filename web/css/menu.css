@@ -1,0 +1,258 @@
+/* CSS Dành riêng cho trang Thực Đơn */
+.menu-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.menu-title-section {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.menu-subtitle {
+    color: #d89b36;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.menu-main-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 38px;
+    color: #421217;
+    margin-top: 5px;
+}
+
+/* Filter Control Bar */
+.filter-bar {
+    background: #ffffff;
+    border: 1px solid #e8dfd8;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+    margin-bottom: 30px;
+}
+
+.search-box {
+    display: flex;
+    flex: 1;
+    min-width: 260px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px 0 0 6px;
+    outline: none;
+    font-size: 14px;
+}
+
+.search-box button {
+    background-color: #421217;
+    color: #ffffff;
+    border: none;
+    padding: 0 18px;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.search-box button:hover {
+    background-color: #5c1a21;
+}
+
+.filter-group {
+    display: flex;
+    gap: 12px;
+}
+
+.filter-group select {
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    font-size: 14px;
+    background-color: #ffffff;
+}
+
+/* Category Tabs */
+.category-tabs {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+}
+
+.tab-item {
+    text-decoration: none;
+    color: #421217;
+    background-color: #ffffff;
+    border: 1px solid #d89b36;
+    padding: 9px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.25s;
+}
+
+.tab-item:hover, .tab-item.active {
+    background-color: #421217;
+    color: #d89b36;
+    border-color: #421217;
+}
+
+/* Grid Món Ăn */
+.dishes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 25px;
+}
+
+.dish-card {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border: 1px solid #f0e6df;
+}
+
+.dish-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(66, 18, 23, 0.15);
+}
+
+.dish-img-wrapper {
+    position: relative;
+    width: 100%;
+    height: 190px;
+    overflow: hidden;
+}
+
+.dish-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.dish-card:hover .dish-img-wrapper img {
+    transform: scale(1.08);
+}
+
+.badge-featured {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background-color: #d89b36;
+    color: #2b0b0e;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+}
+
+.dish-info {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.dish-category {
+    font-size: 12px;
+    color: #888;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.dish-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #421217;
+    margin-bottom: 8px;
+}
+
+.dish-desc {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+    margin-bottom: 15px;
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.dish-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f2e9e1;
+    padding-top: 12px;
+}
+
+.dish-price {
+    font-size: 17px;
+    font-weight: 700;
+    color: #421217;
+}
+
+.dish-unit {
+    font-size: 12px;
+    color: #777;
+    font-weight: normal;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 45px;
+}
+
+.page-link {
+    text-decoration: none;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid #d89b36;
+    color: #421217;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.page-link.active, .page-link:hover {
+    background-color: #421217;
+    color: #d89b36;
+    border-color: #421217;
+}
+
+.no-result {
+    text-align: center;
+    grid-column: 1 / -1;
+    padding: 50px 0;
+    color: #777;
+}
