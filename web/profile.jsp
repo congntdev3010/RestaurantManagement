@@ -95,7 +95,7 @@
                     <span><i class="fa-solid fa-lock"></i> Đổi mật khẩu</span>
                     <i class="fa-solid fa-chevron-down editor-chevron" aria-hidden="true"></i>
                 </summary>
-                <form action="${pageContext.request.contextPath}/profile" method="post" class="profile-form">
+                <form action="${pageContext.request.contextPath}/profile" method="post" class="profile-form password-form">
                     <input type="hidden" name="csrfToken" value="<%= escapeHtml(csrfToken) %>">
                     <input type="hidden" name="action" value="changePassword">
                     <label>
