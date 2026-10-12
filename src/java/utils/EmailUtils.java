@@ -9,8 +9,8 @@ import java.security.SecureRandom;
 
 public class EmailUtils {
 
-    private static final String SENDER_EMAIL = "dongtkhe181473@fpt.edu.vn";
-    private static final String APP_PASSWORD = "cbyr svgq gwnj sxui";
+    private static final String SENDER_EMAIL = "vietalacarte.restaurant@gmail.com";
+    private static final String APP_PASSWORD = "awtl pqlg lfpf gvde";
 
     /**
      * Hàm dùng chung để gửi Email (nhận vào Người nhận, Tiêu đề, Nội dung)
