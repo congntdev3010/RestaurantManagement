@@ -45,6 +45,9 @@
                 <!-- Dropdown Menu khi di chuột -->
                 <div class="dropdown-menu">
                     <a href="${pageContext.request.contextPath}/profile"><i class="fa-regular fa-id-card"></i> Thông tin cá nhân</a>
+                    <% if (currentUser.getRoleName() != null && ("Admin".equalsIgnoreCase(currentUser.getRoleName()) || "Manager".equalsIgnoreCase(currentUser.getRoleName()))) { %>
+                        <a href="${pageContext.request.contextPath}/manage-users"><i class="fa-solid fa-users-gear"></i> Quản lý tài khoản</a>
+                    <% } %>
                     <a href="${pageContext.request.contextPath}/my-bookings"><i class="fa-solid fa-utensils"></i> Lịch sử đặt bàn</a>
                     <hr>
                     <a href="${pageContext.request.contextPath}/logout" class="logout-item"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>
