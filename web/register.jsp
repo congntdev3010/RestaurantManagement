@@ -51,7 +51,9 @@
 
                     <div class="form-group">
                         <label>Số điện thoại</label>
-                        <input type="tel" name="phone" value="${param.phone}" class="form-input" required />
+                        <input type="tel" name="phone" value="${param.phone}" class="form-input"
+                               pattern="0[0-9]{9}" maxlength="10"
+                               title="Số điện thoại gồm 10 chữ số và bắt đầu bằng 0" required />
                     </div>
 
                     <div class="form-group">

@@ -1,0 +1,252 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #faf6f0;
+    color: #302725;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.profile-page {
+    width: min(820px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 48px 0 72px;
+}
+
+.profile-heading {
+    margin-bottom: 24px;
+}
+
+.profile-eyebrow {
+    margin: 0 0 8px;
+    color: #95651e;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+.profile-heading h1 {
+    margin: 0;
+    color: #421217;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 36px;
+    line-height: 1.2;
+}
+
+.profile-message {
+    margin: 0 0 20px;
+    padding: 13px 16px;
+    border-left: 4px solid;
+    background: #fff;
+    line-height: 1.5;
+}
+
+.profile-message.is-success {
+    border-color: #32734b;
+    color: #245739;
+}
+
+.profile-message.is-error {
+    border-color: #a33d32;
+    color: #842e25;
+}
+
+.profile-summary {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px 18px;
+    padding: 24px;
+    border: 1px solid #e6ddd2;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.profile-avatar {
+    display: grid;
+    width: 64px;
+    aspect-ratio: 1;
+    place-items: center;
+    border-radius: 50%;
+    background: #421217;
+    color: #f0c16c;
+    font-size: 23px;
+}
+
+.profile-identity h2 {
+    overflow-wrap: anywhere;
+    margin: 0 0 4px;
+    color: #421217;
+    font-size: 20px;
+}
+
+.profile-identity p {
+    margin: 0;
+    color: #796e68;
+    font-size: 14px;
+}
+
+.profile-details {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 14px 0 0;
+    padding-top: 18px;
+    border-top: 1px solid #eee7df;
+}
+
+.profile-details dt {
+    margin-bottom: 5px;
+    color: #796e68;
+    font-size: 13px;
+}
+
+.profile-details dd {
+    overflow-wrap: anywhere;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.profile-editors {
+    margin-top: 24px;
+    border-top: 1px solid #d9cec2;
+}
+
+.profile-editor {
+    border-bottom: 1px solid #d9cec2;
+}
+
+.profile-editor summary {
+    display: flex;
+    min-height: 62px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    color: #421217;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    list-style: none;
+}
+
+.profile-editor summary::-webkit-details-marker {
+    display: none;
+}
+
+.profile-editor summary span {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-editor summary span i {
+    width: 20px;
+    color: #95651e;
+    text-align: center;
+}
+
+.editor-chevron {
+    color: #796e68;
+    font-size: 13px;
+    transition: transform 160ms ease;
+}
+
+.profile-editor[open] .editor-chevron {
+    transform: rotate(180deg);
+}
+
+.profile-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    padding: 4px 0 24px;
+}
+
+.password-form {
+    display: flex;
+    max-width: 420px;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.profile-form label {
+    display: grid;
+    width: 100%;
+    gap: 7px;
+    color: #554943;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.profile-form input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #cfc3b7;
+    border-radius: 4px;
+    background: #fff;
+    color: #302725;
+    font: inherit;
+    font-weight: 400;
+}
+
+.profile-form input:focus {
+    border-color: #95651e;
+    outline: 3px solid rgba(149, 101, 30, 0.18);
+}
+
+.profile-submit {
+    min-height: 44px;
+    align-self: end;
+    justify-self: start;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 4px;
+    background: #421217;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+}
+
+.profile-submit:hover {
+    background: #5a1b22;
+}
+
+@media (max-width: 600px) {
+    .profile-page {
+        width: calc(100% - 32px);
+        padding-top: 32px;
+    }
+
+    .profile-heading h1 {
+        font-size: 30px;
+    }
+
+    .profile-summary {
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 8px 13px;
+        padding: 18px;
+    }
+
+    .profile-avatar {
+        width: 52px;
+        font-size: 20px;
+    }
+
+    .profile-details,
+    .profile-form {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-submit {
+        width: 100%;
+        justify-self: stretch;
+    }
+}

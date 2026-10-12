@@ -1,0 +1,234 @@
+package controller;
+
+import dao.UserDAO;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.Map;
+import java.util.regex.Pattern;
+import model.User;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
+@WebServlet(name = "ManageUsersServlet", urlPatterns = {"/manage-users"})
+public class ManageUsersServlet extends HttpServlet {
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9}$");
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setHeader("Cache-Control", "no-store");
+        User actor = requireManagerOrAdmin(request, response);
+        if (actor == null) {
+            return;
+        }
+
+        boolean isAdmin = isAdmin(actor);
+        UserDAO dao = new UserDAO();
+        Map<Integer, String> roles = dao.getManageableRoles(isAdmin);
+        Integer selectedRoleId = null;
+        String roleFilter = request.getParameter("roleId");
+        if (isAdmin && roleFilter != null && !roleFilter.isEmpty()) {
+            int requestedRoleId = parseInt(roleFilter, -1);
+            if (roles.containsKey(requestedRoleId)) {
+                selectedRoleId = requestedRoleId;
+            } else {
+                setFlash(request.getSession(), "Vai trò lọc không hợp lệ.", "error");
+            }
+        }
+
+        request.setAttribute("users", dao.getManageableUsers(isAdmin, selectedRoleId));
+        request.setAttribute("roles", roles);
+        request.setAttribute("isAdmin", isAdmin);
+        request.setAttribute("selectedRoleId", selectedRoleId);
+
+        String editId = request.getParameter("edit");
+        if (editId != null) {
+            User editUser = dao.getManageableUserById(parseInt(editId, -1), isAdmin);
+            if (editUser != null) {
+                request.setAttribute("editUser", editUser);
+            } else {
+                setFlash(request.getSession(), "Không tìm thấy tài khoản trong phạm vi được quản lý.", "error");
+            }
+        }
+
+        HttpSession session = request.getSession();
+        request.setAttribute("manageMessage", session.getAttribute("manageMessage"));
+        request.setAttribute("manageMessageType", session.getAttribute("manageMessageType"));
+        session.removeAttribute("manageMessage");
+        session.removeAttribute("manageMessageType");
+        String csrfToken = (String) session.getAttribute("manageUsersCsrfToken");
+        if (csrfToken == null) {
+            byte[] tokenBytes = new byte[32];
+            SECURE_RANDOM.nextBytes(tokenBytes);
+            csrfToken = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+            session.setAttribute("manageUsersCsrfToken", csrfToken);
+        }
+        request.setAttribute("csrfToken", csrfToken);
+        request.getRequestDispatcher("/manage-users.jsp").forward(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        User actor = requireManagerOrAdmin(request, response);
+        if (actor == null) {
+            return;
+        }
+
+        HttpSession session = request.getSession(false);
+        String expectedToken = (String) session.getAttribute("manageUsersCsrfToken");
+        String submittedToken = request.getParameter("csrfToken");
+        if (expectedToken == null || submittedToken == null
+                || !MessageDigest.isEqual(expectedToken.getBytes(StandardCharsets.UTF_8),
+                        submittedToken.getBytes(StandardCharsets.UTF_8))) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
+        boolean isAdmin = isAdmin(actor);
+        UserDAO dao = new UserDAO();
+        String action = request.getParameter("action");
+        String message;
+        String messageType = "error";
+
+        if ("create".equals(action)) {
+            User user = readFormUser(request);
+            message = validateUser(user, true);
+            if (message == null) {
+                if (dao.createManagedUser(user, isAdmin)) {
+                    message = "Đã tạo tài khoản.";
+                    messageType = "success";
+                } else {
+                    message = "Không thể tạo tài khoản. Email hoặc tên đăng nhập có thể đã tồn tại.";
+                }
+            }
+        } else if ("update".equals(action)) {
+            User user = readFormUser(request);
+            user.setUserId(parseInt(request.getParameter("userId"), -1));
+            message = validateUser(user, false);
+            String password = user.getPassword();
+            if (message == null && password != null && !password.isEmpty()
+                    && (password.length() < 8 || password.length() > 255)) {
+                message = "Mật khẩu mới phải có từ 8 đến 255 ký tự.";
+            }
+            if (message == null) {
+                if (dao.updateManagedUser(user, isAdmin)) {
+                    message = "Đã cập nhật tài khoản.";
+                    messageType = "success";
+                } else {
+                    message = "Không thể cập nhật tài khoản. Hãy kiểm tra role và email/tên đăng nhập.";
+                }
+            }
+        } else if ("delete".equals(action)) {
+            int userId = parseInt(request.getParameter("userId"), -1);
+            if (dao.deleteManagedUser(userId, actor.getUserId(), isAdmin)) {
+                message = "Đã xóa tài khoản.";
+                messageType = "success";
+            } else {
+                message = "Không thể xóa tài khoản này; có thể đây là tài khoản đang đăng nhập hoặc không thuộc phạm vi quản lý.";
+            }
+        } else if ("toggle".equals(action)) {
+            int userId = parseInt(request.getParameter("userId"), -1);
+            User target = dao.getManageableUserById(userId, isAdmin);
+            if (target != null && dao.setManagedUserActive(
+                    userId, actor.getUserId(), !target.isIsActive(), isAdmin)) {
+                message = target.isIsActive() ? "Đã khóa tài khoản." : "Đã kích hoạt tài khoản.";
+                messageType = "success";
+            } else {
+                message = "Không thể thay đổi trạng thái tài khoản này.";
+            }
+        } else {
+            message = "Thao tác không hợp lệ.";
+        }
+
+        setFlash(request.getSession(), message, messageType);
+        response.sendRedirect(request.getContextPath() + "/manage-users");
+    }
+
+    private User requireManagerOrAdmin(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        HttpSession session = request.getSession(false);
+        Object sessionUser = session == null ? null : session.getAttribute("user");
+        if (!(sessionUser instanceof User)) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return null;
+        }
+        User actor = (User) sessionUser;
+        if (!isAdmin(actor) && !isManager(actor)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        }
+        return actor;
+    }
+
+    private boolean isAdmin(User user) {
+        return user.getRoleName() != null && "Admin".equalsIgnoreCase(user.getRoleName());
+    }
+
+    private boolean isManager(User user) {
+        return user.getRoleName() != null && "Manager".equalsIgnoreCase(user.getRoleName());
+    }
+
+    private User readFormUser(HttpServletRequest request) {
+        User user = new User();
+        user.setUsername(trim(request.getParameter("username")));
+        user.setEmail(trim(request.getParameter("email")));
+        user.setFullName(trim(request.getParameter("fullName")));
+        user.setPhone(trim(request.getParameter("phone")));
+        user.setPassword(request.getParameter("password"));
+        user.setRoleId(parseInt(request.getParameter("roleId"), -1));
+        user.setIsActive(true);
+        return user;
+    }
+
+    private String validateUser(User user, boolean requirePassword) {
+        if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 50) {
+            return "Tên đăng nhập là bắt buộc và tối đa 50 ký tự.";
+        }
+        if (user.getEmail() == null || user.getEmail().length() > 100
+                || !EMAIL_PATTERN.matcher(user.getEmail()).matches()) {
+            return "Email không hợp lệ.";
+        }
+        if (user.getFullName() == null || user.getFullName().isEmpty() || user.getFullName().length() > 100) {
+            return "Họ và tên là bắt buộc và tối đa 100 ký tự.";
+        }
+        if (user.getPhone() == null || !PHONE_PATTERN.matcher(user.getPhone()).matches()) {
+            return "Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số.";
+        }
+        if (user.getRoleId() < 1) {
+            return "Vui lòng chọn vai trò hợp lệ.";
+        }
+        if (requirePassword && (user.getPassword() == null
+                || user.getPassword().length() < 8 || user.getPassword().length() > 255)) {
+            return "Mật khẩu phải có từ 8 đến 255 ký tự.";
+        }
+        return null;
+    }
+
+    private int parseInt(String value, int fallback) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    private String trim(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private void setFlash(HttpSession session, String message, String messageType) {
+        session.setAttribute("manageMessage", message);
+        session.setAttribute("manageMessageType", messageType);
+    }
+}
