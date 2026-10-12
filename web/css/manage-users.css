@@ -94,20 +94,22 @@ body {
     text-underline-offset: 3px;
 }
 
-.role-filter {
+.user-filters {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
-.role-filter label {
+.user-filters label {
     color: #71666a;
     font-size: 13px;
     font-weight: 600;
 }
 
-.role-filter select,
-.role-filter button {
+.user-filters input,
+.user-filters select,
+.user-filters button {
     min-height: 38px;
     padding: 0 10px;
     border: 1px solid #cfc1b6;
@@ -118,7 +120,11 @@ body {
     font-size: 13px;
 }
 
-.role-filter button {
+.user-filters input {
+    width: 190px;
+}
+
+.user-filters button {
     border-color: #421217;
     background: #421217;
     color: #fffdf9;
@@ -126,7 +132,7 @@ body {
     font-weight: 700;
 }
 
-.role-filter button:hover {
+.user-filters button:hover {
     background: #642028;
 }
 
@@ -161,7 +167,8 @@ body {
 
 .account-form input:focus,
 .account-form select:focus,
-.role-filter select:focus {
+.user-filters input:focus,
+.user-filters select:focus {
     border-color: #9c6720;
     outline: 2px solid rgba(156, 103, 32, 0.18);
 }
@@ -323,13 +330,21 @@ body {
         flex-direction: column;
     }
 
-    .role-filter {
+    .user-filters {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
         width: 100%;
     }
 
-    .role-filter select {
-        flex: 1;
+    .user-filters input,
+    .user-filters select {
+        width: 100%;
         min-width: 0;
+    }
+
+    .user-filters button {
+        grid-column: 2;
+        justify-self: start;
     }
 
     .account-form {

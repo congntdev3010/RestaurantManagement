@@ -36,7 +36,7 @@ public class ManageUsersServlet extends HttpServlet {
         Map<Integer, String> roles = dao.getManageableRoles(isAdmin);
         Integer selectedRoleId = null;
         String roleFilter = request.getParameter("roleId");
-        if (isAdmin && roleFilter != null && !roleFilter.isEmpty()) {
+        if (roleFilter != null && !roleFilter.isEmpty()) {
             int requestedRoleId = parseInt(roleFilter, -1);
             if (roles.containsKey(requestedRoleId)) {
                 selectedRoleId = requestedRoleId;
@@ -45,10 +45,22 @@ public class ManageUsersServlet extends HttpServlet {
             }
         }
 
-        request.setAttribute("users", dao.getManageableUsers(isAdmin, selectedRoleId));
+            String searchName = trim(request.getParameter("name"));
+            if (searchName != null && searchName.isEmpty()) {
+                searchName = null;
+            }
+            String requestedStatus = request.getParameter("status");
+            String selectedStatus = "active".equals(requestedStatus) || "inactive".equals(requestedStatus)
+                ? requestedStatus : "";
+            Boolean activeFilter = "active".equals(selectedStatus) ? Boolean.TRUE
+                : "inactive".equals(selectedStatus) ? Boolean.FALSE : null;
+
+            request.setAttribute("users", dao.getManageableUsers(isAdmin, selectedRoleId, searchName, activeFilter));
         request.setAttribute("roles", roles);
         request.setAttribute("isAdmin", isAdmin);
         request.setAttribute("selectedRoleId", selectedRoleId);
+            request.setAttribute("searchName", searchName == null ? "" : searchName);
+            request.setAttribute("selectedStatus", selectedStatus);
 
         String editId = request.getParameter("edit");
         if (editId != null) {

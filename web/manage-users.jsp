@@ -21,6 +21,8 @@
     String manageMessage = (String) request.getAttribute("manageMessage");
     String manageMessageType = (String) request.getAttribute("manageMessageType");
     Integer selectedRoleId = (Integer) request.getAttribute("selectedRoleId");
+    String searchName = (String) request.getAttribute("searchName");
+    String selectedStatus = (String) request.getAttribute("selectedStatus");
     if (users == null || roles == null) {
         response.sendRedirect(request.getContextPath() + "/manage-users");
         return;
@@ -117,20 +119,27 @@
         <section class="users-section" aria-labelledby="users-title">
             <div class="section-heading">
                 <h2 id="users-title">Danh sách tài khoản</h2>
-                <% if (isAdmin) { %>
-                    <form class="role-filter" action="${pageContext.request.contextPath}/manage-users" method="get">
-                        <label for="role-filter">Vai trò</label>
-                        <select id="role-filter" name="roleId">
-                            <option value="">Tất cả vai trò</option>
-                            <% for (Map.Entry<Integer, String> role : roles.entrySet()) { %>
-                                <option value="<%= role.getKey() %>" <%= selectedRoleId != null && selectedRoleId.equals(role.getKey()) ? "selected" : "" %>>
-                                    <%= escapeHtml(role.getValue()) %>
-                                </option>
-                            <% } %>
+                <form class="user-filters" action="${pageContext.request.contextPath}/manage-users" method="get">
+                    <label for="name-filter">Tên</label>
+                    <input id="name-filter" type="search" name="name" maxlength="100"
+                           placeholder="Tìm theo họ tên" value="<%= escapeHtml(searchName) %>">
+                    <label for="role-filter">Vai trò</label>
+                    <select id="role-filter" name="roleId">
+                        <option value="">Tất cả vai trò</option>
+                        <% for (Map.Entry<Integer, String> role : roles.entrySet()) { %>
+                            <option value="<%= role.getKey() %>" <%= selectedRoleId != null && selectedRoleId.equals(role.getKey()) ? "selected" : "" %>>
+                                <%= escapeHtml(role.getValue()) %>
+                            </option>
+                        <% } %>
+                    </select>
+                        <label for="status-filter">Trạng thái</label>
+                        <select id="status-filter" name="status">
+                            <option value="" <%= selectedStatus == null || selectedStatus.isEmpty() ? "selected" : "" %>>Tất cả trạng thái</option>
+                            <option value="active" <%= "active".equals(selectedStatus) ? "selected" : "" %>>Đang hoạt động</option>
+                            <option value="inactive" <%= "inactive".equals(selectedStatus) ? "selected" : "" %>>Đã khóa</option>
                         </select>
-                        <button type="submit">Lọc</button>
-                    </form>
-                <% } %>
+                    <button type="submit">Lọc</button>
+                </form>
             </div>
 
             <div class="table-scroll">

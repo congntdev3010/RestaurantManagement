@@ -192,19 +192,43 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-    public List<User> getManageableUsers(boolean isAdmin, Integer roleId) {
+    public List<User> getManageableUsers(boolean isAdmin, Integer roleId, String searchName, Boolean activeOnly) {
         List<User> users = new ArrayList<>();
-        String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active "
-                + "FROM Users u JOIN Roles r ON u.role_id = r.role_id "
-                + (isAdmin ? (roleId == null ? "" : "WHERE u.role_id = ? ") : "WHERE " + STAFF_ROLE_FILTER + " ")
-                + "ORDER BY u.user_id DESC";
+        StringBuilder sql = new StringBuilder("SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active ")
+                .append("FROM Users u JOIN Roles r ON u.role_id = r.role_id ");
+        boolean hasCondition = false;
+        if (!isAdmin) {
+            sql.append("WHERE ").append(STAFF_ROLE_FILTER).append(' ');
+            hasCondition = true;
+        }
+        if (roleId != null) {
+            sql.append(hasCondition ? "AND " : "WHERE ").append("u.role_id = ? ");
+            hasCondition = true;
+        }
+        if (searchName != null && !searchName.isEmpty()) {
+            sql.append(hasCondition ? "AND " : "WHERE ").append("u.full_name LIKE ? ESCAPE '\\' ");
+            hasCondition = true;
+        }
+        if (activeOnly != null) {
+            sql.append(hasCondition ? "AND " : "WHERE ").append("u.is_active = ? ");
+        }
+        sql.append("ORDER BY u.user_id DESC");
         try {
             if (connection == null) {
                 return users;
             }
-            PreparedStatement ps = connection.prepareStatement(sql);
-            if (isAdmin && roleId != null) {
-                ps.setInt(1, roleId);
+            PreparedStatement ps = connection.prepareStatement(sql.toString());
+            int parameterIndex = 1;
+            if (roleId != null) {
+                ps.setInt(parameterIndex++, roleId);
+            }
+            if (searchName != null && !searchName.isEmpty()) {
+                String escapedName = searchName.replace("\\", "\\\\").replace("%", "\\%")
+                        .replace("_", "\\_").replace("[", "\\[");
+                ps.setNString(parameterIndex++, "%" + escapedName + "%");
+            }
+            if (activeOnly != null) {
+                ps.setBoolean(parameterIndex, activeOnly);
             }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
