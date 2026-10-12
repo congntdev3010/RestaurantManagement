@@ -1,3 +1,13 @@
+/* Nhúng Font Playfair Display hỗ trợ Tiếng Việt (Sửa lỗi đứt chữ Bắ c, Bế n) */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
+
+html, body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* CSS cho trang menu bên dưới giữ nguyên... */
 /* CSS Dành riêng cho trang Thực Đơn */
 .menu-container {
     max-width: 1200px;
