@@ -158,6 +158,40 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    public boolean updateProfile(int userId, String fullName, String phone) {
+        String sql = "UPDATE Users SET full_name = ?, phone = ? WHERE user_id = ?";
+        try {
+            if (connection == null) {
+                return false;
+            }
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setNString(1, fullName);
+            ps.setString(2, phone);
+            ps.setInt(3, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean changePassword(int userId, String currentPassword, String newPassword) {
+        String sql = "UPDATE Users SET password = ? WHERE user_id = ? AND password = ?";
+        try {
+            if (connection == null) {
+                return false;
+            }
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, newPassword);
+            ps.setInt(2, userId);
+            ps.setString(3, currentPassword);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public List<User> getManageableUsers(boolean isAdmin, Integer roleId) {
         List<User> users = new ArrayList<>();
         String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active "
