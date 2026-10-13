@@ -104,7 +104,6 @@ public class ProfileServlet extends HttpServlet {
     // Lấy người dùng đã đăng nhập; nếu chưa đăng nhập thì chuyển về trang login.
     private User requireUser(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        // Chưa đăng nhập thì quay về trang đăng nhập.
         HttpSession session = request.getSession(false);
         Object sessionUser = session == null ? null : session.getAttribute("user");
         if (!(sessionUser instanceof User)) {

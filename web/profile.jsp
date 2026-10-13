@@ -1,28 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="model.User" %>
-<%
-    User user = (User) session.getAttribute("user");
-    String profileMessage = (String) request.getAttribute("profileMessage");
-    String profileMessageType = (String) request.getAttribute("profileMessageType");
-    String openSection = (String) request.getAttribute("profileOpenSection");
-    if (user == null) {
-        response.sendRedirect(request.getContextPath() + "/profile");
-        return;
-    }
-%>
-<%!
-    // Chuyển ký tự đặc biệt thành dạng an toàn khi hiển thị dữ liệu ra HTML.
-    private String escapeHtml(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
-    }
-%>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:if test="${empty sessionScope.user}">
+    <c:redirect url="/profile" />
+</c:if>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -40,34 +20,34 @@
                 <h1>Thông tin cá nhân</h1>
             </header>
 
-            <% if (profileMessage != null) { %>
-            <p class="profile-message <%= "success".equals(profileMessageType) ? "is-success" : "is-error" %>" role="status">
-                <%= escapeHtml(profileMessage) %>
+            <c:if test="${not empty profileMessage}">
+            <p class="profile-message ${profileMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
+                <c:out value="${profileMessage}" />
             </p>
-            <% } %>
+            </c:if>
 
             <section class="profile-summary" aria-label="Thông tin tài khoản">
                 <div class="profile-avatar" aria-hidden="true">
                     <i class="fa-solid fa-user"></i>
                 </div>
                 <div class="profile-identity">
-                    <h2><%= escapeHtml(user.getFullName()) %></h2>
-                    <p>@<%= escapeHtml(user.getUsername()) %></p>
+                    <h2><c:out value="${sessionScope.user.fullName}" /></h2>
+                    <p>@<c:out value="${sessionScope.user.username}" /></p>
                 </div>
                 <dl class="profile-details">
                     <div>
                         <dt>Email</dt>
-                        <dd><%= escapeHtml(user.getEmail()) %></dd>
+                        <dd><c:out value="${sessionScope.user.email}" /></dd>
                     </div>
                     <div>
                         <dt>Số điện thoại</dt>
-                        <dd><%= escapeHtml(user.getPhone()) %></dd>
+                        <dd><c:out value="${sessionScope.user.phone}" /></dd>
                     </div>
                 </dl>
             </section>
 
             <section class="profile-editors" aria-label="Cập nhật tài khoản">
-                <details class="profile-editor" <%= "profile".equals(openSection) ? "open" : "" %>>
+                <details class="profile-editor" ${profileOpenSection eq 'profile' ? 'open' : ''}>
                     <summary>
                         <span><i class="fa-regular fa-pen-to-square"></i> Thay đổi thông tin</span>
                         <i class="fa-solid fa-chevron-down editor-chevron" aria-hidden="true"></i>
@@ -77,19 +57,19 @@
                         <label>
                             Họ và tên
                             <input type="text" name="fullName" maxlength="100" autocomplete="name" required
-                                   value="<%= escapeHtml(user.getFullName()) %>">
+                                value="<c:out value='${sessionScope.user.fullName}' />">
                         </label>
                         <label>
                             Số điện thoại
                             <input type="tel" name="phone" maxlength="10" pattern="0[0-9]{9}"
                                    title="Số điện thoại gồm 10 chữ số và bắt đầu bằng 0"
-                                   autocomplete="tel" required value="<%= escapeHtml(user.getPhone()) %>">
+                                   autocomplete="tel" required value="<c:out value='${sessionScope.user.phone}' />">
                         </label>
                         <button class="profile-submit" type="submit">Lưu thông tin</button>
                     </form>
                 </details>
 
-                <details class="profile-editor" <%= "password".equals(openSection) ? "open" : "" %>>
+                <details class="profile-editor" ${profileOpenSection eq 'password' ? 'open' : ''}>
                     <summary>
                         <span><i class="fa-solid fa-lock"></i> Đổi mật khẩu</span>
                         <i class="fa-solid fa-chevron-down editor-chevron" aria-hidden="true"></i>

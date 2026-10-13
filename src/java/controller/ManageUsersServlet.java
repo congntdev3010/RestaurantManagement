@@ -150,7 +150,6 @@ public class ManageUsersServlet extends HttpServlet {
     // Kiểm tra đăng nhập và quyền trước khi cho phép quản lý tài khoản.
     private User requireManagerOrAdmin(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        // Chỉ Admin và Manager được vào chức năng quản lý tài khoản.
         HttpSession session = request.getSession(false);
         Object sessionUser = session == null ? null : session.getAttribute("user");
         if (!(sessionUser instanceof User)) {

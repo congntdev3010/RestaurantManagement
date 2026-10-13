@@ -198,29 +198,25 @@ public class UserDAO extends DBContext {
     // Lấy danh sách tài khoản: Admin xem tất cả, Manager chỉ xem nhân viên.
     public List<User> getManageableUsers(boolean isAdmin, int roleId, String nameQuery) {
         List<User> users = new ArrayList<>();
-        StringBuilder filters = new StringBuilder();
+        StringBuilder sql = new StringBuilder("SELECT u.user_id, u.username, u.email, u.full_name, u.phone, ")
+                .append("u.role_id, r.role_name, u.is_active FROM Users u ")
+                .append("JOIN Roles r ON u.role_id = r.role_id WHERE 1 = 1 ");
         if (!isAdmin) {
-            filters.append("WHERE ").append(STAFF_ROLE_FILTER).append(' ');
+            sql.append("AND ").append(STAFF_ROLE_FILTER).append(' ');
         }
         if (roleId > 0) {
-            filters.append(filters.length() == 0 ? "WHERE " : "AND ")
-                    .append("u.role_id = ? ");
+            sql.append("AND u.role_id = ? ");
         }
         if (nameQuery != null && !nameQuery.isEmpty()) {
-            filters.append(filters.length() == 0 ? "WHERE " : "AND ")
-                .append("REPLACE(REPLACE(u.full_name, N'Đ', N'D'), N'đ', N'd') "
-                    + "COLLATE Latin1_General_CI_AI LIKE ? ");
+            sql.append("AND REPLACE(REPLACE(u.full_name, N'Đ', N'D'), N'đ', N'd') ")
+                    .append("COLLATE Latin1_General_CI_AI LIKE ? ");
         }
-        String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, "
-                + "u.role_id, r.role_name, u.is_active FROM Users u "
-                + "JOIN Roles r ON u.role_id = r.role_id "
-                + filters
-                + "ORDER BY u.user_id DESC";
+        sql.append("ORDER BY u.user_id DESC");
         try {
             if (connection == null) {
                 return users;
             }
-            PreparedStatement ps = connection.prepareStatement(sql);
+            PreparedStatement ps = connection.prepareStatement(sql.toString());
             int parameterIndex = 1;
             if (roleId > 0) {
                 ps.setInt(parameterIndex++, roleId);
@@ -230,6 +226,7 @@ public class UserDAO extends DBContext {
                         .replaceAll("\\p{M}+", "")
                         .replace('đ', 'd')
                         .replace('Đ', 'D');
+                    // Cho phép các từ nhập thiếu ký tự khớp theo đúng thứ tự trong tên.
                 String namePattern = normalizedNameQuery.replaceAll("\\s+", "%");
                 ps.setNString(parameterIndex, "%" + namePattern + "%");
             }

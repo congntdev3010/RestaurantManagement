@@ -1,41 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="model.User" %>
-<%!
-    // Chuyển ký tự đặc biệt thành dạng an toàn khi hiển thị dữ liệu ra HTML.
-    private String escapeHtml(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
-    }
-%>
-<%
-    List<User> users = (List<User>) request.getAttribute("users");
-    Map<Integer, String> roles = (Map<Integer, String>) request.getAttribute("roles");
-    Integer roleFilterId = (Integer) request.getAttribute("roleFilterId");
-    User editUser = (User) request.getAttribute("editUser");
-    String nameQuery = (String) request.getAttribute("nameQuery");
-    String manageMessage = (String) request.getAttribute("manageMessage");
-    String manageMessageType = (String) request.getAttribute("manageMessageType");
-    if (users == null || roles == null) {
-        response.sendRedirect(request.getContextPath() + "/manage-users");
-        return;
-    }
-    if (roleFilterId == null) {
-        roleFilterId = 0;
-    }
-    if (nameQuery == null) {
-        nameQuery = "";
-    }
-    String encodedNameQuery = java.net.URLEncoder.encode(nameQuery, java.nio.charset.StandardCharsets.UTF_8);
-    String formAction = editUser == null ? "create" : "update";
-%>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<c:if test="${requestScope.users == null or requestScope.roles == null}">
+    <c:redirect url="/manage-users" />
+</c:if>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -53,87 +21,41 @@
                     <p class="manage-eyebrow">QUẢN TRỊ HỆ THỐNG</p>
                     <h1>Quản lý tài khoản</h1>
                 </div>
-                <p><%= users.size() %> tài khoản phù hợp</p>
+                <p><c:out value="${fn:length(users)}" /> tài khoản phù hợp</p>
             </header>
 
-            <% if (manageMessage != null) { %>
-            <p class="manage-message <%= "success".equals(manageMessageType) ? "is-success" : "is-error" %>" role="status">
-                <%= escapeHtml(manageMessage) %>
+            <c:if test="${not empty manageMessage}">
+            <p class="manage-message ${manageMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
+                <c:out value="${manageMessage}" />
             </p>
-            <% } %>
+            </c:if>
 
-            <% if (editUser == null) { %>
+            <c:choose>
+                <c:when test="${empty editUser}">
             <details class="account-form-section account-create-section">
                 <summary class="button-primary">Thêm tài khoản</summary>
                 <div class="account-form-content">
                 <div class="section-heading">
                     <h2 id="account-form-title">Thông tin tài khoản mới</h2>
                 </div>
-            <% } else { %>
+                    <jsp:include page="/WEB-INF/fragments/managed-user-form.jsp" />
+                </div>
+            </details>
+                </c:when>
+                <c:otherwise>
             <section class="account-form-section" aria-labelledby="account-form-title">
                 <div class="section-heading">
                     <h2 id="account-form-title">Sửa tài khoản</h2>
-                    <a href="${pageContext.request.contextPath}/manage-users?roleId=<%= roleFilterId %>&amp;name=<%= encodedNameQuery %>">Hủy chỉnh sửa</a>
+                    <c:url var="cancelEditUrl" value="/manage-users">
+                        <c:param name="roleId" value="${roleFilterId}" />
+                        <c:param name="name" value="${nameQuery}" />
+                    </c:url>
+                    <a href="${cancelEditUrl}">Hủy chỉnh sửa</a>
                 </div>
-            <% } %>
-
-                <form class="account-form" action="${pageContext.request.contextPath}/manage-users" method="post">
-                    <input type="hidden" name="action" value="<%= formAction %>">
-                    <input type="hidden" name="filterRoleId" value="<%= roleFilterId %>">
-                    <input type="hidden" name="filterName" value="<%= escapeHtml(nameQuery) %>">
-                    <% if (editUser != null) { %>
-                    <input type="hidden" name="userId" value="<%= editUser.getUserId() %>">
-                    <% } %>
-                    <label>
-                        Tên đăng nhập
-                        <input type="text" name="username" maxlength="50" required
-                               value="<%= editUser == null ? "" : escapeHtml(editUser.getUsername()) %>">
-                    </label>
-                    <label>
-                        Họ và tên
-                        <input type="text" name="fullName" maxlength="100" required
-                               value="<%= editUser == null ? "" : escapeHtml(editUser.getFullName()) %>">
-                    </label>
-                    <label>
-                        Email
-                        <input type="email" name="email" maxlength="100" required
-                               value="<%= editUser == null ? "" : escapeHtml(editUser.getEmail()) %>">
-                    </label>
-                    <label>
-                        Số điện thoại
-                        <input type="tel" name="phone" maxlength="10" pattern="0[0-9]{9}"
-                               title="Số điện thoại gồm 10 chữ số và bắt đầu bằng 0" required
-                               value="<%= editUser == null ? "" : escapeHtml(editUser.getPhone()) %>">
-                    </label>
-                    <label>
-                        Vai trò
-                        <select name="roleId" required>
-                            <option value="">Chọn vai trò</option>
-                            <% for (Map.Entry<Integer, String> role : roles.entrySet()) { %>
-                            <option value="<%= role.getKey() %>" <%= editUser != null && editUser.getRoleId() == role.getKey() ? "selected" : "" %>>
-                                <%= escapeHtml(role.getValue()) %>
-                            </option>
-                            <% } %>
-                        </select>
-                    </label>
-                    <label>
-                        <%= editUser == null ? "Mật khẩu khởi tạo" : "Mật khẩu mới (để trống nếu không đổi)" %>
-                        <input type="password" name="password" minlength="8" maxlength="255"
-                               autocomplete="new-password" <%= editUser == null ? "required" : "" %>>
-                    </label>
-                    <div class="form-actions">
-                        <button class="button-primary" type="submit"><%= editUser == null ? "Tạo tài khoản" : "Lưu thay đổi" %></button>
-                        <% if (editUser != null) { %>
-                        <a class="button-secondary" href="${pageContext.request.contextPath}/manage-users?roleId=<%= roleFilterId %>&amp;name=<%= encodedNameQuery %>">Hủy</a>
-                        <% } %>
-                    </div>
-                </form>
-            <% if (editUser == null) { %>
-                </div>
-            </details>
-            <% } else { %>
+                <jsp:include page="/WEB-INF/fragments/managed-user-form.jsp" />
             </section>
-            <% } %>
+                </c:otherwise>
+            </c:choose>
 
             <section class="users-section" aria-labelledby="users-title">
                 <div class="section-heading">
@@ -141,24 +63,27 @@
                     <form class="user-filters" action="${pageContext.request.contextPath}/manage-users" method="get">
                         <div class="filter-field name-filter">
                             <label for="name-filter">Tìm theo tên</label>
-                            <input id="name-filter" type="search" name="name" value="<%= escapeHtml(nameQuery) %>" placeholder="Nhập họ tên">
+                            <input id="name-filter" type="search" name="name" value="<c:out value='${nameQuery}' />" placeholder="Nhập họ tên">
                         </div>
                         <div class="filter-field role-filter">
                             <label for="role-filter">Vai trò</label>
                             <select id="role-filter" name="roleId" onchange="this.form.submit()">
-                                <option value="0" <%= roleFilterId == 0 ? "selected" : "" %>>Tất cả vai trò</option>
-                                <% for (Map.Entry<Integer, String> role : roles.entrySet()) { %>
-                                <option value="<%= role.getKey() %>" <%= roleFilterId.equals(role.getKey()) ? "selected" : "" %>>
-                                    <%= escapeHtml(role.getValue()) %>
+                                <option value="0" ${roleFilterId == 0 ? 'selected' : ''}>Tất cả vai trò</option>
+                                <c:forEach var="role" items="${roles}">
+                                <option value="${role.key}" ${roleFilterId eq role.key ? 'selected' : ''}>
+                                    <c:out value="${role.value}" />
                                 </option>
-                                <% } %>
+                                </c:forEach>
                             </select>
                         </div>
                         <div class="filter-actions">
                             <button class="filter-submit" type="submit">Tìm</button>
-                            <% if (!nameQuery.isEmpty()) { %>
-                            <a class="filter-reset" href="${pageContext.request.contextPath}/manage-users?roleId=<%= roleFilterId %>">Xem tất cả</a>
-                            <% } %>
+                            <c:if test="${not empty nameQuery}">
+                                <c:url var="resetFilterUrl" value="/manage-users">
+                                    <c:param name="roleId" value="${roleFilterId}" />
+                                </c:url>
+                                <a class="filter-reset" href="${resetFilterUrl}">Xem tất cả</a>
+                            </c:if>
                         </div>
                     </form>
                 </div>
@@ -175,47 +100,52 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <% for (User user : users) { %>
+                            <c:forEach var="user" items="${users}">
                             <tr>
                                 <td>
-                                    <strong><%= escapeHtml(user.getFullName()) %></strong>
-                                    <span class="table-subtext"><%= escapeHtml(user.getUsername()) %></span>
+                                    <strong><c:out value="${user.fullName}" /></strong>
+                                    <span class="table-subtext"><c:out value="${user.username}" /></span>
                                 </td>
                                 <td>
-                                    <span><%= escapeHtml(user.getEmail()) %></span>
-                                    <span class="table-subtext"><%= escapeHtml(user.getPhone()) %></span>
+                                    <span><c:out value="${user.email}" /></span>
+                                    <span class="table-subtext"><c:out value="${user.phone}" /></span>
                                 </td>
-                                <td><%= escapeHtml(user.getRoleName()) %></td>
+                                <td><c:out value="${user.roleName}" /></td>
                                 <td>
-                                    <span class="status <%= user.isIsActive() ? "status-active" : "status-inactive" %>">
-                                        <%= user.isIsActive() ? "Đang hoạt động" : "Đã khóa" %>
+                                    <span class="status ${user.isActive ? 'status-active' : 'status-inactive'}">
+                                        ${user.isActive ? 'Đang hoạt động' : 'Đã khóa'}
                                     </span>
                                 </td>
                                 <td>
                                     <div class="row-actions">
-                                        <a class="action-link" href="${pageContext.request.contextPath}/manage-users?edit=<%= user.getUserId() %>&amp;roleId=<%= roleFilterId %>&amp;name=<%= encodedNameQuery %>">Sửa</a>
+                                        <c:url var="editUserUrl" value="/manage-users">
+                                            <c:param name="edit" value="${user.userId}" />
+                                            <c:param name="roleId" value="${roleFilterId}" />
+                                            <c:param name="name" value="${nameQuery}" />
+                                        </c:url>
+                                        <a class="action-link" href="${editUserUrl}">Sửa</a>
                                         <form action="${pageContext.request.contextPath}/manage-users" method="post">
                                             <input type="hidden" name="action" value="toggle">
-                                            <input type="hidden" name="userId" value="<%= user.getUserId() %>">
-                                            <input type="hidden" name="filterRoleId" value="<%= roleFilterId %>">
-                                            <input type="hidden" name="filterName" value="<%= escapeHtml(nameQuery) %>">
-                                            <button class="action-button" type="submit"><%= user.isIsActive() ? "Khóa" : "Mở khóa" %></button>
+                                            <input type="hidden" name="userId" value="${user.userId}">
+                                            <input type="hidden" name="filterRoleId" value="${roleFilterId}">
+                                            <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
+                                            <button class="action-button" type="submit">${user.isActive ? 'Khóa' : 'Mở khóa'}</button>
                                         </form>
                                         <form action="${pageContext.request.contextPath}/manage-users" method="post"
                                               onsubmit="return confirm('Bạn chắc chắn muốn xóa tài khoản này?');">
                                             <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="userId" value="<%= user.getUserId() %>">
-                                            <input type="hidden" name="filterRoleId" value="<%= roleFilterId %>">
-                                            <input type="hidden" name="filterName" value="<%= escapeHtml(nameQuery) %>">
+                                            <input type="hidden" name="userId" value="${user.userId}">
+                                            <input type="hidden" name="filterRoleId" value="${roleFilterId}">
+                                            <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
                                             <button class="action-button action-danger" type="submit">Xóa</button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
-                            <% } %>
-                            <% if (users.isEmpty()) { %>
+                            </c:forEach>
+                            <c:if test="${empty users}">
                             <tr><td class="empty-state" colspan="5">Không tìm thấy tài khoản phù hợp.</td></tr>
-                            <% } %>
+                            </c:if>
                         </tbody>
                     </table>
                 </div>
