@@ -52,7 +52,9 @@
                 <!-- Dropdown Menu khi di chuột -->
                 <div class="dropdown-menu">
                     <a href="${pageContext.request.contextPath}/profile"><i class="fa-regular fa-id-card"></i> Thông tin cá nhân</a>
+                    <% if (!"Server".equalsIgnoreCase(roleName)) { %>
                     <a href="${pageContext.request.contextPath}/my-bookings"><i class="fa-solid fa-utensils"></i> Lịch sử đặt bàn</a>
+                    <% } %>
                     <hr>
                     <a href="${pageContext.request.contextPath}/logout" class="logout-item"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>
                 </div>
