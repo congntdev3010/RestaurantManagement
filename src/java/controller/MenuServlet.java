@@ -11,6 +11,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 
 @WebServlet(name = "MenuServlet", urlPatterns = {"/menu"})
 public class MenuServlet extends HttpServlet {
@@ -20,23 +22,31 @@ public class MenuServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         request.setCharacterEncoding("UTF-8");
 
         // Lấy các tham số lọc từ URL
+        // Lấy tham số keyword từ URL và xử lý giải mã chuẩn UTF-8
         String keyword = request.getParameter("keyword");
+        keyword = fixUtf8GetParameter(keyword);
         String categoryIdRaw = request.getParameter("categoryId");
         String sortBy = request.getParameter("sortBy");
         String pageRaw = request.getParameter("page");
 
         int categoryId = 0;
         if (categoryIdRaw != null && !categoryIdRaw.isEmpty()) {
-            try { categoryId = Integer.parseInt(categoryIdRaw); } catch (NumberFormatException ignored) {}
+            try {
+                categoryId = Integer.parseInt(categoryIdRaw);
+            } catch (NumberFormatException ignored) {
+            }
         }
 
         int page = 1;
         if (pageRaw != null && !pageRaw.isEmpty()) {
-            try { page = Integer.parseInt(pageRaw); } catch (NumberFormatException ignored) {}
+            try {
+                page = Integer.parseInt(pageRaw);
+            } catch (NumberFormatException ignored) {
+            }
         }
 
         DishDAO dishDAO = new DishDAO();
@@ -53,7 +63,7 @@ public class MenuServlet extends HttpServlet {
         request.setAttribute("dishes", dishes);
         request.setAttribute("totalDishes", totalDishes);
         request.setAttribute("totalPages", totalPages);
-        
+
         // Giữ lại trạng thái lọc trên thanh công cụ
         request.setAttribute("keyword", keyword);
         request.setAttribute("categoryId", categoryId);
@@ -61,5 +71,30 @@ public class MenuServlet extends HttpServlet {
         request.setAttribute("currentPage", page);
 
         request.getRequestDispatcher("menu.jsp").forward(request, response);
+    }
+    /**
+     * Hàm tự động phát hiện và sửa lỗi mã hóa UTF-8 cho phương thức GET
+     */
+    private String fixUtf8GetParameter(String param) {
+        if (param == null || param.trim().isEmpty()) {
+            return null;
+        }
+        param = param.trim();
+
+        // Check 1: Nếu chuỗi đã chứa ký tự Tiếng Việt chuẩn (Unicode > 255) -> Tomcat 10 đã giải mã đúng
+        for (char c : param.toCharArray()) {
+            if (c > 255) {
+                return Normalizer.normalize(param, Normalizer.Form.NFC);
+            }
+        }
+
+        // Check 2: Nếu Tomcat giải mã nhầm theo ISO-8859-1, chuyển lại về UTF-8
+        try {
+            byte[] bytes = param.getBytes(StandardCharsets.ISO_8859_1);
+            String decoded = new String(bytes, StandardCharsets.UTF_8);
+            return Normalizer.normalize(decoded, Normalizer.Form.NFC);
+        } catch (Exception e) {
+            return Normalizer.normalize(param, Normalizer.Form.NFC);
+        }
     }
 }

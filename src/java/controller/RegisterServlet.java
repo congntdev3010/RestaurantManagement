@@ -42,16 +42,30 @@ public class RegisterServlet extends HttpServlet {
         if (email != null) email = email.trim();
         if (phone != null) phone = phone.trim();
 
+        // 1. Kiểm tra Họ và tên (không rỗng & tối đa 30 ký tự)
+        if (fullName == null || fullName.isEmpty() || fullName.length() > 30) {
+            request.setAttribute("error", "Họ và tên không được để trống và tối đa 30 ký tự!");
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+            return;
+        }
+
+        // 2. Kiểm tra độ dài Tên tài khoản (không rỗng & tối đa 30 ký tự)
+        if (username == null || username.isEmpty() || username.length() > 30) {
+            request.setAttribute("error", "Tên tài khoản không được để trống và tối đa 30 ký tự!");
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+            return;
+        }
+
         UserDAO dao = new UserDAO();
 
-        // 1. Kiểm tra Username duy nhất
+        // 3. Kiểm tra Username duy nhất
         if (dao.checkUsernameExists(username)) {
             request.setAttribute("error", "Tên tài khoản đã tồn tại, vui lòng chọn tên khác!");
             request.getRequestDispatcher("register.jsp").forward(request, response);
             return;
         }
 
-        // 2. Kiểm tra định dạng & trùng lặp Email
+        // 4. Kiểm tra định dạng & trùng lặp Email
         if (email == null || !email.matches(EMAIL_REGEX)) {
             request.setAttribute("error", "Định dạng email không hợp lệ!");
             request.getRequestDispatcher("register.jsp").forward(request, response);
@@ -63,21 +77,21 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        // 3. Kiểm tra Số điện thoại (bắt đầu từ 0 và đủ 10 chữ số)
+        // 5. Kiểm tra Số điện thoại (bắt đầu từ 0 và đủ 10 chữ số)
         if (phone == null || !phone.matches(PHONE_REGEX)) {
             request.setAttribute("error", "Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số!");
             request.getRequestDispatcher("register.jsp").forward(request, response);
             return;
         }
 
-        // 4. Kiểm tra độ dài Mật khẩu (tối thiểu 8 ký tự)
-        if (pass == null || pass.length() < 8) {
-            request.setAttribute("error", "Mật khẩu phải có tối thiểu 8 ký tự!");
+        // 6. Kiểm tra độ dài Mật khẩu (từ 8 đến 30 ký tự)
+        if (pass == null || pass.length() < 8 || pass.length() > 30) {
+            request.setAttribute("error", "Mật khẩu phải từ 8 đến 30 ký tự!");
             request.getRequestDispatcher("register.jsp").forward(request, response);
             return;
         }
 
-        // 5. Kiểm tra Mật khẩu nhập lại
+        // 7. Kiểm tra Mật khẩu nhập lại
         if (!pass.equals(confirmPass)) {
             request.setAttribute("error", "Mật khẩu nhập lại không khớp!");
             request.getRequestDispatcher("register.jsp").forward(request, response);

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
 <%@ page import="model.Dish" %>
 <%@ page import="model.Category" %>
@@ -38,7 +38,7 @@
         </div>
 
         <!-- Thanh Tìm Kiếm, Lọc & Sắp Xếp -->
-        <form action="${pageContext.request.contextPath}/menu" method="GET" class="filter-bar">
+        <form action="${pageContext.request.contextPath}/menu" method="GET" accept-charset="UTF-8" class="filter-bar">
             
             <div class="search-box">
                 <input type="text" name="keyword" placeholder="Tìm tên món ăn (VD: Phở, Bún chả...)" value="<%= keyword %>">
