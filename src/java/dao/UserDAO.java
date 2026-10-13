@@ -230,7 +230,8 @@ public class UserDAO extends DBContext {
                         .replaceAll("\\p{M}+", "")
                         .replace('đ', 'd')
                         .replace('Đ', 'D');
-                ps.setNString(parameterIndex, "%" + normalizedNameQuery + "%");
+                String namePattern = normalizedNameQuery.replaceAll("\\s+", "%");
+                ps.setNString(parameterIndex, "%" + namePattern + "%");
             }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
