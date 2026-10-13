@@ -6,15 +6,18 @@
         String roleName = currentUser == null ? "" : currentUser.getRoleName();
         boolean isAdmin = "Admin".equalsIgnoreCase(roleName);
         boolean isManager = "Manager".equalsIgnoreCase(roleName);
+        boolean hideHeader = isAdmin || isManager || "Server".equalsIgnoreCase(roleName)
+            || "Receptionist".equalsIgnoreCase(roleName);
         boolean canViewTables = isManager || "Server".equalsIgnoreCase(roleName)
             || "Receptionist".equalsIgnoreCase(roleName);
         boolean showStaffSidebar = isAdmin || isManager || canViewTables
             || "Chef".equalsIgnoreCase(roleName);
 %>
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/header.css?v=1.3">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/header.css?v=1.7">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+<% if (!hideHeader) { %>
 <header class="site-header">
     <!-- Logo -->
     <a href="${pageContext.request.contextPath}/home.jsp" class="header-logo">
@@ -62,6 +65,7 @@
         <% } %>
     </div>
 </header>
+<% } %>
 
 <% if (showStaffSidebar) { %>
 <aside class="staff-sidebar" aria-label="Điều hướng nhân viên">
@@ -77,10 +81,12 @@
            href="${pageContext.request.contextPath}/home.jsp" title="Trang chủ" aria-label="Trang chủ">
             <i class="fa-solid fa-house" aria-hidden="true"></i><span>Trang chủ</span>
         </a>
+        <% if (!isAdmin) { %>
         <a class="sidebar-link <%= currentURI.contains("menu") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/menu" title="Thực đơn" aria-label="Thực đơn">
             <i class="fa-solid fa-book-open" aria-hidden="true"></i><span>Thực đơn</span>
         </a>
+        <% } %>
         <% if (canViewTables) { %>
         <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-tables" title="Sơ đồ bàn" aria-label="Sơ đồ bàn">
@@ -94,6 +100,23 @@
         </a>
         <% } %>
     </nav>
+    <% if (hideHeader && currentUser != null) { %>
+    <div class="sidebar-account">
+        <div class="sidebar-account-identity">
+            <i class="fa-solid fa-user" aria-hidden="true"></i>
+            <span title="<%= escapeHtmlSidebarRole(currentUser.getFullName() != null && !currentUser.getFullName().trim().isEmpty() ? currentUser.getFullName() : currentUser.getUsername()) %>">
+                <%= escapeHtmlSidebarRole(currentUser.getFullName() != null && !currentUser.getFullName().trim().isEmpty()
+                    ? currentUser.getFullName() : currentUser.getUsername()) %>
+            </span>
+        </div>
+        <a class="sidebar-account-link" href="${pageContext.request.contextPath}/profile" title="Thông tin cá nhân" aria-label="Thông tin cá nhân">
+            <i class="fa-regular fa-id-card" aria-hidden="true"></i><span>Thông tin cá nhân</span>
+        </a>
+        <a class="sidebar-account-link sidebar-logout" href="${pageContext.request.contextPath}/logout" title="Đăng xuất" aria-label="Đăng xuất">
+            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span>Đăng xuất</span>
+        </a>
+    </div>
+    <% } %>
 </aside>
 <script>
     document.body.classList.add("has-staff-sidebar");

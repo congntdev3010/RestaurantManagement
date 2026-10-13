@@ -2,6 +2,12 @@
 <%@ page import="model.User" %>
 <%
     User user = (User) session.getAttribute("user");
+    String roleName = user == null ? "" : user.getRoleName();
+    boolean isRestaurantStaff = "Admin".equalsIgnoreCase(roleName)
+        || "Manager".equalsIgnoreCase(roleName)
+        || "Server".equalsIgnoreCase(roleName)
+        || "Receptionist".equalsIgnoreCase(roleName)
+        || "Chef".equalsIgnoreCase(roleName);
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -34,6 +40,7 @@
                 Thưởng thức những món ăn được phục vụ tận tâm trong không gian ấm cúng.
             </p>
             
+            <% if (!isRestaurantStaff) { %>
             <div class="hero-buttons">
                 <a href="${pageContext.request.contextPath}/booking" class="btn-hero-primary">
                     <i class="fa-regular fa-calendar-check"></i> Đặt bàn ngay
@@ -42,6 +49,7 @@
                     <i class="fa-solid fa-utensils"></i> Xem Thực Đơn
                 </a>
             </div>
+            <% } %>
         </div>
     </section>
 

@@ -7,6 +7,9 @@
 }
 
 body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #faf6f0;
     color: #2c2c2c;
@@ -15,7 +18,9 @@ body {
 /* Hero Section */
 .hero-section {
     position: relative;
-    height: 85vh;
+    height: auto;
+    min-height: 85vh;
+    flex: 1;
     background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.55)), 
                 url('../images/login.jpg') center/cover no-repeat;
     display: flex;
