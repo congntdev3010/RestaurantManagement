@@ -336,8 +336,6 @@ body.has-staff-sidebar {
     flex-direction: column;
     gap: 5px;
     margin-top: auto;
-    padding-top: 12px;
-    border-top: 1px solid rgba(255, 253, 249, 0.14);
 }
 
 .sidebar-account-identity,
@@ -351,6 +349,8 @@ body.has-staff-sidebar {
 }
 
 .sidebar-account-identity {
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 253, 249, 0.14);
     color: #d9c8bc;
     font-size: 13px;
     font-weight: 600;

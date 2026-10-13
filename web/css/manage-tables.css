@@ -88,8 +88,32 @@ body {
 }
 
 .table-form-section {
-    padding: 28px 0;
+    padding: 18px 0;
     border-bottom: 1px solid #dfd2c6;
+}
+
+.table-form-toggle {
+    display: inline-flex;
+    gap: 9px;
+    list-style: none;
+}
+
+.table-form-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.table-form-toggle .table-form-chevron {
+    margin-left: 4px;
+    font-size: 12px;
+    transition: transform 0.18s ease;
+}
+
+.table-form-disclosure[open] > .table-form-toggle .table-form-chevron {
+    transform: rotate(180deg);
+}
+
+.table-form-content {
+    padding-top: 24px;
 }
 
 .section-heading {

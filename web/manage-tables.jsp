@@ -62,13 +62,20 @@
             <% } %>
 
             <% if (Boolean.TRUE.equals(canManage)) { %>
-            <section class="table-form-section" aria-labelledby="table-form-title">
-                <div class="section-heading">
-                    <h2 id="table-form-title"><%= editTable == null ? "Thêm bàn" : "Cập nhật bàn" %></h2>
-                    <% if (editTable != null) { %>
-                    <a href="${pageContext.request.contextPath}/manage-tables">Hủy chỉnh sửa</a>
-                    <% } %>
-                </div>
+            <section class="table-form-section" aria-label="Thao tác quản lý bàn">
+                <details class="table-form-disclosure" <%= editTable != null ? "open" : "" %>>
+                    <summary class="button-primary table-form-toggle">
+                        <i class="fa-solid <%= editTable == null ? "fa-plus" : "fa-pen-to-square" %>" aria-hidden="true"></i>
+                        <%= editTable == null ? "Thêm bàn" : "Đang sửa bàn" %>
+                        <i class="fa-solid fa-chevron-down table-form-chevron" aria-hidden="true"></i>
+                    </summary>
+                    <div class="table-form-content">
+                        <% if (editTable != null) { %>
+                        <div class="section-heading">
+                            <h2>Cập nhật bàn</h2>
+                            <a href="${pageContext.request.contextPath}/manage-tables">Hủy chỉnh sửa</a>
+                        </div>
+                        <% } %>
                 <form class="table-form" action="${pageContext.request.contextPath}/manage-tables" method="post">
                     <input type="hidden" name="action" value="<%= formAction %>">
                     <% if (editTable != null) { %>
@@ -121,6 +128,8 @@
                         <% } %>
                     </div>
                 </form>
+                    </div>
+                </details>
             </section>
             <% } %>
 
