@@ -4,6 +4,10 @@
     User currentUser = (User) session.getAttribute("user");
     String currentURI = request.getRequestURI();
         String roleName = currentUser == null ? "" : currentUser.getRoleName();
+        String displayName = currentUser == null ? "" : currentUser.getFullName();
+        if (displayName == null || displayName.trim().isEmpty()) {
+            displayName = currentUser == null ? "" : currentUser.getUsername();
+        }
         boolean isAdmin = "Admin".equalsIgnoreCase(roleName);
         boolean isManager = "Manager".equalsIgnoreCase(roleName);
         boolean hideHeader = isAdmin || isManager || "Server".equalsIgnoreCase(roleName)
@@ -71,9 +75,9 @@
 <aside class="staff-sidebar" aria-label="Điều hướng nhân viên">
     <div class="sidebar-brand">
         <span class="sidebar-brand-mark"><i class="fa-solid fa-leaf" aria-hidden="true"></i></span>
-        <div>
-            <strong>Vận hành nhà hàng</strong>
-            <span><%= escapeHtmlSidebarRole(roleName) %></span>
+        <div class="sidebar-brand-title">
+            <strong>Việt À la carte</strong>
+            <span class="sidebar-brand-subtitle">Vận hành nhà hàng</span>
         </div>
     </div>
     <nav class="staff-sidebar-nav">
@@ -100,23 +104,24 @@
         </a>
         <% } %>
     </nav>
-    <% if (hideHeader && currentUser != null) { %>
-    <div class="sidebar-account">
-        <div class="sidebar-account-identity">
-            <i class="fa-solid fa-user" aria-hidden="true"></i>
-            <span title="<%= escapeHtmlSidebarRole(currentUser.getFullName() != null && !currentUser.getFullName().trim().isEmpty() ? currentUser.getFullName() : currentUser.getUsername()) %>">
-                <%= escapeHtmlSidebarRole(currentUser.getFullName() != null && !currentUser.getFullName().trim().isEmpty()
-                    ? currentUser.getFullName() : currentUser.getUsername()) %>
+    <div class="sidebar-profile">
+        <div class="sidebar-profile-trigger" tabindex="0" role="group" aria-label="Thông tin tài khoản">
+            <span class="sidebar-profile-avatar"><i class="fa-solid fa-user" aria-hidden="true"></i></span>
+            <span class="sidebar-profile-identity">
+                <strong title="<%= escapeHtmlSidebarRole(displayName) %>"><%= escapeHtmlSidebarRole(displayName) %></strong>
+                <span class="sidebar-profile-role"><%= escapeHtmlSidebarRole(roleName) %></span>
             </span>
+            <i class="fa-solid fa-chevron-up sidebar-profile-chevron" aria-hidden="true"></i>
         </div>
-        <a class="sidebar-account-link" href="${pageContext.request.contextPath}/profile" title="Thông tin cá nhân" aria-label="Thông tin cá nhân">
-            <i class="fa-regular fa-id-card" aria-hidden="true"></i><span>Thông tin cá nhân</span>
-        </a>
-        <a class="sidebar-account-link sidebar-logout" href="${pageContext.request.contextPath}/logout" title="Đăng xuất" aria-label="Đăng xuất">
-            <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span>Đăng xuất</span>
-        </a>
+        <div class="sidebar-profile-menu">
+            <a href="${pageContext.request.contextPath}/profile">
+                <i class="fa-regular fa-id-card" aria-hidden="true"></i><span>Thông tin cá nhân</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/logout" class="sidebar-profile-logout">
+                <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span>Đăng xuất</span>
+            </a>
+        </div>
     </div>
-    <% } %>
 </aside>
 <script>
     document.body.classList.add("has-staff-sidebar");

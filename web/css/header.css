@@ -256,15 +256,23 @@ body.has-staff-sidebar {
     color: #2d1718;
 }
 
-.sidebar-brand > div,
+.sidebar-brand-title,
+.sidebar-profile-identity,
 .sidebar-link span,
-.sidebar-account span {
+.sidebar-profile-menu span {
     min-width: 0;
 }
 
 .sidebar-brand strong,
-.sidebar-brand > div > span {
+.sidebar-brand-subtitle,
+.sidebar-profile-identity strong,
+.sidebar-profile-role {
     display: block;
+}
+
+.sidebar-brand-title {
+    flex: 1;
+    min-width: 0;
 }
 
 .sidebar-brand strong {
@@ -275,7 +283,7 @@ body.has-staff-sidebar {
     white-space: nowrap;
 }
 
-.sidebar-brand > div > span {
+.sidebar-brand-subtitle {
     margin-top: 3px;
     color: #d9c8bc;
     font-size: 12px;
@@ -283,9 +291,133 @@ body.has-staff-sidebar {
 
 .staff-sidebar-nav {
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: 5px;
+    min-height: 0;
+    overflow-y: auto;
     padding-top: 18px;
+    margin-bottom: 96px;
+}
+
+.sidebar-profile {
+    position: relative;
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 253, 249, 0.14);
+}
+
+.sidebar-profile-trigger {
+    display: flex;
+    width: 100%;
+    height: 56px;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border: 0;
+    border-radius: 4px;
+    background: rgba(255, 253, 249, 0.06);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+}
+
+.sidebar-profile-trigger:hover {
+    background: rgba(255, 253, 249, 0.11);
+}
+
+.sidebar-profile-avatar {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    place-items: center;
+    border-radius: 4px;
+    background: #d89b36;
+    color: #2d1718;
+}
+
+.sidebar-profile-identity {
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar-profile-identity strong {
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-profile-role {
+    overflow: hidden;
+    margin-top: 3px;
+    color: #d9c8bc;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-profile-chevron {
+    flex: 0 0 auto;
+    color: #d89b36;
+    font-size: 11px;
+    transition: transform 0.18s ease;
+}
+
+.sidebar-profile:hover .sidebar-profile-chevron,
+.sidebar-profile:focus-within .sidebar-profile-chevron {
+    transform: rotate(180deg);
+}
+
+.sidebar-profile-menu {
+    display: none;
+    position: absolute;
+    z-index: 1200;
+    right: 0;
+    bottom: 100%;
+    left: 0;
+    padding: 6px 0;
+    border: 1px solid #f0e6df;
+    border-radius: 4px;
+    background: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-profile:hover .sidebar-profile-menu,
+.sidebar-profile:focus-within .sidebar-profile-menu {
+    display: block;
+}
+
+.sidebar-profile-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    color: #333333;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.sidebar-profile-menu a:hover {
+    background: #f7f1eb;
+    color: #421217;
+}
+
+.sidebar-profile-menu a i {
+    display: grid;
+    width: 20px;
+    flex: 0 0 20px;
+    place-items: center;
+    color: #421217;
+}
+
+.sidebar-profile-menu a.sidebar-profile-logout,
+.sidebar-profile-menu a.sidebar-profile-logout i {
+    color: #c92a2a;
 }
 
 .sidebar-link {
@@ -329,65 +461,6 @@ body.has-staff-sidebar {
 
 .sidebar-link.active {
     box-shadow: inset 3px 0 #d89b36;
-}
-
-.sidebar-account {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: auto;
-}
-
-.sidebar-account-identity,
-.sidebar-account-link {
-    display: flex;
-    min-width: 0;
-    height: 40px;
-    align-items: center;
-    gap: 12px;
-    padding: 0 12px;
-}
-
-.sidebar-account-identity {
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 253, 249, 0.14);
-    color: #d9c8bc;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.sidebar-account-identity i,
-.sidebar-account-link i {
-    display: grid;
-    width: 20px;
-    flex: 0 0 20px;
-    place-items: center;
-    color: #d89b36;
-}
-
-.sidebar-account-identity span,
-.sidebar-account-link span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.sidebar-account-link {
-    box-sizing: border-box;
-    border-radius: 4px;
-    color: #f2e3d5;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.sidebar-account-link:hover {
-    background: rgba(216, 155, 54, 0.16);
-    color: #f4bf61;
-}
-
-.sidebar-account-link.sidebar-logout i {
-    color: #e58a7c;
 }
 
 @media (max-width: 1100px) {
