@@ -2,10 +2,6 @@ package controller;
 
 import dao.UserDAO;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.regex.Pattern;
 import model.User;
 import jakarta.servlet.ServletException;
@@ -19,8 +15,8 @@ import jakarta.servlet.http.HttpSession;
 public class ProfileServlet extends HttpServlet {
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9}$");
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    // Hiển thị hồ sơ và lấy thông báo sau khi người dùng gửi form.
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -31,15 +27,6 @@ public class ProfileServlet extends HttpServlet {
         }
 
         HttpSession session = request.getSession();
-        String csrfToken = (String) session.getAttribute("profileCsrfToken");
-        if (csrfToken == null) {
-            byte[] tokenBytes = new byte[32];
-            SECURE_RANDOM.nextBytes(tokenBytes);
-            csrfToken = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
-            session.setAttribute("profileCsrfToken", csrfToken);
-        }
-
-        request.setAttribute("csrfToken", csrfToken);
         request.setAttribute("profileMessage", session.getAttribute("profileMessage"));
         request.setAttribute("profileMessageType", session.getAttribute("profileMessageType"));
         request.setAttribute("profileOpenSection", session.getAttribute("profileOpenSection"));
@@ -49,22 +36,13 @@ public class ProfileServlet extends HttpServlet {
         request.getRequestDispatcher("/profile.jsp").forward(request, response);
     }
 
+    // Xử lý cập nhật thông tin cá nhân hoặc đổi mật khẩu.
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         User user = requireUser(request, response);
         if (user == null) {
-            return;
-        }
-
-        HttpSession session = request.getSession(false);
-        String expectedToken = (String) session.getAttribute("profileCsrfToken");
-        String submittedToken = request.getParameter("csrfToken");
-        if (expectedToken == null || submittedToken == null
-                || !MessageDigest.isEqual(expectedToken.getBytes(StandardCharsets.UTF_8),
-                        submittedToken.getBytes(StandardCharsets.UTF_8))) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
@@ -75,6 +53,7 @@ public class ProfileServlet extends HttpServlet {
         UserDAO dao = new UserDAO();
 
         if ("updateProfile".equals(action)) {
+            // Kiểm tra dữ liệu trước khi lưu, rồi cập nhật thông tin trong session.
             openSection = "profile";
             String fullName = trim(request.getParameter("fullName"));
             String phone = trim(request.getParameter("phone"));
@@ -91,6 +70,7 @@ public class ProfileServlet extends HttpServlet {
                 message = "Không thể cập nhật thông tin. Vui lòng thử lại.";
             }
         } else if ("changePassword".equals(action)) {
+            // Chỉ đổi mật khẩu khi mật khẩu hiện tại đúng và xác nhận khớp.
             openSection = "password";
             String currentPassword = request.getParameter("currentPassword");
             String newPassword = request.getParameter("newPassword");
@@ -114,6 +94,7 @@ public class ProfileServlet extends HttpServlet {
             message = "Thao tác không hợp lệ.";
         }
 
+        HttpSession session = request.getSession();
         session.setAttribute("profileMessage", message);
         session.setAttribute("profileMessageType", messageType);
         session.setAttribute("profileOpenSection", openSection);
@@ -122,6 +103,7 @@ public class ProfileServlet extends HttpServlet {
 
     private User requireUser(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        // Chưa đăng nhập thì quay về trang đăng nhập.
         HttpSession session = request.getSession(false);
         Object sessionUser = session == null ? null : session.getAttribute("user");
         if (!(sessionUser instanceof User)) {

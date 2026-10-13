@@ -65,7 +65,6 @@
             </div>
 
             <form class="account-form" action="${pageContext.request.contextPath}/manage-users" method="post">
-                <input type="hidden" name="csrfToken" value="${csrfToken}">
                 <input type="hidden" name="action" value="<%= formAction %>">
                 <% if (editUser != null) { %>
                     <input type="hidden" name="userId" value="<%= editUser.getUserId() %>">
@@ -174,14 +173,12 @@
                                     <div class="row-actions">
                                         <a class="action-link" href="${pageContext.request.contextPath}/manage-users?edit=<%= user.getUserId() %>">Sửa</a>
                                         <form action="${pageContext.request.contextPath}/manage-users" method="post">
-                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="action" value="toggle">
                                             <input type="hidden" name="userId" value="<%= user.getUserId() %>">
                                             <button class="action-button" type="submit"><%= user.isIsActive() ? "Khóa" : "Mở khóa" %></button>
                                         </form>
                                         <form action="${pageContext.request.contextPath}/manage-users" method="post"
                                               onsubmit="return confirm('Bạn chắc chắn muốn xóa tài khoản này?');">
-                                            <input type="hidden" name="csrfToken" value="${csrfToken}">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="userId" value="<%= user.getUserId() %>">
                                             <button class="action-button action-danger" type="submit">Xóa</button>

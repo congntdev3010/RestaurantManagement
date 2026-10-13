@@ -2,11 +2,10 @@
 <%@ page import="model.User" %>
 <%
     User user = (User) session.getAttribute("user");
-    String csrfToken = (String) request.getAttribute("csrfToken");
     String profileMessage = (String) request.getAttribute("profileMessage");
     String profileMessageType = (String) request.getAttribute("profileMessageType");
     String openSection = (String) request.getAttribute("profileOpenSection");
-    if (user == null || csrfToken == null) {
+    if (user == null) {
         response.sendRedirect(request.getContextPath() + "/profile");
         return;
     }
@@ -73,7 +72,6 @@
                     <i class="fa-solid fa-chevron-down editor-chevron" aria-hidden="true"></i>
                 </summary>
                 <form action="${pageContext.request.contextPath}/profile" method="post" class="profile-form">
-                    <input type="hidden" name="csrfToken" value="<%= escapeHtml(csrfToken) %>">
                     <input type="hidden" name="action" value="updateProfile">
                     <label>
                         Họ và tên
@@ -96,7 +94,6 @@
                     <i class="fa-solid fa-chevron-down editor-chevron" aria-hidden="true"></i>
                 </summary>
                 <form action="${pageContext.request.contextPath}/profile" method="post" class="profile-form password-form">
-                    <input type="hidden" name="csrfToken" value="<%= escapeHtml(csrfToken) %>">
                     <input type="hidden" name="action" value="changePassword">
                     <label>
                         Mật khẩu hiện tại

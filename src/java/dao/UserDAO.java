@@ -158,6 +158,7 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Lưu họ tên và số điện thoại mới cho tài khoản.
     public boolean updateProfile(int userId, String fullName, String phone) {
         String sql = "UPDATE Users SET full_name = ?, phone = ? WHERE user_id = ?";
         try {
@@ -175,6 +176,7 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Chỉ cập nhật mật khẩu nếu mật khẩu hiện tại trong form khớp dữ liệu trong DB.
     public boolean changePassword(int userId, String currentPassword, String newPassword) {
         String sql = "UPDATE Users SET password = ? WHERE user_id = ? AND password = ?";
         try {
@@ -192,6 +194,7 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Lấy danh sách tài khoản theo quyền và các bộ lọc trên trang quản lý.
     public List<User> getManageableUsers(boolean isAdmin, Integer roleId, String searchName, Boolean activeOnly) {
         List<User> users = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active ")
@@ -240,6 +243,7 @@ public class UserDAO extends DBContext {
         return users;
     }
 
+    // Manager chỉ được chọn vai trò nhân viên; Admin được chọn mọi vai trò.
     public Map<Integer, String> getManageableRoles(boolean isAdmin) {
         Map<Integer, String> roles = new LinkedHashMap<>();
         String sql = "SELECT role_id, role_name FROM Roles "
@@ -260,6 +264,7 @@ public class UserDAO extends DBContext {
         return roles;
     }
 
+    // Tìm tài khoản cần sửa hoặc đổi trạng thái trong phạm vi được phép quản lý.
     public User getManageableUserById(int userId, boolean isAdmin) {
         String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active "
                 + "FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.user_id = ? "
@@ -278,6 +283,7 @@ public class UserDAO extends DBContext {
         return null;
     }
 
+    // Thêm tài khoản mới nếu vai trò được phép cấp cho người đang thao tác.
     public boolean createManagedUser(User user, boolean isAdmin) {
         if (connection == null || !isAllowedRole(user.getRoleId(), isAdmin)) {
             return false;
@@ -301,6 +307,7 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Cập nhật thông tin; chỉ đổi mật khẩu khi form có nhập mật khẩu mới.
     public boolean updateManagedUser(User user, boolean isAdmin) {
         if (connection == null || !isManageableUser(user.getUserId(), isAdmin)
                 || !isAllowedRole(user.getRoleId(), isAdmin)) {
@@ -330,6 +337,7 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Không cho phép tự xóa tài khoản hoặc xóa tài khoản ngoài phạm vi quản lý.
     public boolean deleteManagedUser(int userId, int actorId, boolean isAdmin) {
         if (connection == null || userId == actorId || !isManageableUser(userId, isAdmin)) {
             return false;
@@ -347,6 +355,7 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Khóa/mở tài khoản, đồng thời không cho người dùng tự đổi trạng thái của mình.
     public boolean setManagedUserActive(int userId, int actorId, boolean isActive, boolean isAdmin) {
         if (connection == null || userId == actorId || !isManageableUser(userId, isAdmin)) {
             return false;

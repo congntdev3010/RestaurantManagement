@@ -2,9 +2,6 @@ package controller;
 
 import dao.UserDAO;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.util.Map;
 import java.util.regex.Pattern;
 import model.User;
@@ -20,8 +17,8 @@ public class ManageUsersServlet extends HttpServlet {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9}$");
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    // Hiển thị danh sách, bộ lọc và form thêm/sửa tài khoản.
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -34,6 +31,8 @@ public class ManageUsersServlet extends HttpServlet {
         boolean isAdmin = isAdmin(actor);
         UserDAO dao = new UserDAO();
         Map<Integer, String> roles = dao.getManageableRoles(isAdmin);
+
+        // Chỉ nhận vai trò lọc nằm trong danh sách mà người dùng hiện tại được quản lý.
         Integer selectedRoleId = null;
         String roleFilter = request.getParameter("roleId");
         if (roleFilter != null && !roleFilter.isEmpty()) {
@@ -62,6 +61,7 @@ public class ManageUsersServlet extends HttpServlet {
             request.setAttribute("searchName", searchName == null ? "" : searchName);
             request.setAttribute("selectedStatus", selectedStatus);
 
+        // Khi chọn sửa, tải tài khoản để đưa dữ liệu lên form.
         String editId = request.getParameter("edit");
         if (editId != null) {
             User editUser = dao.getManageableUserById(parseInt(editId, -1), isAdmin);
@@ -77,33 +77,16 @@ public class ManageUsersServlet extends HttpServlet {
         request.setAttribute("manageMessageType", session.getAttribute("manageMessageType"));
         session.removeAttribute("manageMessage");
         session.removeAttribute("manageMessageType");
-        String csrfToken = (String) session.getAttribute("manageUsersCsrfToken");
-        if (csrfToken == null) {
-            byte[] tokenBytes = new byte[32];
-            SECURE_RANDOM.nextBytes(tokenBytes);
-            csrfToken = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
-            session.setAttribute("manageUsersCsrfToken", csrfToken);
-        }
-        request.setAttribute("csrfToken", csrfToken);
         request.getRequestDispatcher("/manage-users.jsp").forward(request, response);
     }
 
+    // Thực hiện thao tác được gửi từ form quản lý tài khoản.
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         User actor = requireManagerOrAdmin(request, response);
         if (actor == null) {
-            return;
-        }
-
-        HttpSession session = request.getSession(false);
-        String expectedToken = (String) session.getAttribute("manageUsersCsrfToken");
-        String submittedToken = request.getParameter("csrfToken");
-        if (expectedToken == null || submittedToken == null
-                || !MessageDigest.isEqual(expectedToken.getBytes(StandardCharsets.UTF_8),
-                        submittedToken.getBytes(StandardCharsets.UTF_8))) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
@@ -114,6 +97,7 @@ public class ManageUsersServlet extends HttpServlet {
         String messageType = "error";
 
         if ("create".equals(action)) {
+            // Tạo mới cần mật khẩu; dữ liệu được kiểm tra trước khi gọi DAO.
             User user = readFormUser(request);
             message = validateUser(user, true);
             if (message == null) {
@@ -125,6 +109,7 @@ public class ManageUsersServlet extends HttpServlet {
                 }
             }
         } else if ("update".equals(action)) {
+            // Khi sửa, mật khẩu để trống nghĩa là giữ nguyên mật khẩu cũ.
             User user = readFormUser(request);
             user.setUserId(parseInt(request.getParameter("userId"), -1));
             message = validateUser(user, false);
@@ -142,6 +127,7 @@ public class ManageUsersServlet extends HttpServlet {
                 }
             }
         } else if ("delete".equals(action)) {
+            // DAO ngăn xóa tài khoản đang đăng nhập và tài khoản ngoài phạm vi quyền.
             int userId = parseInt(request.getParameter("userId"), -1);
             if (dao.deleteManagedUser(userId, actor.getUserId(), isAdmin)) {
                 message = "Đã xóa tài khoản.";
@@ -150,6 +136,7 @@ public class ManageUsersServlet extends HttpServlet {
                 message = "Không thể xóa tài khoản này; có thể đây là tài khoản đang đăng nhập hoặc không thuộc phạm vi quản lý.";
             }
         } else if ("toggle".equals(action)) {
+            // Đổi trạng thái hoạt động: đang mở thì khóa, đang khóa thì mở lại.
             int userId = parseInt(request.getParameter("userId"), -1);
             User target = dao.getManageableUserById(userId, isAdmin);
             if (target != null && dao.setManagedUserActive(
@@ -163,12 +150,14 @@ public class ManageUsersServlet extends HttpServlet {
             message = "Thao tác không hợp lệ.";
         }
 
+        // Dùng redirect để tải lại danh sách và chỉ hiển thị thông báo một lần.
         setFlash(request.getSession(), message, messageType);
         response.sendRedirect(request.getContextPath() + "/manage-users");
     }
 
     private User requireManagerOrAdmin(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        // Chỉ Admin và Manager được vào chức năng quản lý tài khoản.
         HttpSession session = request.getSession(false);
         Object sessionUser = session == null ? null : session.getAttribute("user");
         if (!(sessionUser instanceof User)) {
@@ -192,6 +181,7 @@ public class ManageUsersServlet extends HttpServlet {
     }
 
     private User readFormUser(HttpServletRequest request) {
+        // Gom dữ liệu form thành User để kiểm tra và chuyển xuống DAO.
         User user = new User();
         user.setUsername(trim(request.getParameter("username")));
         user.setEmail(trim(request.getParameter("email")));
@@ -204,6 +194,7 @@ public class ManageUsersServlet extends HttpServlet {
     }
 
     private String validateUser(User user, boolean requirePassword) {
+        // Kiểm tra các trường bắt buộc trước khi thêm hoặc cập nhật tài khoản.
         if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 50) {
             return "Tên đăng nhập là bắt buộc và tối đa 50 ký tự.";
         }
