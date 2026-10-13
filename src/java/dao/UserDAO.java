@@ -5,6 +5,7 @@ import model.User;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -195,24 +196,41 @@ public class UserDAO extends DBContext {
     }
 
     // Lấy danh sách tài khoản: Admin xem tất cả, Manager chỉ xem nhân viên.
-    public List<User> getManageableUsers(boolean isAdmin, int roleId) {
+    public List<User> getManageableUsers(boolean isAdmin, int roleId, String nameQuery) {
         List<User> users = new ArrayList<>();
-        String roleFilter = roleId > 0
-                ? (isAdmin ? "WHERE u.role_id = ? " : "AND u.role_id = ? ")
-                : "";
+        StringBuilder filters = new StringBuilder();
+        if (!isAdmin) {
+            filters.append("WHERE ").append(STAFF_ROLE_FILTER).append(' ');
+        }
+        if (roleId > 0) {
+            filters.append(filters.length() == 0 ? "WHERE " : "AND ")
+                    .append("u.role_id = ? ");
+        }
+        if (nameQuery != null && !nameQuery.isEmpty()) {
+            filters.append(filters.length() == 0 ? "WHERE " : "AND ")
+                .append("REPLACE(REPLACE(u.full_name, N'Đ', N'D'), N'đ', N'd') "
+                    + "COLLATE Latin1_General_CI_AI LIKE ? ");
+        }
         String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, "
                 + "u.role_id, r.role_name, u.is_active FROM Users u "
                 + "JOIN Roles r ON u.role_id = r.role_id "
-                + (isAdmin ? "" : "WHERE " + STAFF_ROLE_FILTER + " ")
-                + roleFilter
+                + filters
                 + "ORDER BY u.user_id DESC";
         try {
             if (connection == null) {
                 return users;
             }
             PreparedStatement ps = connection.prepareStatement(sql);
+            int parameterIndex = 1;
             if (roleId > 0) {
-                ps.setInt(1, roleId);
+                ps.setInt(parameterIndex++, roleId);
+            }
+            if (nameQuery != null && !nameQuery.isEmpty()) {
+                String normalizedNameQuery = Normalizer.normalize(nameQuery, Normalizer.Form.NFD)
+                        .replaceAll("\\p{M}+", "")
+                        .replace('đ', 'd')
+                        .replace('Đ', 'D');
+                ps.setNString(parameterIndex, "%" + normalizedNameQuery + "%");
             }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {

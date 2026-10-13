@@ -35,9 +35,14 @@ public class ManageUsersServlet extends HttpServlet {
         if (!roles.containsKey(roleFilterId)) {
             roleFilterId = 0;
         }
-        request.setAttribute("users", dao.getManageableUsers(isAdmin, roleFilterId));
+        String nameQuery = trim(request.getParameter("name"));
+        if (nameQuery == null) {
+            nameQuery = "";
+        }
+        request.setAttribute("users", dao.getManageableUsers(isAdmin, roleFilterId, nameQuery));
         request.setAttribute("roles", roles);
         request.setAttribute("roleFilterId", roleFilterId);
+        request.setAttribute("nameQuery", nameQuery);
 
         // Khi chọn sửa, tải tài khoản để đưa dữ liệu lên form.
         String editId = request.getParameter("edit");
@@ -72,6 +77,7 @@ public class ManageUsersServlet extends HttpServlet {
         UserDAO dao = new UserDAO();
         String action = request.getParameter("action");
         int roleFilterId = parseInt(request.getParameter("filterRoleId"), 0);
+        String nameQuery = trim(request.getParameter("filterName"));
         String message;
         String messageType = "error";
 
@@ -132,8 +138,11 @@ public class ManageUsersServlet extends HttpServlet {
         // Dùng redirect để tải lại danh sách và chỉ hiển thị thông báo một lần.
         setFlash(request.getSession(), message, messageType);
         String redirect = request.getContextPath() + "/manage-users";
-        if (roleFilterId > 0) {
+        if (roleFilterId > 0 || (nameQuery != null && !nameQuery.isEmpty())) {
             redirect += "?roleId=" + roleFilterId;
+            if (nameQuery != null && !nameQuery.isEmpty()) {
+                redirect += "&name=" + java.net.URLEncoder.encode(nameQuery, java.nio.charset.StandardCharsets.UTF_8);
+            }
         }
         response.sendRedirect(redirect);
     }

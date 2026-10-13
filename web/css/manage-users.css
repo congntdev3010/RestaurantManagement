@@ -76,6 +76,22 @@ body {
     border-bottom: 1px solid #dfd2c6;
 }
 
+.account-create-section > summary {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    padding: 0 16px;
+    list-style: none;
+}
+
+.account-create-section > summary::-webkit-details-marker {
+    display: none;
+}
+
+.account-create-section[open] > summary {
+    margin-bottom: 22px;
+}
+
 .section-heading {
     margin-bottom: 20px;
 }
@@ -96,20 +112,25 @@ body {
 
 .user-filters {
     display: flex;
-    align-items: center;
+    align-items: end;
     flex-wrap: wrap;
-    gap: 8px;
+    justify-content: end;
+    gap: 12px;
 }
 
-.user-filters label {
+.filter-field {
+    display: grid;
+    gap: 6px;
+}
+
+.filter-field label {
     color: #71666a;
     font-size: 13px;
     font-weight: 600;
 }
 
 .user-filters input,
-.user-filters select,
-.user-filters button {
+.user-filters select {
     min-height: 38px;
     padding: 0 10px;
     border: 1px solid #cfc1b6;
@@ -120,20 +141,54 @@ body {
     font-size: 13px;
 }
 
-.user-filters input {
-    width: 190px;
+.name-filter input {
+    width: 220px;
 }
 
-.user-filters button {
+.role-filter select {
+    min-width: 160px;
+}
+
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-submit,
+.filter-reset {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 1px solid #421217;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.filter-submit {
     border-color: #421217;
     background: #421217;
     color: #fffdf9;
     cursor: pointer;
-    font-weight: 700;
 }
 
-.user-filters button:hover {
+.filter-submit:hover {
     background: #642028;
+}
+
+.filter-reset {
+    background: #fffdf9;
+    color: #421217;
+}
+
+.filter-reset:hover {
+    background: #f0e5da;
 }
 
 .account-form {
@@ -332,8 +387,12 @@ body {
 
     .user-filters {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
         width: 100%;
+    }
+
+    .filter-field {
+        min-width: 0;
     }
 
     .user-filters input,
@@ -342,9 +401,9 @@ body {
         min-width: 0;
     }
 
-    .user-filters button {
-        grid-column: 2;
-        justify-self: start;
+    .filter-actions {
+        grid-column: 1 / -1;
+        justify-content: end;
     }
 
     .account-form {
