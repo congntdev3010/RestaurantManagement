@@ -101,6 +101,7 @@ public class ProfileServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/profile");
     }
 
+    // Lấy người dùng đã đăng nhập; nếu chưa đăng nhập thì chuyển về trang login.
     private User requireUser(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         // Chưa đăng nhập thì quay về trang đăng nhập.
@@ -113,6 +114,7 @@ public class ProfileServlet extends HttpServlet {
         return (User) sessionUser;
     }
 
+    // Bỏ khoảng trắng thừa trong dữ liệu nhập.
     private String trim(String value) {
         return value == null ? null : value.trim();
     }

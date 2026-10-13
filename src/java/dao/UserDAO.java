@@ -194,45 +194,19 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-    // Lấy danh sách tài khoản theo quyền và các bộ lọc trên trang quản lý.
-    public List<User> getManageableUsers(boolean isAdmin, Integer roleId, String searchName, Boolean activeOnly) {
+    // Lấy danh sách tài khoản: Admin xem tất cả, Manager chỉ xem nhân viên.
+    public List<User> getManageableUsers(boolean isAdmin) {
         List<User> users = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active ")
-                .append("FROM Users u JOIN Roles r ON u.role_id = r.role_id ");
-        boolean hasCondition = false;
-        if (!isAdmin) {
-            sql.append("WHERE ").append(STAFF_ROLE_FILTER).append(' ');
-            hasCondition = true;
-        }
-        if (roleId != null) {
-            sql.append(hasCondition ? "AND " : "WHERE ").append("u.role_id = ? ");
-            hasCondition = true;
-        }
-        if (searchName != null && !searchName.isEmpty()) {
-            sql.append(hasCondition ? "AND " : "WHERE ").append("u.full_name LIKE ? ESCAPE '\\' ");
-            hasCondition = true;
-        }
-        if (activeOnly != null) {
-            sql.append(hasCondition ? "AND " : "WHERE ").append("u.is_active = ? ");
-        }
-        sql.append("ORDER BY u.user_id DESC");
+        String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, "
+                + "u.role_id, r.role_name, u.is_active FROM Users u "
+                + "JOIN Roles r ON u.role_id = r.role_id "
+                + (isAdmin ? "" : "WHERE " + STAFF_ROLE_FILTER + " ")
+                + "ORDER BY u.user_id DESC";
         try {
             if (connection == null) {
                 return users;
             }
-            PreparedStatement ps = connection.prepareStatement(sql.toString());
-            int parameterIndex = 1;
-            if (roleId != null) {
-                ps.setInt(parameterIndex++, roleId);
-            }
-            if (searchName != null && !searchName.isEmpty()) {
-                String escapedName = searchName.replace("\\", "\\\\").replace("%", "\\%")
-                        .replace("_", "\\_").replace("[", "\\[");
-                ps.setNString(parameterIndex++, "%" + escapedName + "%");
-            }
-            if (activeOnly != null) {
-                ps.setBoolean(parameterIndex, activeOnly);
-            }
+            PreparedStatement ps = connection.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 users.add(readUser(rs));
@@ -374,6 +348,7 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Kiểm tra vai trò được gán có nằm trong phạm vi quyền của người thao tác không.
     private boolean isAllowedRole(int roleId, boolean isAdmin) {
         String sql = "SELECT role_name FROM Roles WHERE role_id = ?";
         try {
@@ -393,6 +368,7 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Kiểm tra tài khoản mục tiêu có thuộc phạm vi quản lý không.
     private boolean isManageableUser(int userId, boolean isAdmin) {
         String sql = "SELECT 1 FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.user_id = ? "
                 + (isAdmin ? "" : "AND " + STAFF_ROLE_FILTER);
@@ -410,12 +386,14 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    // Xác định các vai trò nhân viên mà Manager được phép quản lý.
     private boolean isStaffRole(String roleName) {
         return "Server".equalsIgnoreCase(roleName)
                 || "Chef".equalsIgnoreCase(roleName)
                 || "Receptionist".equalsIgnoreCase(roleName);
     }
 
+    // Đọc một dòng kết quả SQL và chuyển thành đối tượng User.
     private User readUser(ResultSet rs) throws SQLException {
         User user = new User();
         user.setUserId(rs.getInt("user_id"));

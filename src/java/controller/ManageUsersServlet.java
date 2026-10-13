@@ -31,35 +31,8 @@ public class ManageUsersServlet extends HttpServlet {
         boolean isAdmin = isAdmin(actor);
         UserDAO dao = new UserDAO();
         Map<Integer, String> roles = dao.getManageableRoles(isAdmin);
-
-        // Chỉ nhận vai trò lọc nằm trong danh sách mà người dùng hiện tại được quản lý.
-        Integer selectedRoleId = null;
-        String roleFilter = request.getParameter("roleId");
-        if (roleFilter != null && !roleFilter.isEmpty()) {
-            int requestedRoleId = parseInt(roleFilter, -1);
-            if (roles.containsKey(requestedRoleId)) {
-                selectedRoleId = requestedRoleId;
-            } else {
-                setFlash(request.getSession(), "Vai trò lọc không hợp lệ.", "error");
-            }
-        }
-
-            String searchName = trim(request.getParameter("name"));
-            if (searchName != null && searchName.isEmpty()) {
-                searchName = null;
-            }
-            String requestedStatus = request.getParameter("status");
-            String selectedStatus = "active".equals(requestedStatus) || "inactive".equals(requestedStatus)
-                ? requestedStatus : "";
-            Boolean activeFilter = "active".equals(selectedStatus) ? Boolean.TRUE
-                : "inactive".equals(selectedStatus) ? Boolean.FALSE : null;
-
-            request.setAttribute("users", dao.getManageableUsers(isAdmin, selectedRoleId, searchName, activeFilter));
+        request.setAttribute("users", dao.getManageableUsers(isAdmin));
         request.setAttribute("roles", roles);
-        request.setAttribute("isAdmin", isAdmin);
-        request.setAttribute("selectedRoleId", selectedRoleId);
-            request.setAttribute("searchName", searchName == null ? "" : searchName);
-            request.setAttribute("selectedStatus", selectedStatus);
 
         // Khi chọn sửa, tải tài khoản để đưa dữ liệu lên form.
         String editId = request.getParameter("edit");
@@ -155,6 +128,7 @@ public class ManageUsersServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/manage-users");
     }
 
+    // Kiểm tra đăng nhập và quyền trước khi cho phép quản lý tài khoản.
     private User requireManagerOrAdmin(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         // Chỉ Admin và Manager được vào chức năng quản lý tài khoản.
@@ -172,14 +146,17 @@ public class ManageUsersServlet extends HttpServlet {
         return actor;
     }
 
+    // Trả về true nếu tài khoản hiện tại có vai trò Admin.
     private boolean isAdmin(User user) {
         return user.getRoleName() != null && "Admin".equalsIgnoreCase(user.getRoleName());
     }
 
+    // Trả về true nếu tài khoản hiện tại có vai trò Manager.
     private boolean isManager(User user) {
         return user.getRoleName() != null && "Manager".equalsIgnoreCase(user.getRoleName());
     }
 
+    // Đọc các trường trong form và chuyển thành đối tượng User.
     private User readFormUser(HttpServletRequest request) {
         // Gom dữ liệu form thành User để kiểm tra và chuyển xuống DAO.
         User user = new User();
@@ -193,6 +170,7 @@ public class ManageUsersServlet extends HttpServlet {
         return user;
     }
 
+    // Kiểm tra dữ liệu bắt buộc trước khi thêm hoặc sửa tài khoản.
     private String validateUser(User user, boolean requirePassword) {
         // Kiểm tra các trường bắt buộc trước khi thêm hoặc cập nhật tài khoản.
         if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 50) {
@@ -218,6 +196,7 @@ public class ManageUsersServlet extends HttpServlet {
         return null;
     }
 
+    // Chuyển chuỗi sang số; trả về giá trị mặc định nếu dữ liệu không hợp lệ.
     private int parseInt(String value, int fallback) {
         try {
             return Integer.parseInt(value);
@@ -226,10 +205,12 @@ public class ManageUsersServlet extends HttpServlet {
         }
     }
 
+    // Xóa khoảng trắng đầu và cuối, đồng thời xử lý giá trị null.
     private String trim(String value) {
         return value == null ? null : value.trim();
     }
 
+    // Lưu thông báo vào session để hiển thị sau khi chuyển hướng.
     private void setFlash(HttpSession session, String message, String messageType) {
         session.setAttribute("manageMessage", message);
         session.setAttribute("manageMessageType", messageType);
