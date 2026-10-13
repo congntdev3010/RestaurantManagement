@@ -3,9 +3,16 @@
 <%
     User currentUser = (User) session.getAttribute("user");
     String currentURI = request.getRequestURI();
+        String roleName = currentUser == null ? "" : currentUser.getRoleName();
+        boolean isAdmin = "Admin".equalsIgnoreCase(roleName);
+        boolean isManager = "Manager".equalsIgnoreCase(roleName);
+        boolean canViewTables = isManager || "Server".equalsIgnoreCase(roleName)
+            || "Receptionist".equalsIgnoreCase(roleName);
+        boolean showStaffSidebar = isAdmin || isManager || canViewTables
+            || "Chef".equalsIgnoreCase(roleName);
 %>
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/header.css?v=1.2">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/header.css?v=1.3">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <header class="site-header">
@@ -45,9 +52,6 @@
                 <!-- Dropdown Menu khi di chuột -->
                 <div class="dropdown-menu">
                     <a href="${pageContext.request.contextPath}/profile"><i class="fa-regular fa-id-card"></i> Thông tin cá nhân</a>
-                    <% if (currentUser.getRoleName() != null && ("Admin".equalsIgnoreCase(currentUser.getRoleName()) || "Manager".equalsIgnoreCase(currentUser.getRoleName()))) { %>
-                        <a href="${pageContext.request.contextPath}/manage-users"><i class="fa-solid fa-users-gear"></i> Quản lý tài khoản</a>
-                    <% } %>
                     <a href="${pageContext.request.contextPath}/my-bookings"><i class="fa-solid fa-utensils"></i> Lịch sử đặt bàn</a>
                     <hr>
                     <a href="${pageContext.request.contextPath}/logout" class="logout-item"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>
@@ -56,3 +60,48 @@
         <% } %>
     </div>
 </header>
+
+<% if (showStaffSidebar) { %>
+<aside class="staff-sidebar" aria-label="Điều hướng nhân viên">
+    <div class="sidebar-brand">
+        <span class="sidebar-brand-mark"><i class="fa-solid fa-leaf" aria-hidden="true"></i></span>
+        <div>
+            <strong>Vận hành nhà hàng</strong>
+            <span><%= escapeHtmlSidebarRole(roleName) %></span>
+        </div>
+    </div>
+    <nav class="staff-sidebar-nav">
+        <a class="sidebar-link <%= currentURI.contains("home") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/home.jsp" title="Trang chủ" aria-label="Trang chủ">
+            <i class="fa-solid fa-house" aria-hidden="true"></i><span>Trang chủ</span>
+        </a>
+        <a class="sidebar-link <%= currentURI.contains("menu") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/menu" title="Thực đơn" aria-label="Thực đơn">
+            <i class="fa-solid fa-book-open" aria-hidden="true"></i><span>Thực đơn</span>
+        </a>
+        <% if (canViewTables) { %>
+        <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manage-tables" title="Sơ đồ bàn" aria-label="Sơ đồ bàn">
+            <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Sơ đồ bàn</span>
+        </a>
+        <% } %>
+        <% if (isManager || isAdmin) { %>
+        <a class="sidebar-link <%= currentURI.contains("manage-users") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manage-users" title="Quản lý tài khoản" aria-label="Quản lý tài khoản">
+            <i class="fa-solid fa-users-gear" aria-hidden="true"></i><span>Quản lý tài khoản</span>
+        </a>
+        <% } %>
+    </nav>
+</aside>
+<script>
+    document.body.classList.add("has-staff-sidebar");
+</script>
+<% } %>
+
+<%!
+    private String escapeHtmlSidebarRole(String value) {
+        if (value == null) return "Nhân viên";
+        return value.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
+    }
+%>

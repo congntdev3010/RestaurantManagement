@@ -1,0 +1,398 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f7f2e9;
+    color: #302628;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.tables-page {
+    width: min(100% - 48px, 1180px);
+    min-height: calc(100vh - 76px);
+    margin: 0 auto;
+    padding: 42px 0 72px;
+}
+
+.tables-heading,
+.section-heading,
+.group-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.tables-heading {
+    padding-bottom: 24px;
+    border-bottom: 1px solid #dfd2c6;
+}
+
+.tables-eyebrow {
+    margin: 0 0 8px;
+    color: #9c6720;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.tables-heading h1,
+.section-heading h2,
+.group-heading h2 {
+    margin: 0;
+    color: #421217;
+    font-family: 'Playfair Display', Georgia, serif;
+}
+
+.tables-heading h1 {
+    font-size: 34px;
+    line-height: 1.2;
+}
+
+.tables-intro {
+    margin: 10px 0 0;
+    color: #71666a;
+    font-size: 14px;
+}
+
+.table-count {
+    margin: 0 0 3px;
+    color: #71666a;
+    font-size: 14px;
+}
+
+.table-count strong {
+    color: #421217;
+    font-size: 20px;
+}
+
+.table-message {
+    margin: 20px 0 0;
+    padding: 12px 14px;
+    border-left: 3px solid;
+    line-height: 1.5;
+}
+
+.table-message.is-success {
+    border-color: #36734b;
+    background: #eaf4ec;
+    color: #245637;
+}
+
+.table-message.is-error {
+    border-color: #a13b32;
+    background: #fbefed;
+    color: #7c2028;
+}
+
+.table-form-section {
+    padding: 28px 0;
+    border-bottom: 1px solid #dfd2c6;
+}
+
+.section-heading {
+    margin-bottom: 18px;
+}
+
+.section-heading h2,
+.group-heading h2 {
+    font-size: 22px;
+}
+
+.section-heading > a {
+    color: #7c2028;
+    font-size: 14px;
+    font-weight: 600;
+    text-underline-offset: 3px;
+}
+
+.table-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 17px 20px;
+}
+
+.table-form label {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    color: #51474a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.table-form input,
+.table-form select {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 0 11px;
+    border: 1px solid #cfc1b6;
+    border-radius: 4px;
+    background: #fffdf9;
+    color: #302628;
+    font: inherit;
+    font-weight: 400;
+}
+
+.table-form input:focus,
+.table-form select:focus {
+    border-color: #9c6720;
+    outline: 2px solid rgba(156, 103, 32, 0.18);
+}
+
+.description-field {
+    grid-column: span 2;
+}
+
+.form-actions {
+    display: flex;
+    align-items: end;
+    gap: 10px;
+}
+
+.button-primary,
+.button-secondary {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border: 1px solid #421217;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.button-primary {
+    background: #421217;
+    color: #fffdf9;
+}
+
+.button-primary:hover {
+    background: #642028;
+}
+
+.button-secondary {
+    background: transparent;
+    color: #421217;
+}
+
+.table-layout {
+    padding-top: 28px;
+}
+
+.table-group + .table-group {
+    margin-top: 34px;
+}
+
+.group-heading {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dfd2c6;
+}
+
+.group-heading span {
+    color: #71666a;
+    font-size: 13px;
+}
+
+.table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    padding-top: 16px;
+}
+
+.table-card {
+    --status-color: #36734b;
+    --status-background: #e5f1e7;
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid #dfd2c6;
+    border-top: 3px solid var(--status-color);
+    border-radius: 4px;
+    background: #fffdf9;
+}
+
+.status-reserved {
+    --status-color: #986000;
+    --status-background: #fff1cf;
+}
+
+.status-occupied {
+    --status-color: #a13b32;
+    --status-background: #fbe9e7;
+}
+
+.status-unavailable {
+    --status-color: #657179;
+    --status-background: #e9ecef;
+}
+
+.card-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.table-icon {
+    display: inline-grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--status-background);
+    color: var(--status-color);
+    font-size: 23px;
+}
+
+.table-status {
+    padding: 5px 8px;
+    border-radius: 3px;
+    background: var(--status-background);
+    color: var(--status-color);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.table-card h3 {
+    margin: 15px 0 5px;
+    color: #421217;
+    font-size: 19px;
+}
+
+.capacity,
+.table-description {
+    margin: 0;
+    color: #71666a;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.table-description {
+    min-height: 39px;
+    margin-top: 9px;
+}
+
+.table-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #e8ded5;
+}
+
+.table-actions a,
+.table-actions button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #7c2028;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.table-actions form {
+    margin: 0;
+}
+
+.table-status-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #e8ded5;
+}
+
+.table-status-form label {
+    display: grid;
+    min-width: 0;
+    gap: 5px;
+    color: #71666a;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.table-status-form select {
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    padding: 0 8px;
+    border: 1px solid #cfc1b6;
+    border-radius: 4px;
+    background: #fffdf9;
+    color: #302628;
+    font: inherit;
+    font-size: 12px;
+}
+
+.table-status-form button {
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid #421217;
+    border-radius: 4px;
+    background: #421217;
+    color: #fffdf9;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.table-status-form button:hover {
+    background: #642028;
+}
+
+.empty-state {
+    padding: 30px 12px;
+    color: #71666a;
+    text-align: center;
+}
+
+@media (max-width: 820px) {
+    .table-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .tables-page {
+        width: min(100% - 32px, 1180px);
+        padding-top: 30px;
+    }
+
+    .tables-heading {
+        align-items: start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .tables-heading h1 {
+        font-size: 29px;
+    }
+
+    .table-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .description-field {
+        grid-column: auto;
+    }
+
+    .form-actions {
+        align-items: stretch;
+    }
+}

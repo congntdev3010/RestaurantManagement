@@ -31,8 +31,13 @@ public class ManageUsersServlet extends HttpServlet {
         boolean isAdmin = isAdmin(actor);
         UserDAO dao = new UserDAO();
         Map<Integer, String> roles = dao.getManageableRoles(isAdmin);
-        request.setAttribute("users", dao.getManageableUsers(isAdmin));
+        int roleFilterId = parseInt(request.getParameter("roleId"), 0);
+        if (!roles.containsKey(roleFilterId)) {
+            roleFilterId = 0;
+        }
+        request.setAttribute("users", dao.getManageableUsers(isAdmin, roleFilterId));
         request.setAttribute("roles", roles);
+        request.setAttribute("roleFilterId", roleFilterId);
 
         // Khi chọn sửa, tải tài khoản để đưa dữ liệu lên form.
         String editId = request.getParameter("edit");
@@ -66,6 +71,7 @@ public class ManageUsersServlet extends HttpServlet {
         boolean isAdmin = isAdmin(actor);
         UserDAO dao = new UserDAO();
         String action = request.getParameter("action");
+        int roleFilterId = parseInt(request.getParameter("filterRoleId"), 0);
         String message;
         String messageType = "error";
 
@@ -125,7 +131,11 @@ public class ManageUsersServlet extends HttpServlet {
 
         // Dùng redirect để tải lại danh sách và chỉ hiển thị thông báo một lần.
         setFlash(request.getSession(), message, messageType);
-        response.sendRedirect(request.getContextPath() + "/manage-users");
+        String redirect = request.getContextPath() + "/manage-users";
+        if (roleFilterId > 0) {
+            redirect += "?roleId=" + roleFilterId;
+        }
+        response.sendRedirect(redirect);
     }
 
     // Kiểm tra đăng nhập và quyền trước khi cho phép quản lý tài khoản.

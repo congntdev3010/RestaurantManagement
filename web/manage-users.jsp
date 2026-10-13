@@ -18,12 +18,16 @@
 <%
     List<User> users = (List<User>) request.getAttribute("users");
     Map<Integer, String> roles = (Map<Integer, String>) request.getAttribute("roles");
+    Integer roleFilterId = (Integer) request.getAttribute("roleFilterId");
     User editUser = (User) request.getAttribute("editUser");
     String manageMessage = (String) request.getAttribute("manageMessage");
     String manageMessageType = (String) request.getAttribute("manageMessageType");
     if (users == null || roles == null) {
         response.sendRedirect(request.getContextPath() + "/manage-users");
         return;
+    }
+    if (roleFilterId == null) {
+        roleFilterId = 0;
     }
     String formAction = editUser == null ? "create" : "update";
 %>
@@ -44,7 +48,7 @@
                     <p class="manage-eyebrow">QUẢN TRỊ HỆ THỐNG</p>
                     <h1>Quản lý tài khoản</h1>
                 </div>
-                <p><%= users.size() %> tài khoản trong phạm vi quản lý</p>
+                <p><%= users.size() %> tài khoản phù hợp</p>
             </header>
 
             <% if (manageMessage != null) { %>
@@ -57,12 +61,13 @@
                 <div class="section-heading">
                     <h2 id="account-form-title"><%= editUser == null ? "Thêm tài khoản" : "Sửa tài khoản" %></h2>
                     <% if (editUser != null) { %>
-                    <a href="${pageContext.request.contextPath}/manage-users">Hủy chỉnh sửa</a>
+                    <a href="${pageContext.request.contextPath}/manage-users?roleId=<%= roleFilterId %>">Hủy chỉnh sửa</a>
                     <% } %>
                 </div>
 
                 <form class="account-form" action="${pageContext.request.contextPath}/manage-users" method="post">
                     <input type="hidden" name="action" value="<%= formAction %>">
+                    <input type="hidden" name="filterRoleId" value="<%= roleFilterId %>">
                     <% if (editUser != null) { %>
                     <input type="hidden" name="userId" value="<%= editUser.getUserId() %>">
                     <% } %>
@@ -106,7 +111,7 @@
                     <div class="form-actions">
                         <button class="button-primary" type="submit"><%= editUser == null ? "Tạo tài khoản" : "Lưu thay đổi" %></button>
                         <% if (editUser != null) { %>
-                        <a class="button-secondary" href="${pageContext.request.contextPath}/manage-users">Hủy</a>
+                        <a class="button-secondary" href="${pageContext.request.contextPath}/manage-users?roleId=<%= roleFilterId %>">Hủy</a>
                         <% } %>
                     </div>
                 </form>
@@ -115,6 +120,18 @@
             <section class="users-section" aria-labelledby="users-title">
                 <div class="section-heading">
                     <h2 id="users-title">Danh sách tài khoản</h2>
+                    <form class="user-filters" action="${pageContext.request.contextPath}/manage-users" method="get">
+                        <label for="role-filter">Vai trò</label>
+                        <select id="role-filter" name="roleId" onchange="this.form.submit()">
+                            <option value="0" <%= roleFilterId == 0 ? "selected" : "" %>>Tất cả vai trò</option>
+                            <% for (Map.Entry<Integer, String> role : roles.entrySet()) { %>
+                            <option value="<%= role.getKey() %>" <%= roleFilterId.equals(role.getKey()) ? "selected" : "" %>>
+                                <%= escapeHtml(role.getValue()) %>
+                            </option>
+                            <% } %>
+                        </select>
+                        <noscript><button type="submit">Lọc</button></noscript>
+                    </form>
                 </div>
 
                 <div class="table-scroll">
@@ -147,16 +164,18 @@
                                 </td>
                                 <td>
                                     <div class="row-actions">
-                                        <a class="action-link" href="${pageContext.request.contextPath}/manage-users?edit=<%= user.getUserId() %>">Sửa</a>
+                                        <a class="action-link" href="${pageContext.request.contextPath}/manage-users?edit=<%= user.getUserId() %>&amp;roleId=<%= roleFilterId %>">Sửa</a>
                                         <form action="${pageContext.request.contextPath}/manage-users" method="post">
                                             <input type="hidden" name="action" value="toggle">
                                             <input type="hidden" name="userId" value="<%= user.getUserId() %>">
+                                            <input type="hidden" name="filterRoleId" value="<%= roleFilterId %>">
                                             <button class="action-button" type="submit"><%= user.isIsActive() ? "Khóa" : "Mở khóa" %></button>
                                         </form>
                                         <form action="${pageContext.request.contextPath}/manage-users" method="post"
                                               onsubmit="return confirm('Bạn chắc chắn muốn xóa tài khoản này?');">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="userId" value="<%= user.getUserId() %>">
+                                            <input type="hidden" name="filterRoleId" value="<%= roleFilterId %>">
                                             <button class="action-button action-danger" type="submit">Xóa</button>
                                         </form>
                                     </div>
@@ -164,7 +183,7 @@
                             </tr>
                             <% } %>
                             <% if (users.isEmpty()) { %>
-                            <tr><td class="empty-state" colspan="5">Chưa có tài khoản nào trong phạm vi quản lý.</td></tr>
+                            <tr><td class="empty-state" colspan="5">Không tìm thấy tài khoản phù hợp.</td></tr>
                             <% } %>
                         </tbody>
                     </table>

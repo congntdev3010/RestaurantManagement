@@ -195,18 +195,25 @@ public class UserDAO extends DBContext {
     }
 
     // Lấy danh sách tài khoản: Admin xem tất cả, Manager chỉ xem nhân viên.
-    public List<User> getManageableUsers(boolean isAdmin) {
+    public List<User> getManageableUsers(boolean isAdmin, int roleId) {
         List<User> users = new ArrayList<>();
+        String roleFilter = roleId > 0
+                ? (isAdmin ? "WHERE u.role_id = ? " : "AND u.role_id = ? ")
+                : "";
         String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, "
                 + "u.role_id, r.role_name, u.is_active FROM Users u "
                 + "JOIN Roles r ON u.role_id = r.role_id "
                 + (isAdmin ? "" : "WHERE " + STAFF_ROLE_FILTER + " ")
+                + roleFilter
                 + "ORDER BY u.user_id DESC";
         try {
             if (connection == null) {
                 return users;
             }
             PreparedStatement ps = connection.prepareStatement(sql);
+            if (roleId > 0) {
+                ps.setInt(1, roleId);
+            }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 users.add(readUser(rs));
