@@ -113,8 +113,8 @@ public class ManageUsersServlet extends HttpServlet {
             message = validateUser(user, false);
             String password = user.getPassword();
             if (message == null && password != null && !password.isEmpty()
-                    && (password.length() < 8 || password.length() > 255)) {
-                message = "Mật khẩu mới phải có từ 8 đến 255 ký tự.";
+                    && (password.length() < 8 || password.length() > 30)) {
+                message = "Mật khẩu mới phải có từ 8 đến 30 ký tự.";
             }
             if (message == null) {
                 if (dao.updateManagedUser(user, isAdmin)) {
@@ -220,15 +220,15 @@ public class ManageUsersServlet extends HttpServlet {
     // Kiểm tra dữ liệu bắt buộc trước khi thêm hoặc sửa tài khoản.
     private String validateUser(User user, boolean requirePassword) {
         // Kiểm tra các trường bắt buộc trước khi thêm hoặc cập nhật tài khoản.
-        if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 50) {
-            return "Tên đăng nhập là bắt buộc và tối đa 50 ký tự.";
+        if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 30) {
+            return "Tên đăng nhập là bắt buộc và tối đa 30 ký tự.";
         }
-        if (user.getEmail() == null || user.getEmail().length() > 100
+        if (user.getEmail() == null || user.getEmail().length() > 30
                 || !EMAIL_PATTERN.matcher(user.getEmail()).matches()) {
-            return "Email không hợp lệ.";
+            return "Email không hợp lệ hoặc dài quá 30 ký tự.";
         }
-        if (user.getFullName() == null || user.getFullName().isEmpty() || user.getFullName().length() > 100) {
-            return "Họ và tên là bắt buộc và tối đa 100 ký tự.";
+        if (user.getFullName() == null || user.getFullName().isEmpty() || user.getFullName().length() > 30) {
+            return "Họ và tên là bắt buộc và tối đa 30 ký tự.";
         }
         if (user.getPhone() == null || !PHONE_PATTERN.matcher(user.getPhone()).matches()) {
             return "Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số.";
@@ -237,8 +237,8 @@ public class ManageUsersServlet extends HttpServlet {
             return "Vui lòng chọn vai trò hợp lệ.";
         }
         if (requirePassword && (user.getPassword() == null
-                || user.getPassword().length() < 8 || user.getPassword().length() > 255)) {
-            return "Mật khẩu phải có từ 8 đến 255 ký tự.";
+                || user.getPassword().length() < 8 || user.getPassword().length() > 30)) {
+            return "Mật khẩu phải có từ 8 đến 30 ký tự.";
         }
         return null;
     }

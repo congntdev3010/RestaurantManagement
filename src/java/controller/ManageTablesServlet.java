@@ -189,11 +189,11 @@ public class ManageTablesServlet extends HttpServlet {
 
     // Kiểm tra trường bắt buộc và trạng thái trước khi lưu.
     private String validateTable(RestaurantTable table) {
-        if (table.getTableName() == null || table.getTableName().isEmpty() || table.getTableName().length() > 50) {
-            return "Mã bàn là bắt buộc và tối đa 50 ký tự.";
+        if (table.getTableName() == null || table.getTableName().isEmpty() || table.getTableName().length() > 30) {
+            return "Tên bàn là bắt buộc và tối đa 30 ký tự.";
         }
-        if (table.getTableType() == null || table.getTableType().isEmpty() || table.getTableType().length() > 50) {
-            return "Loại bàn là bắt buộc và tối đa 50 ký tự.";
+        if (table.getTableType() == null || table.getTableType().isEmpty() || table.getTableType().length() > 30) {
+            return "Loại bàn là bắt buộc và tối đa 30 ký tự.";
         }
         if (table.getCapacity() < 1 || table.getCapacity() > 30) {
             return "Sức chứa phải từ 1 đến 30 khách.";

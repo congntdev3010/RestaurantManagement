@@ -57,8 +57,8 @@ public class ProfileServlet extends HttpServlet {
             openSection = "profile";
             String fullName = trim(request.getParameter("fullName"));
             String phone = trim(request.getParameter("phone"));
-            if (fullName == null || fullName.isEmpty() || fullName.length() > 100) {
-                message = "Họ và tên là bắt buộc và tối đa 100 ký tự.";
+            if (fullName == null || fullName.isEmpty() || fullName.length() > 30) {
+                message = "Họ và tên là bắt buộc và tối đa 30 ký tự.";
             } else if (phone == null || !PHONE_PATTERN.matcher(phone).matches()) {
                 message = "Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số.";
             } else if (dao.updateProfile(user.getUserId(), fullName, phone)) {
@@ -77,8 +77,8 @@ public class ProfileServlet extends HttpServlet {
             String confirmPassword = request.getParameter("confirmPassword");
             if (currentPassword == null || currentPassword.isEmpty()) {
                 message = "Vui lòng nhập mật khẩu hiện tại.";
-            } else if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 255) {
-                message = "Mật khẩu mới phải có từ 8 đến 255 ký tự.";
+            } else if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 30) {
+                message = "Mật khẩu mới phải có từ 8 đến 30 ký tự.";
             } else if (!newPassword.equals(confirmPassword)) {
                 message = "Mật khẩu xác nhận không khớp.";
             } else if (newPassword.equals(currentPassword)) {

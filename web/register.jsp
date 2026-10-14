@@ -36,17 +36,17 @@
                 <form action="register" method="post">
                     <div class="form-group">
                         <label>Họ và tên</label>
-                        <input type="text" name="fullName" value="${param.fullName}" class="form-input" required />
+                        <input type="text" name="fullName" value="${param.fullName}" class="form-input" maxlength="30" required />
                     </div>
 
                     <div class="form-group">
                         <label>Tên tài khoản</label>
-                        <input type="text" name="username" value="${param.username}" class="form-input" required />
+                        <input type="text" name="username" value="${param.username}" class="form-input" maxlength="30" required />
                     </div>
 
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" name="email" value="${param.email}" class="form-input" required />
+                        <input type="email" name="email" value="${param.email}" class="form-input" maxlength="30" required />
                     </div>
 
                     <div class="form-group">
@@ -58,12 +58,12 @@
 
                     <div class="form-group">
                         <label>Mật khẩu</label>
-                        <input type="password" name="password" class="form-input" required />
+                        <input type="password" name="password" class="form-input" minlength="8" maxlength="30" required />
                     </div>
 
                     <div class="form-group">
                         <label>Nhập lại mật khẩu</label>
-                        <input type="password" name="confirmPassword" class="form-input" required />
+                        <input type="password" name="confirmPassword" class="form-input" minlength="8" maxlength="30" required />
                     </div>
 
                     <button type="submit" class="btn-submit">Tạo tài khoản</button>

@@ -9,15 +9,15 @@
     </c:if>
     <label>
         Tên đăng nhập
-        <input type="text" name="username" maxlength="50" required value="<c:out value='${editUser.username}' />">
+        <input type="text" name="username" maxlength="30" required value="<c:out value='${editUser.username}' />">
     </label>
     <label>
         Họ và tên
-        <input type="text" name="fullName" maxlength="100" required value="<c:out value='${editUser.fullName}' />">
+        <input type="text" name="fullName" maxlength="30" required value="<c:out value='${editUser.fullName}' />">
     </label>
     <label>
         Email
-        <input type="email" name="email" maxlength="100" required value="<c:out value='${editUser.email}' />">
+        <input type="email" name="email" maxlength="30" required value="<c:out value='${editUser.email}' />">
     </label>
     <label>
         Số điện thoại
@@ -49,7 +49,7 @@
     </c:choose>
     <label>
         ${empty editUser ? 'Mật khẩu khởi tạo' : 'Mật khẩu mới (để trống nếu không đổi)'}
-        <input type="password" name="password" minlength="8" maxlength="255"
+        <input type="password" name="password" minlength="8" maxlength="30"
                autocomplete="new-password" ${empty editUser ? 'required' : ''}>
     </label>
     <div class="form-actions">

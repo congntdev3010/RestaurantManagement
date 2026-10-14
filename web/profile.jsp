@@ -56,7 +56,7 @@
                         <input type="hidden" name="action" value="updateProfile">
                         <label>
                             Họ và tên
-                            <input type="text" name="fullName" maxlength="100" autocomplete="name" required
+                            <input type="text" name="fullName" maxlength="30" autocomplete="name" required
                                 value="<c:out value='${sessionScope.user.fullName}' />">
                         </label>
                         <label>
@@ -82,12 +82,12 @@
                         </label>
                         <label>
                             Mật khẩu mới
-                            <input type="password" name="newPassword" minlength="8" maxlength="255"
+                            <input type="password" name="newPassword" minlength="8" maxlength="30"
                                    autocomplete="new-password" required>
                         </label>
                         <label>
                             Xác nhận mật khẩu mới
-                            <input type="password" name="confirmPassword" minlength="8" maxlength="255"
+                            <input type="password" name="confirmPassword" minlength="8" maxlength="30"
                                    autocomplete="new-password" required>
                         </label>
                         <button class="profile-submit" type="submit">Cập nhật mật khẩu</button>
