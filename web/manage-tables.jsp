@@ -10,7 +10,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Sơ đồ bàn - Việt À la carte</title>
-        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/manage-tables.css">
+        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/manage-tables.css?v=1.1">
     </head>
     <body>
         <jsp:include page="includes/header.jsp" />
