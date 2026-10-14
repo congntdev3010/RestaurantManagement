@@ -32,7 +32,7 @@
 
             <c:choose>
                 <c:when test="${empty editUser}">
-            <details class="account-form-section account-create-section">
+            <details class="account-form-section account-create-section" ${not empty createUserForm ? 'open' : ''}>
                 <summary class="button-primary">Thêm tài khoản</summary>
                 <div class="account-form-content">
                 <div class="section-heading">
