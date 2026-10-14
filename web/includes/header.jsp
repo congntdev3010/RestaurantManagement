@@ -10,12 +10,12 @@
         }
         boolean isAdmin = "Admin".equalsIgnoreCase(roleName);
         boolean isManager = "Manager".equalsIgnoreCase(roleName);
+        boolean isChef = "Chef".equalsIgnoreCase(roleName);
         boolean hideHeader = isAdmin || isManager || "Server".equalsIgnoreCase(roleName)
-            || "Receptionist".equalsIgnoreCase(roleName);
+            || "Receptionist".equalsIgnoreCase(roleName) || isChef;
         boolean canViewTables = isManager || "Server".equalsIgnoreCase(roleName)
             || "Receptionist".equalsIgnoreCase(roleName);
-        boolean showStaffSidebar = isAdmin || isManager || canViewTables
-            || "Chef".equalsIgnoreCase(roleName);
+        boolean showStaffSidebar = isAdmin || isManager || canViewTables || isChef;
 %>
 
 <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/header.css?v=1.7">
