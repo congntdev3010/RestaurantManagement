@@ -35,14 +35,25 @@ public class ManageUsersServlet extends HttpServlet {
         if (!roles.containsKey(roleFilterId)) {
             roleFilterId = 0;
         }
+        int archivedRoleFilterId = parseInt(request.getParameter("archivedRoleId"), 0);
+        if (!roles.containsKey(archivedRoleFilterId)) {
+            archivedRoleFilterId = 0;
+        }
         String nameQuery = trim(request.getParameter("name"));
         if (nameQuery == null) {
             nameQuery = "";
         }
+        String archivedNameQuery = trim(request.getParameter("archivedName"));
+        if (archivedNameQuery == null) {
+            archivedNameQuery = "";
+        }
         request.setAttribute("users", dao.getManageableUsers(isAdmin, roleFilterId, nameQuery));
+        request.setAttribute("archivedUsers", dao.getArchivedUsers(isAdmin, archivedRoleFilterId, archivedNameQuery));
         request.setAttribute("roles", roles);
         request.setAttribute("roleFilterId", roleFilterId);
         request.setAttribute("nameQuery", nameQuery);
+        request.setAttribute("archivedRoleFilterId", archivedRoleFilterId);
+        request.setAttribute("archivedNameQuery", archivedNameQuery);
 
         // Khi chọn sửa, tải tài khoản để đưa dữ liệu lên form.
         String editId = request.getParameter("edit");
@@ -78,6 +89,8 @@ public class ManageUsersServlet extends HttpServlet {
         String action = request.getParameter("action");
         int roleFilterId = parseInt(request.getParameter("filterRoleId"), 0);
         String nameQuery = trim(request.getParameter("filterName"));
+        int archivedRoleFilterId = parseInt(request.getParameter("filterArchivedRoleId"), 0);
+        String archivedNameQuery = trim(request.getParameter("filterArchivedName"));
         String message;
         String messageType = "error";
 
@@ -108,17 +121,25 @@ public class ManageUsersServlet extends HttpServlet {
                     message = "Đã cập nhật tài khoản.";
                     messageType = "success";
                 } else {
-                    message = "Không thể cập nhật tài khoản. Hãy kiểm tra role và email/tên đăng nhập.";
+                    message = "Không thể cập nhật tài khoản. Hãy kiểm tra role, email/tên đăng nhập; role Admin được cố định.";
                 }
             }
         } else if ("delete".equals(action)) {
             // DAO ngăn xóa tài khoản đang đăng nhập và tài khoản ngoài phạm vi quyền.
             int userId = parseInt(request.getParameter("userId"), -1);
             if (dao.deleteManagedUser(userId, actor.getUserId(), isAdmin)) {
-                message = "Đã xóa tài khoản.";
+                message = "Đã xóa tài khoản; dữ liệu lịch sử được giữ lại.";
                 messageType = "success";
             } else {
                 message = "Không thể xóa tài khoản này; có thể đây là tài khoản đang đăng nhập hoặc không thuộc phạm vi quản lý.";
+            }
+        } else if ("restore".equals(action)) {
+            int userId = parseInt(request.getParameter("userId"), -1);
+            if (dao.restoreManagedUser(userId, actor.getUserId(), isAdmin)) {
+                message = "Đã khôi phục tài khoản ở trạng thái khóa. Dùng Mở khóa để cho phép đăng nhập.";
+                messageType = "success";
+            } else {
+                message = "Không thể khôi phục tài khoản này hoặc tài khoản không thuộc phạm vi quản lý.";
             }
         } else if ("toggle".equals(action)) {
             // Đổi trạng thái hoạt động: đang mở thì khóa, đang khóa thì mở lại.
@@ -142,6 +163,14 @@ public class ManageUsersServlet extends HttpServlet {
             redirect += "?roleId=" + roleFilterId;
             if (nameQuery != null && !nameQuery.isEmpty()) {
                 redirect += "&name=" + java.net.URLEncoder.encode(nameQuery, java.nio.charset.StandardCharsets.UTF_8);
+            }
+        }
+        if (archivedRoleFilterId > 0 || (archivedNameQuery != null && !archivedNameQuery.isEmpty())) {
+            redirect += redirect.contains("?") ? "&" : "?";
+            redirect += "archivedRoleId=" + archivedRoleFilterId;
+            if (archivedNameQuery != null && !archivedNameQuery.isEmpty()) {
+                redirect += "&archivedName=" + java.net.URLEncoder.encode(
+                        archivedNameQuery, java.nio.charset.StandardCharsets.UTF_8);
             }
         }
         response.sendRedirect(redirect);

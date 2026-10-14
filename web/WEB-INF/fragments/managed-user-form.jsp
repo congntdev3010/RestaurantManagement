@@ -25,17 +25,28 @@
                title="Số điện thoại gồm 10 chữ số và bắt đầu bằng 0" required
                value="<c:out value='${editUser.phone}' />">
     </label>
-    <label>
-        Vai trò
-        <select name="roleId" required>
-            <option value="">Chọn vai trò</option>
-            <c:forEach var="role" items="${roles}">
-                <option value="${role.key}" ${not empty editUser and editUser.roleId eq role.key ? 'selected' : ''}>
-                    <c:out value="${role.value}" />
-                </option>
-            </c:forEach>
-        </select>
-    </label>
+    <c:choose>
+        <c:when test="${not empty editUser and editUser.roleName eq 'Admin'}">
+            <input type="hidden" name="roleId" value="${editUser.roleId}">
+            <label>
+                Vai trò
+                <input type="text" value="Admin" readonly>
+            </label>
+        </c:when>
+        <c:otherwise>
+            <label>
+                Vai trò
+                <select name="roleId" required>
+                    <option value="">Chọn vai trò</option>
+                    <c:forEach var="role" items="${roles}">
+                        <option value="${role.key}" ${not empty editUser and editUser.roleId eq role.key ? 'selected' : ''}>
+                            <c:out value="${role.value}" />
+                        </option>
+                    </c:forEach>
+                </select>
+            </label>
+        </c:otherwise>
+    </c:choose>
     <label>
         ${empty editUser ? 'Mật khẩu khởi tạo' : 'Mật khẩu mới (để trống nếu không đổi)'}
         <input type="password" name="password" minlength="8" maxlength="255"

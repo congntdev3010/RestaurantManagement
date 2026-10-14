@@ -19,7 +19,7 @@ public class UserDAO extends DBContext {
     public User login(String userOrEmail, String password) {
         String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active "
                 + "FROM Users u JOIN Roles r ON u.role_id = r.role_id "
-                + "WHERE (u.username = ? OR u.email = ?) AND u.password = ? AND u.is_active = 1";
+            + "WHERE (u.username = ? OR u.email = ?) AND u.password = ? AND u.is_active = 1 AND u.is_deleted = 0";
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.setString(1, userOrEmail);
@@ -42,6 +42,28 @@ public class UserDAO extends DBContext {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean isUserActive(int userId) {
+        String sql = "SELECT 1 FROM Users WHERE user_id = ? AND is_active = 1 AND is_deleted = 0";
+        if (connection == null) {
+            return false;
+        }
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     // Kiểm tra Tên tài khoản đã tồn tại chưa
@@ -200,7 +222,7 @@ public class UserDAO extends DBContext {
         List<User> users = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT u.user_id, u.username, u.email, u.full_name, u.phone, ")
                 .append("u.role_id, r.role_name, u.is_active FROM Users u ")
-                .append("JOIN Roles r ON u.role_id = r.role_id WHERE 1 = 1 ");
+            .append("JOIN Roles r ON u.role_id = r.role_id WHERE u.is_deleted = 0 ");
         if (!isAdmin) {
             sql.append("AND ").append(STAFF_ROLE_FILTER).append(' ');
         }
@@ -240,6 +262,51 @@ public class UserDAO extends DBContext {
         return users;
     }
 
+    public List<User> getArchivedUsers(boolean isAdmin, int roleId, String nameQuery) {
+        List<User> users = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT u.user_id, u.username, u.email, u.full_name, u.phone, ")
+                .append("u.role_id, r.role_name, u.is_active FROM Users u ")
+                .append("JOIN Roles r ON u.role_id = r.role_id WHERE u.is_deleted = 1 ");
+        if (!isAdmin) {
+            sql.append("AND ").append(STAFF_ROLE_FILTER).append(' ');
+        }
+        if (roleId > 0) {
+            sql.append("AND u.role_id = ? ");
+        }
+        if (nameQuery != null && !nameQuery.isEmpty()) {
+            sql.append("AND REPLACE(REPLACE(u.full_name, N'Đ', N'D'), N'đ', N'd') ")
+                    .append("COLLATE Latin1_General_CI_AI LIKE ? ");
+        }
+        sql.append("ORDER BY u.user_id DESC");
+        try {
+            if (connection == null) {
+                return users;
+            }
+            try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+                int parameterIndex = 1;
+                if (roleId > 0) {
+                    statement.setInt(parameterIndex++, roleId);
+                }
+                if (nameQuery != null && !nameQuery.isEmpty()) {
+                    String normalizedNameQuery = Normalizer.normalize(nameQuery, Normalizer.Form.NFD)
+                            .replaceAll("\\p{M}+", "")
+                            .replace('đ', 'd')
+                            .replace('Đ', 'D');
+                    String namePattern = normalizedNameQuery.replaceAll("\\s+", "%");
+                    statement.setNString(parameterIndex, "%" + namePattern + "%");
+                }
+                try (ResultSet results = statement.executeQuery()) {
+                while (results.next()) {
+                    users.add(readUser(results));
+                }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
     // Manager chỉ được chọn vai trò nhân viên; Admin được chọn mọi vai trò.
     public Map<Integer, String> getManageableRoles(boolean isAdmin) {
         Map<Integer, String> roles = new LinkedHashMap<>();
@@ -264,7 +331,7 @@ public class UserDAO extends DBContext {
     // Tìm tài khoản cần sửa hoặc đổi trạng thái trong phạm vi được phép quản lý.
     public User getManageableUserById(int userId, boolean isAdmin) {
         String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active "
-                + "FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.user_id = ? "
+            + "FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.user_id = ? AND u.is_deleted = 0 "
                 + (isAdmin ? "" : "AND " + STAFF_ROLE_FILTER);
         try {
             if (connection == null) {
@@ -310,9 +377,16 @@ public class UserDAO extends DBContext {
                 || !isAllowedRole(user.getRoleId(), isAdmin)) {
             return false;
         }
+        User currentUser = getManageableUserById(user.getUserId(), true);
+        if (currentUser == null) {
+            return false;
+        }
+        if ("Admin".equalsIgnoreCase(currentUser.getRoleName()) && !isAdminRole(user.getRoleId())) {
+            return false;
+        }
         boolean updatePassword = user.getPassword() != null && !user.getPassword().isEmpty();
         String sql = "UPDATE Users SET username = ?, email = ?, full_name = ?, phone = ?, role_id = ?"
-                + (updatePassword ? ", password = ?" : "") + " WHERE user_id = ?"
+            + (updatePassword ? ", password = ?" : "") + " WHERE user_id = ? AND is_deleted = 0"
                 + (isAdmin ? "" : " AND role_id IN (SELECT role_id FROM Roles WHERE role_name IN ('Server', 'Chef', 'Receptionist'))");
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
@@ -334,12 +408,12 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-    // Không cho phép tự xóa tài khoản hoặc xóa tài khoản ngoài phạm vi quản lý.
+    // Xóa mềm thay vì xóa cứng để giữ lịch sử; không cho tự xóa hoặc vượt phạm vi quản lý.
     public boolean deleteManagedUser(int userId, int actorId, boolean isAdmin) {
         if (connection == null || userId == actorId || !isManageableUser(userId, isAdmin)) {
             return false;
         }
-        String sql = "DELETE FROM Users WHERE user_id = ? AND user_id <> ?"
+        String sql = "UPDATE Users SET is_active = 0, is_deleted = 1 WHERE user_id = ? AND user_id <> ? AND is_deleted = 0"
                 + (isAdmin ? "" : " AND role_id IN (SELECT role_id FROM Roles WHERE role_name IN ('Server', 'Chef', 'Receptionist'))");
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
@@ -352,12 +426,27 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    public boolean restoreManagedUser(int userId, int actorId, boolean isAdmin) {
+        if (connection == null || userId == actorId) {
+            return false;
+        }
+        String sql = "UPDATE Users SET is_deleted = 0, is_active = 0 WHERE user_id = ? AND is_deleted = 1"
+                + (isAdmin ? "" : " AND role_id IN (SELECT role_id FROM Roles WHERE role_name IN ('Server', 'Chef', 'Receptionist'))");
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, userId);
+            return statement.executeUpdate() == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     // Khóa/mở tài khoản, đồng thời không cho người dùng tự đổi trạng thái của mình.
     public boolean setManagedUserActive(int userId, int actorId, boolean isActive, boolean isAdmin) {
         if (connection == null || userId == actorId || !isManageableUser(userId, isAdmin)) {
             return false;
         }
-        String sql = "UPDATE Users SET is_active = ? WHERE user_id = ? AND user_id <> ?"
+        String sql = "UPDATE Users SET is_active = ? WHERE user_id = ? AND user_id <> ? AND is_deleted = 0"
                 + (isAdmin ? "" : " AND role_id IN (SELECT role_id FROM Roles WHERE role_name IN ('Server', 'Chef', 'Receptionist'))");
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
@@ -391,9 +480,27 @@ public class UserDAO extends DBContext {
         return false;
     }
 
+    private boolean isAdminRole(int roleId) {
+        String sql = "SELECT 1 FROM Roles WHERE role_id = ? AND role_name = 'Admin'";
+        try {
+            if (connection == null) {
+                return false;
+            }
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, roleId);
+                try (ResultSet result = statement.executeQuery()) {
+                    return result.next();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     // Kiểm tra tài khoản mục tiêu có thuộc phạm vi quản lý không.
     private boolean isManageableUser(int userId, boolean isAdmin) {
-        String sql = "SELECT 1 FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.user_id = ? "
+        String sql = "SELECT 1 FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.user_id = ? AND u.is_deleted = 0 "
                 + (isAdmin ? "" : "AND " + STAFF_ROLE_FILTER);
         try {
             if (connection == null) {

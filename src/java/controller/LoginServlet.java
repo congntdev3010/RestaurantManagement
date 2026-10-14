@@ -16,6 +16,9 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        if ("inactive".equals(request.getParameter("reason"))) {
+            request.setAttribute("error", "Tài khoản đã bị khóa hoặc xóa. Vui lòng liên hệ quản trị viên.");
+        }
         request.getRequestDispatcher("login.jsp").forward(request, response);
     }
 
