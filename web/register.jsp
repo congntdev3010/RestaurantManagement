@@ -46,7 +46,7 @@
 
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" name="email" value="${param.email}" class="form-input" maxlength="30" required />
+                        <input type="email" name="email" value="${param.email}" class="form-input" maxlength="50" required />
                     </div>
 
                     <div class="form-group">

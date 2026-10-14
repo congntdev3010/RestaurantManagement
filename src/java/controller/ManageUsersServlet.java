@@ -223,9 +223,9 @@ public class ManageUsersServlet extends HttpServlet {
         if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 30) {
             return "Tên đăng nhập là bắt buộc và tối đa 30 ký tự.";
         }
-        if (user.getEmail() == null || user.getEmail().length() > 30
+        if (user.getEmail() == null || user.getEmail().length() > 50
                 || !EMAIL_PATTERN.matcher(user.getEmail()).matches()) {
-            return "Email không hợp lệ hoặc dài quá 30 ký tự.";
+            return "Email không hợp lệ hoặc dài quá 50 ký tự.";
         }
         if (user.getFullName() == null || user.getFullName().isEmpty() || user.getFullName().length() > 30) {
             return "Họ và tên là bắt buộc và tối đa 30 ký tự.";

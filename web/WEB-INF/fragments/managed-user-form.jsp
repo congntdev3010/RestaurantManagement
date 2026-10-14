@@ -17,7 +17,7 @@
     </label>
     <label>
         Email
-        <input type="email" name="email" maxlength="30" required value="<c:out value='${editUser.email}' />">
+        <input type="email" name="email" maxlength="50" required value="<c:out value='${editUser.email}' />">
     </label>
     <label>
         Số điện thoại

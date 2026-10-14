@@ -66,8 +66,8 @@ public class RegisterServlet extends HttpServlet {
         }
 
         // 4. Kiểm tra định dạng & trùng lặp Email
-        if (email == null || email.length() > 30 || !email.matches(EMAIL_REGEX)) {
-            request.setAttribute("error", "Email không hợp lệ hoặc dài quá 30 ký tự!");
+        if (email == null || email.length() > 50 || !email.matches(EMAIL_REGEX)) {
+            request.setAttribute("error", "Email không hợp lệ hoặc dài quá 50 ký tự!");
             request.getRequestDispatcher("register.jsp").forward(request, response);
             return;
         }

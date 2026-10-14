@@ -54,12 +54,12 @@
                             </c:if>
                             <label>
                                 Mã bàn
-                                <input type="text" name="tableName" maxlength="30" required placeholder="Ví dụ: Bàn 01"
+                                <input type="text" name="tableName" maxlength="50" required placeholder="Ví dụ: Bàn 01"
                                        value="${fn:escapeXml(editTable.tableName)}">
                             </label>
                             <label>
                                 Loại bàn
-                                <input type="text" name="tableType" maxlength="30" list="table-types" required
+                                <input type="text" name="tableType" maxlength="50" list="table-types" required
                                        placeholder="Ví dụ: Cửa sổ" value="${fn:escapeXml(editTable.tableType)}">
                                 <datalist id="table-types">
                                     <option value="Phòng riêng">
