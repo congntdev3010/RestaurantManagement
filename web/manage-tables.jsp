@@ -21,7 +21,9 @@
                     <h1>Sơ đồ bàn</h1>
                     <p class="tables-intro">Danh sách bàn được sắp xếp theo từng khu vực.</p>
                 </div>
-                <p class="table-count"><strong><c:out value="${tableCount}" /></strong> bàn</p>
+                <c:if test="${not tableLoadFailed}">
+                    <p class="table-count"><strong><c:out value="${tableCount}" /></strong> bàn</p>
+                </c:if>
             </header>
 
             <c:if test="${not empty tableMessage}">
@@ -78,7 +80,6 @@
                                         <option value="AVAILABLE" ${editTable.status eq 'AVAILABLE' ? 'selected' : ''}>Còn trống</option>
                                         <option value="RESERVED" ${editTable.status eq 'RESERVED' ? 'selected' : ''}>Đã đặt</option>
                                         <option value="OCCUPIED" ${editTable.status eq 'OCCUPIED' ? 'selected' : ''}>Đang phục vụ</option>
-                                        <option value="UNAVAILABLE" ${editTable.status eq 'UNAVAILABLE' ? 'selected' : ''}>Tạm ngưng</option>
                                     </select>
                                 </label>
                             </c:if>
@@ -101,6 +102,9 @@
 
             <section class="table-layout" aria-label="Bàn theo khu vực">
                 <c:choose>
+                    <c:when test="${tableLoadFailed}">
+                <p class="empty-state" role="alert">Không thể tải sơ đồ bàn do lỗi kết nối dữ liệu. Vui lòng thử lại sau.</p>
+                    </c:when>
                     <c:when test="${empty tableGroups}">
                 <p class="empty-state">Chưa có bàn nào được thiết lập.</p>
                     </c:when>
@@ -121,7 +125,7 @@
                                     <c:when test="${table.status eq 'AVAILABLE'}">Còn trống</c:when>
                                     <c:when test="${table.status eq 'RESERVED'}">Đã đặt</c:when>
                                     <c:when test="${table.status eq 'OCCUPIED'}">Đang phục vụ</c:when>
-                                    <c:otherwise>Tạm ngưng</c:otherwise>
+                                    <c:otherwise>Đang phục vụ</c:otherwise>
                                 </c:choose>
                             </span>
                         </div>
@@ -152,7 +156,6 @@
                                     <option value="AVAILABLE" ${table.status eq 'AVAILABLE' ? 'selected' : ''}>Còn trống</option>
                                     <option value="RESERVED" ${table.status eq 'RESERVED' ? 'selected' : ''}>Đã đặt</option>
                                     <option value="OCCUPIED" ${table.status eq 'OCCUPIED' ? 'selected' : ''}>Đang phục vụ</option>
-                                    <option value="UNAVAILABLE" ${table.status eq 'UNAVAILABLE' ? 'selected' : ''}>Tạm ngưng</option>
                                 </select>
                             </label>
                             <button type="submit">Cập nhật</button>

@@ -2,6 +2,7 @@ package controller;
 
 import dao.RestaurantTableDAO;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -23,7 +24,7 @@ public class ManageTablesServlet extends HttpServlet {
 
     // Các trạng thái được phép lưu vào cơ sở dữ liệu.
     private static final Set<String> TABLE_STATUSES = new HashSet<>(Arrays.asList(
-            "AVAILABLE", "RESERVED", "OCCUPIED", "UNAVAILABLE"));
+            "AVAILABLE", "RESERVED", "OCCUPIED"));
 
     // Tải danh sách bàn và chỉ mở form sửa cho quản lý.
     @Override
@@ -38,18 +39,27 @@ public class ManageTablesServlet extends HttpServlet {
         boolean canManage = isManager(actor);
         boolean canChangeStatus = canManage || hasRole(actor, "Server") || hasRole(actor, "Receptionist");
         RestaurantTableDAO dao = new RestaurantTableDAO();
-        List<RestaurantTable> tables = dao.getAllTables();
+        List<RestaurantTable> tables;
+        boolean tableLoadFailed = false;
+        try {
+            tables = dao.getAllTables();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            tables = new ArrayList<>();
+            tableLoadFailed = true;
+        }
         Map<String, List<RestaurantTable>> tableGroups = new LinkedHashMap<>();
         for (RestaurantTable table : tables) {
             tableGroups.computeIfAbsent(table.getTableType(), type -> new ArrayList<>()).add(table);
         }
         request.setAttribute("tableGroups", tableGroups);
         request.setAttribute("tableCount", tables.size());
+        request.setAttribute("tableLoadFailed", tableLoadFailed);
         request.setAttribute("canManage", canManage);
         request.setAttribute("canChangeStatus", canChangeStatus);
 
         String editId = request.getParameter("edit");
-        if (canManage && editId != null) {
+        if (canManage && editId != null && !tableLoadFailed) {
             RestaurantTable editTable = dao.getTableById(parseInt(editId, -1));
             if (editTable != null) {
                 request.setAttribute("editTable", editTable);
@@ -96,7 +106,7 @@ public class ManageTablesServlet extends HttpServlet {
                 message = "Đã cập nhật trạng thái bàn.";
                 messageType = "success";
             } else {
-                message = "Không thể cập nhật trạng thái bàn.";
+                message = "Không thể cập nhật trạng thái bàn; trạng thái chuyển đổi không hợp lệ hoặc bàn không còn tồn tại.";
             }
         } else if ("create".equals(action) || "update".equals(action)) {
             RestaurantTable table = readFormTable(request);
@@ -119,7 +129,7 @@ public class ManageTablesServlet extends HttpServlet {
                     message = "create".equals(action) ? "Đã thêm bàn." : "Đã cập nhật bàn.";
                     messageType = "success";
                 } else {
-                    message = "Không thể lưu bàn. Mã bàn có thể đã được sử dụng.";
+                    message = "Không thể lưu bàn. Mã bàn có thể bị trùng hoặc trạng thái chuyển đổi không hợp lệ.";
                 }
             }
         } else if ("delete".equals(action)) {
@@ -128,7 +138,7 @@ public class ManageTablesServlet extends HttpServlet {
                 message = "Đã xóa bàn.";
                 messageType = "success";
             } else {
-                message = "Không thể xóa bàn này.";
+                message = "Không thể xóa bàn; chỉ xóa được bàn đang trống.";
             }
         } else {
             message = "Thao tác không hợp lệ.";

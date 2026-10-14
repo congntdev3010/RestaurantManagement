@@ -253,11 +253,6 @@ body {
     --status-background: #fbe9e7;
 }
 
-.status-unavailable {
-    --status-color: #657179;
-    --status-background: #e9ecef;
-}
-
 .card-topline {
     display: flex;
     align-items: center;
