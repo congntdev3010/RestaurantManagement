@@ -1,4 +1,4 @@
-package controller;
+package controller.authen;
 
 import dao.UserDAO;
 import model.User;
@@ -19,7 +19,7 @@ public class LoginServlet extends HttpServlet {
         if ("inactive".equals(request.getParameter("reason"))) {
             request.setAttribute("error", "Tài khoản đã bị khóa hoặc xóa. Vui lòng liên hệ quản trị viên.");
         }
-        request.getRequestDispatcher("login.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/authen/login.jsp").forward(request, response);
     }
 
     @Override
@@ -34,10 +34,10 @@ public class LoginServlet extends HttpServlet {
         if (user != null) {
             HttpSession session = request.getSession();
             session.setAttribute("user", user);
-            response.sendRedirect("home.jsp");
+            response.sendRedirect(request.getContextPath() + "/home");
         } else {
             request.setAttribute("error", "Tài khoản/Mật khẩu không đúng hoặc chưa được kích hoạt!");
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/login.jsp").forward(request, response);
         }
 
     }

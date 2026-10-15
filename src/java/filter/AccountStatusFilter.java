@@ -39,7 +39,8 @@ public class AccountStatusFilter implements Filter {
 
     private boolean isStaticResource(String path) {
         String normalizedPath = path.toLowerCase(Locale.ROOT);
-        return normalizedPath.startsWith("/css/")
+        return normalizedPath.startsWith("/assets/")
+                || normalizedPath.startsWith("/css/")
                 || normalizedPath.startsWith("/js/")
                 || normalizedPath.startsWith("/images/")
                 || normalizedPath.startsWith("/fonts/")

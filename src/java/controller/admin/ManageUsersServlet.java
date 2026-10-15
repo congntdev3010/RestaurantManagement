@@ -1,4 +1,4 @@
-package controller;
+package controller.admin;
 
 import dao.UserDAO;
 import java.io.IOException;
@@ -76,7 +76,7 @@ public class ManageUsersServlet extends HttpServlet {
         request.setAttribute("manageMessageType", session.getAttribute("manageMessageType"));
         session.removeAttribute("manageMessage");
         session.removeAttribute("manageMessageType");
-        request.getRequestDispatcher("/manage-users.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/admin/manage-users.jsp").forward(request, response);
     }
 
     // Thực hiện thao tác được gửi từ form quản lý tài khoản.

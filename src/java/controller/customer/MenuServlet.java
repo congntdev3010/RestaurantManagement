@@ -1,4 +1,4 @@
-package controller;
+package controller.customer;
 
 import dao.CategoryDAO;
 import dao.DishDAO;
@@ -70,7 +70,7 @@ public class MenuServlet extends HttpServlet {
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("currentPage", page);
 
-        request.getRequestDispatcher("menu.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/customer/menu.jsp").forward(request, response);
     }
     /**
      * Hàm tự động phát hiện và sửa lỗi mã hóa UTF-8 cho phương thức GET

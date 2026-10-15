@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Xác minh OTP - Việt À la carte</title>
-    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/auth.css?v=1.2">
+    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/auth.css?v=1.2">
 </head>
 <body>
 
     <div class="auth-container">
         <!-- Nửa trái: Banner thương hiệu -->
-        <div class="auth-banner" style="background-image: url('${pageContext.request.contextPath}/images/login.jpg');">
+        <div class="auth-banner" style="background-image: url('${pageContext.request.contextPath}/assets/images/login.jpg');">
             <div class="banner-content">
                 <p class="banner-subtitle">ẨM THỰC BA MIỀN</p>
                 <h1 class="banner-title">“Hương vị quê nhà,<br>trọn vẹn từng món.”</h1>
@@ -70,7 +70,7 @@
                 </div>
 
                 <div class="auth-footer" style="margin-top: 15px;">
-                    Nhập sai email? <a href="register.jsp">Đăng ký lại</a>
+                    Nhập sai email? <a href="${pageContext.request.contextPath}/register">Đăng ký lại</a>
                 </div>
             </div>
         </div>

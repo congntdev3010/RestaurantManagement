@@ -1,4 +1,4 @@
-package controller;
+package controller.authen;
 
 import dao.UserDAO;
 import model.User;
@@ -21,7 +21,7 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("register.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
     }
 
     @Override
@@ -45,14 +45,14 @@ public class RegisterServlet extends HttpServlet {
         // 1. Kiểm tra Họ và tên (không rỗng & tối đa 30 ký tự)
         if (fullName == null || fullName.isEmpty() || fullName.length() > 30) {
             request.setAttribute("error", "Họ và tên không được để trống và tối đa 30 ký tự!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
             return;
         }
 
         // 2. Kiểm tra độ dài Tên tài khoản (không rỗng & tối đa 30 ký tự)
         if (username == null || username.isEmpty() || username.length() > 30) {
             request.setAttribute("error", "Tên tài khoản không được để trống và tối đa 30 ký tự!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
             return;
         }
 
@@ -61,40 +61,40 @@ public class RegisterServlet extends HttpServlet {
         // 3. Kiểm tra Username duy nhất
         if (dao.checkUsernameExists(username)) {
             request.setAttribute("error", "Tên tài khoản đã tồn tại, vui lòng chọn tên khác!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
             return;
         }
 
         // 4. Kiểm tra định dạng & trùng lặp Email
         if (email == null || email.length() > 50 || !email.matches(EMAIL_REGEX)) {
             request.setAttribute("error", "Email không hợp lệ hoặc dài quá 50 ký tự!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
             return;
         }
         if (dao.checkEmailExists(email)) {
             request.setAttribute("error", "Email này đã được đăng ký!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
             return;
         }
 
         // 5. Kiểm tra Số điện thoại (bắt đầu từ 0 và đủ 10 chữ số)
         if (phone == null || !phone.matches(PHONE_REGEX)) {
             request.setAttribute("error", "Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
             return;
         }
 
         // 6. Kiểm tra độ dài Mật khẩu (từ 8 đến 30 ký tự)
         if (pass == null || pass.length() < 8 || pass.length() > 30) {
             request.setAttribute("error", "Mật khẩu phải từ 8 đến 30 ký tự!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
             return;
         }
 
         // 7. Kiểm tra Mật khẩu nhập lại
         if (!pass.equals(confirmPass)) {
             request.setAttribute("error", "Mật khẩu nhập lại không khớp!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
             return;
         }
 
@@ -111,10 +111,10 @@ public class RegisterServlet extends HttpServlet {
             session.setAttribute("registerOTP", otp);
             session.setAttribute("otpTime", System.currentTimeMillis());
 
-            response.sendRedirect("verify-otp.jsp");
+            response.sendRedirect(request.getContextPath() + "/verify-otp");
         } else {
             request.setAttribute("error", "Gửi mã OTP thất bại, vui lòng kiểm tra lại Email!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
         }
     }
 }

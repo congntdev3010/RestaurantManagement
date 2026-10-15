@@ -1,4 +1,4 @@
-package controller;
+package controller.customer;
 
 import java.io.IOException;
 import jakarta.servlet.ServletException;
@@ -7,12 +7,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(name = "LogoutServlet", urlPatterns = {"/logout"})
-public class LogoutServlet extends HttpServlet {
+@WebServlet(name = "HomeServlet", urlPatterns = {"/home"})
+public class HomeServlet extends HttpServlet {
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getSession().invalidate();
-        response.sendRedirect("login");
+        request.getRequestDispatcher("/WEB-INF/views/customer/home.jsp").forward(request, response);
     }
 }

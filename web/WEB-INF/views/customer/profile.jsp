@@ -9,10 +9,10 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Thông tin cá nhân - Việt À la carte</title>
-        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/profile.css">
+        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/profile.css">
     </head>
     <body>
-        <jsp:include page="includes/header.jsp" />
+        <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
         <main class="profile-page">
             <header class="profile-heading">

@@ -1,4 +1,4 @@
-package controller;
+package controller.customer;
 
 import dao.UserDAO;
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class ProfileServlet extends HttpServlet {
         session.removeAttribute("profileMessage");
         session.removeAttribute("profileMessageType");
         session.removeAttribute("profileOpenSection");
-        request.getRequestDispatcher("/profile.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/customer/profile.jsp").forward(request, response);
     }
 
     // Xử lý cập nhật thông tin cá nhân hoặc đổi mật khẩu.
