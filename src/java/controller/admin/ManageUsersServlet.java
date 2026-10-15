@@ -2,6 +2,8 @@ package controller.admin;
 
 import dao.UserDAO;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.regex.Pattern;
 import model.User;
@@ -100,8 +102,8 @@ public class ManageUsersServlet extends HttpServlet {
         String messageType = "error";
 
         if ("create".equals(action)) {
-            // Tạo mới cần mật khẩu; dữ liệu được kiểm tra trước khi gọi DAO.
             User user = readFormUser(request);
+            user.setIsActive(true);
             message = validateUser(user, true);
             if (message == null) {
                 if (dao.createManagedUser(user, isAdmin)) {
@@ -121,11 +123,6 @@ public class ManageUsersServlet extends HttpServlet {
             User user = readFormUser(request);
             user.setUserId(parseInt(request.getParameter("userId"), -1));
             message = validateUser(user, false);
-            String password = user.getPassword();
-            if (message == null && password != null && !password.isEmpty()
-                    && (password.length() < 8 || password.length() > 30)) {
-                message = "Mật khẩu mới phải có từ 8 đến 30 ký tự.";
-            }
             if (message == null) {
                 if (dao.updateManagedUser(user, isAdmin)) {
                     message = "Đã cập nhật tài khoản.";
@@ -172,15 +169,14 @@ public class ManageUsersServlet extends HttpServlet {
         if (roleFilterId > 0 || (nameQuery != null && !nameQuery.isEmpty())) {
             redirect += "?roleId=" + roleFilterId;
             if (nameQuery != null && !nameQuery.isEmpty()) {
-                redirect += "&name=" + java.net.URLEncoder.encode(nameQuery, java.nio.charset.StandardCharsets.UTF_8);
+                redirect += "&name=" + URLEncoder.encode(nameQuery, StandardCharsets.UTF_8);
             }
         }
         if (archivedRoleFilterId > 0 || (archivedNameQuery != null && !archivedNameQuery.isEmpty())) {
             redirect += redirect.contains("?") ? "&" : "?";
             redirect += "archivedRoleId=" + archivedRoleFilterId;
             if (archivedNameQuery != null && !archivedNameQuery.isEmpty()) {
-                redirect += "&archivedName=" + java.net.URLEncoder.encode(
-                        archivedNameQuery, java.nio.charset.StandardCharsets.UTF_8);
+                redirect += "&archivedName=" + URLEncoder.encode(archivedNameQuery, StandardCharsets.UTF_8);
             }
         }
         response.sendRedirect(redirect);
@@ -215,7 +211,6 @@ public class ManageUsersServlet extends HttpServlet {
 
     // Đọc các trường trong form và chuyển thành đối tượng User.
     private User readFormUser(HttpServletRequest request) {
-        // Gom dữ liệu form thành User để kiểm tra và chuyển xuống DAO.
         User user = new User();
         user.setUsername(trim(request.getParameter("username")));
         user.setEmail(trim(request.getParameter("email")));
@@ -223,13 +218,10 @@ public class ManageUsersServlet extends HttpServlet {
         user.setPhone(trim(request.getParameter("phone")));
         user.setPassword(request.getParameter("password"));
         user.setRoleId(parseInt(request.getParameter("roleId"), -1));
-        user.setIsActive(true);
         return user;
     }
 
-    // Kiểm tra dữ liệu bắt buộc trước khi thêm hoặc sửa tài khoản.
-    private String validateUser(User user, boolean requirePassword) {
-        // Kiểm tra các trường bắt buộc trước khi thêm hoặc cập nhật tài khoản.
+    private String validateUser(User user, boolean passwordRequired) {
         if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 30) {
             return "Tên đăng nhập là bắt buộc và tối đa 30 ký tự.";
         }
@@ -249,8 +241,9 @@ public class ManageUsersServlet extends HttpServlet {
         if (user.getRoleId() < 1) {
             return "Vui lòng chọn vai trò hợp lệ.";
         }
-        if (requirePassword && (user.getPassword() == null
-                || user.getPassword().length() < 8 || user.getPassword().length() > 30)) {
+        String password = user.getPassword();
+        if ((passwordRequired || (password != null && !password.isEmpty()))
+                && (password == null || password.length() < 8 || password.length() > 30)) {
             return "Mật khẩu phải có từ 8 đến 30 ký tự.";
         }
         return null;

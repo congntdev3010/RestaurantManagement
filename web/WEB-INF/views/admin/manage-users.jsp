@@ -1,9 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<c:if test="${requestScope.users == null or requestScope.roles == null}">
-    <c:redirect url="/manage-users" />
-</c:if>
 <!DOCTYPE html>
 <html lang="vi">
     <head>

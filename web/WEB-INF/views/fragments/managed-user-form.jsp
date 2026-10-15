@@ -40,7 +40,7 @@
                 <select name="roleId" required>
                     <option value="">Chọn vai trò</option>
                     <c:forEach var="role" items="${roles}">
-                        <option value="${role.key}" ${not empty formUser and formUser.roleId eq role.key ? 'selected' : ''}>
+                        <option value="${role.key}" ${formUser.roleId eq role.key ? 'selected' : ''}>
                             <c:out value="${role.value}" />
                         </option>
                     </c:forEach>
@@ -55,12 +55,5 @@
     </label>
     <div class="form-actions">
         <button class="button-primary" type="submit">${empty editUser ? 'Tạo tài khoản' : 'Lưu thay đổi'}</button>
-        <c:if test="${not empty editUser}">
-            <c:url var="cancelEditUrl" value="/manage-users">
-                <c:param name="roleId" value="${roleFilterId}" />
-                <c:param name="name" value="${nameQuery}" />
-            </c:url>
-            <a class="button-secondary" href="${cancelEditUrl}">Hủy</a>
-        </c:if>
     </div>
 </form>

@@ -21,8 +21,7 @@ public class ProfileServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setHeader("Cache-Control", "no-store");
-        User user = requireUser(request, response);
-        if (user == null) {
+        if (requireUser(request, response) == null) {
             return;
         }
 

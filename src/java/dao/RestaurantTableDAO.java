@@ -10,20 +10,30 @@ import model.RestaurantTable;
 
 public class RestaurantTableDAO extends DBContext {
 
-    private static final String STATUS_TRANSITION_CONDITION = "(table_status = ? "
-            + "OR (? = 'AVAILABLE' AND table_status IN ('RESERVED', 'OCCUPIED', 'UNAVAILABLE')) "
-            + "OR (? = 'RESERVED' AND table_status IN ('AVAILABLE', 'UNAVAILABLE')) "
-            + "OR (? = 'OCCUPIED' AND table_status IN ('AVAILABLE', 'RESERVED', 'UNAVAILABLE')))";
+    // Dùng chung danh sách cột cho các truy vấn đọc bàn.
+    private static final String TABLE_COLUMNS
+            = "table_id, table_name, table_type, capacity, table_status, description";
 
-    // Trả về toàn bộ bàn, sắp xếp theo khu vực rồi theo mã bàn.
+    // Chỉ cho phép giữ nguyên trạng thái hoặc chuyển giữa các trạng thái hợp lệ.
+    private static final String STATUS_TRANSITION_CONDITION = "(table_status = ? "
+            + "OR (? = 'AVAILABLE' AND table_status IN ('RESERVED', 'OCCUPIED')) "
+            + "OR (? = 'RESERVED' AND table_status = 'AVAILABLE') "
+            + "OR (? = 'OCCUPIED' AND table_status IN ('AVAILABLE', 'RESERVED')))";
+
+    /**
+     * Lấy danh sách bàn và sắp xếp theo khu vực rồi theo tên bàn.
+     *
+     * @throws SQLException nếu không có kết nối hoặc truy vấn thất bại
+     */
     public List<RestaurantTable> getAllTables() throws SQLException {
         List<RestaurantTable> tables = new ArrayList<>();
-        String sql = "SELECT table_id, table_name, table_type, capacity, "
-            + "CASE WHEN table_status = 'UNAVAILABLE' THEN 'AVAILABLE' ELSE table_status END AS table_status, description "
-                + "FROM RestaurantTables ORDER BY table_type, table_name";
+        String sql = "SELECT " + TABLE_COLUMNS
+                + " FROM RestaurantTables ORDER BY table_type, table_name";
         if (connection == null) {
             throw new SQLException("Database connection is unavailable.");
         }
+
+        // Đóng statement và result set ngay sau khi đã ánh xạ xong kết quả.
         try (PreparedStatement statement = connection.prepareStatement(sql);
                 ResultSet results = statement.executeQuery()) {
             while (results.next()) {
@@ -33,46 +43,43 @@ public class RestaurantTableDAO extends DBContext {
         return tables;
     }
 
-    // Tìm một bàn theo ID, hoặc trả về null nếu không tồn tại.
-    public RestaurantTable getTableById(int tableId) {
-        String sql = "SELECT table_id, table_name, table_type, capacity, "
-            + "CASE WHEN table_status = 'UNAVAILABLE' THEN 'AVAILABLE' ELSE table_status END AS table_status, description "
-                + "FROM RestaurantTables WHERE table_id = ?";
-        try {
-            if (connection == null) {
-                return null;
-            }
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setInt(1, tableId);
-                try (ResultSet results = statement.executeQuery()) {
-                    return results.next() ? readTable(results) : null;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+    /**
+     * Tìm bàn theo ID; trả về null nếu không tồn tại và ném SQLException nếu truy vấn lỗi.
+     */
+    public RestaurantTable getTableById(int tableId) throws SQLException {
+        String sql = "SELECT " + TABLE_COLUMNS + " FROM RestaurantTables WHERE table_id = ?";
+        if (connection == null) {
+            throw new SQLException("Database connection is unavailable.");
         }
-        return null;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, tableId);
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? readTable(results) : null;
+            }
+        }
     }
 
-    // Thêm bàn mới bằng các giá trị đã được servlet kiểm tra.
+    /** Thêm bàn mới bằng dữ liệu đã được servlet kiểm tra. */
     public boolean createTable(RestaurantTable table) {
         String sql = "INSERT INTO RestaurantTables (table_name, table_type, capacity, table_status, description) "
                 + "VALUES (?, ?, ?, ?, ?)";
         return executeUpdate(sql, statement -> bindTable(statement, table));
     }
 
-    // Cập nhật thông tin bàn; ID được bind riêng sau các trường còn lại.
+    /** Cập nhật thông tin bàn và chỉ chấp nhận chuyển trạng thái hợp lệ. */
     public boolean updateTable(RestaurantTable table) {
         String sql = "UPDATE RestaurantTables SET table_name = ?, table_type = ?, capacity = ?, "
                 + "table_status = ?, description = ? WHERE table_id = ? AND " + STATUS_TRANSITION_CONDITION;
         return executeUpdate(sql, statement -> {
             bindTable(statement, table);
             statement.setInt(6, table.getTableId());
+            // Điều kiện SQL có bốn tham số trạng thái để bảo vệ cả cập nhật ngoài servlet.
             bindTransitionStatus(statement, table.getStatus(), 7);
         });
     }
 
-    // Chỉ cập nhật trạng thái mà không thay đổi thông tin khác của bàn.
+    /** Chỉ cập nhật trạng thái, không thay đổi thông tin còn lại của bàn. */
     public boolean updateTableStatus(int tableId, String status) {
         String sql = "UPDATE RestaurantTables SET table_status = ? WHERE table_id = ? AND "
                 + STATUS_TRANSITION_CONDITION;
@@ -83,19 +90,25 @@ public class RestaurantTableDAO extends DBContext {
         });
     }
 
-    // Chỉ xóa bàn đang trống.
+    /** Chỉ xóa bàn đang trống. */
     public boolean deleteTable(int tableId) {
-        String sql = "DELETE FROM RestaurantTables WHERE table_id = ? AND table_status IN ('AVAILABLE', 'UNAVAILABLE')";
+        String sql = "DELETE FROM RestaurantTables "
+                + "WHERE table_id = ? AND table_status = 'AVAILABLE'";
         return executeUpdate(sql, statement -> statement.setInt(1, tableId));
     }
 
+    /**
+     * Gắn trạng thái vào bốn placeholder của điều kiện chuyển trạng thái SQL.
+     */
     private void bindTransitionStatus(PreparedStatement statement, String status, int firstIndex) throws SQLException {
         for (int index = firstIndex; index < firstIndex + 4; index++) {
             statement.setString(index, status);
         }
     }
 
-    // Dùng chung phần mở/đóng statement và xử lý lỗi cho các lệnh ghi.
+    /**
+     * Thực thi lệnh ghi với quản lý vòng đời PreparedStatement dùng chung.
+     */
     private boolean executeUpdate(String sql, StatementBinder binder) {
         if (connection == null) {
             return false;
@@ -109,13 +122,14 @@ public class RestaurantTableDAO extends DBContext {
         }
     }
 
-    // Gắn tham số của từng lệnh ghi vào PreparedStatement.
+    /** Bộ gắn tham số để dùng chung hàm thực thi các câu lệnh ghi. */
     @FunctionalInterface
     private interface StatementBinder {
+        /** Gắn các giá trị vào placeholder của PreparedStatement. */
         void bind(PreparedStatement statement) throws SQLException;
     }
 
-    // Gắn các trường dùng chung của bàn theo đúng thứ tự placeholder SQL.
+    /** Gắn năm trường dùng chung theo thứ tự placeholder của lệnh INSERT/UPDATE. */
     private void bindTable(PreparedStatement statement, RestaurantTable table) throws SQLException {
         statement.setNString(1, table.getTableName());
         statement.setNString(2, table.getTableType());
@@ -124,7 +138,7 @@ public class RestaurantTableDAO extends DBContext {
         statement.setNString(5, table.getDescription());
     }
 
-    // Chuyển một dòng kết quả SQL thành đối tượng bàn.
+    /** Ánh xạ một dòng kết quả SQL sang model bàn. */
     private RestaurantTable readTable(ResultSet results) throws SQLException {
         RestaurantTable table = new RestaurantTable();
         table.setTableId(results.getInt("table_id"));
