@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%-- Tài khoản được ProfileServlet xác thực trước khi forward tới view. --%>
 <c:set var="profileUser" value="${sessionScope.user}" />
 <!DOCTYPE html>
 <html lang="vi">
@@ -18,6 +19,7 @@
                 <h1>Thông tin cá nhân</h1>
             </header>
 
+            <%-- Thông báo flash đã được servlet chuyển từ session sang request. --%>
             <c:if test="${not empty profileMessage}">
                 <p class="profile-message ${profileMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
                     <c:out value="${profileMessage}" />
@@ -44,6 +46,7 @@
                 </dl>
             </section>
 
+            <%-- Hai form dùng chung route; action xác định thao tác cần xử lý trong servlet. --%>
             <section class="profile-editors" aria-label="Cập nhật tài khoản">
                 <details class="profile-editor" ${profileOpenSection eq 'profile' ? 'open' : ''}>
                     <summary>

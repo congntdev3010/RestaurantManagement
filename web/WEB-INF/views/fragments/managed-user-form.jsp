@@ -5,6 +5,8 @@
     <input type="hidden" name="action" value="${empty editUser ? 'create' : 'update'}">
     <input type="hidden" name="filterRoleId" value="${roleFilterId}">
     <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
+    <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
+    <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
     <c:if test="${not empty editUser}">
         <input type="hidden" name="userId" value="${editUser.userId}">
     </c:if>
@@ -26,6 +28,7 @@
                title="Số điện thoại gồm 10 chữ số và bắt đầu bằng 0" required
                value="<c:out value='${formUser.phone}' />">
     </label>
+    <%-- Tài khoản Admin giữ nguyên role; lựa chọn ẩn trong form không thay thế kiểm tra ở DAO. --%>
     <c:choose>
         <c:when test="${not empty editUser and editUser.roleName eq 'Admin'}">
             <input type="hidden" name="roleId" value="${editUser.roleId}">
@@ -49,6 +52,7 @@
         </c:otherwise>
     </c:choose>
     <label>
+        <%-- Khi cập nhật, mật khẩu rỗng được xử lý như giữ nguyên mật khẩu hiện tại. --%>
         ${empty editUser ? 'Mật khẩu khởi tạo' : 'Mật khẩu mới (để trống nếu không đổi)'}
         <input type="password" name="password" minlength="8" maxlength="30"
                autocomplete="new-password" ${empty editUser ? 'required' : ''}>
