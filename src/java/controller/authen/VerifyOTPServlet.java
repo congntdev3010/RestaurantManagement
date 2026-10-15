@@ -1,4 +1,4 @@
-package controller;
+package controller.authen;
 
 import dao.UserDAO;
 import model.User;
@@ -14,6 +14,12 @@ import jakarta.servlet.http.HttpSession;
 public class VerifyOTPServlet extends HttpServlet {
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.getRequestDispatcher("/WEB-INF/views/authen/verify-otp.jsp").forward(request, response);
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
@@ -26,7 +32,7 @@ public class VerifyOTPServlet extends HttpServlet {
         // Nếu hết hạn session hoặc truy cập trái phép
         if (tempUser == null || sessionOtp == null) {
             request.setAttribute("error", "Phiên xác thực đã hết hạn. Vui lòng đăng ký lại!");
-            request.getRequestDispatcher("register.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/register.jsp").forward(request, response);
             return;
         }
 
@@ -40,14 +46,14 @@ public class VerifyOTPServlet extends HttpServlet {
                 session.removeAttribute("tempUser");
                 session.removeAttribute("registerOTP");
 
-                response.sendRedirect("login.jsp");
+                response.sendRedirect(request.getContextPath() + "/login");
             } else {
                 request.setAttribute("error", "Đã có lỗi xảy ra khi tạo tài khoản, vui lòng thử lại!");
-                request.getRequestDispatcher("verify-otp.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/authen/verify-otp.jsp").forward(request, response);
             }
         } else {
             request.setAttribute("error", "Mã OTP không chính xác!");
-            request.getRequestDispatcher("verify-otp.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/verify-otp.jsp").forward(request, response);
         }
     }
 }

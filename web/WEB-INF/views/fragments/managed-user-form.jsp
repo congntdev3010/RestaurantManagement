@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:set var="formUser" value="${not empty editUser ? editUser : createUserForm}" />
 <form class="account-form" action="${pageContext.request.contextPath}/manage-users" method="post">
     <input type="hidden" name="action" value="${empty editUser ? 'create' : 'update'}">
     <input type="hidden" name="filterRoleId" value="${roleFilterId}">
@@ -9,21 +10,21 @@
     </c:if>
     <label>
         Tên đăng nhập
-        <input type="text" name="username" maxlength="30" required value="<c:out value='${editUser.username}' />">
+        <input type="text" name="username" maxlength="30" required value="<c:out value='${formUser.username}' />">
     </label>
     <label>
         Họ và tên
-        <input type="text" name="fullName" maxlength="30" required value="<c:out value='${editUser.fullName}' />">
+        <input type="text" name="fullName" maxlength="30" required value="<c:out value='${formUser.fullName}' />">
     </label>
     <label>
         Email
-        <input type="email" name="email" maxlength="50" required value="<c:out value='${editUser.email}' />">
+        <input type="email" name="email" maxlength="50" required value="<c:out value='${formUser.email}' />">
     </label>
     <label>
         Số điện thoại
         <input type="tel" name="phone" maxlength="10" pattern="0[0-9]{9}"
                title="Số điện thoại gồm 10 chữ số và bắt đầu bằng 0" required
-               value="<c:out value='${editUser.phone}' />">
+               value="<c:out value='${formUser.phone}' />">
     </label>
     <c:choose>
         <c:when test="${not empty editUser and editUser.roleName eq 'Admin'}">
@@ -39,7 +40,7 @@
                 <select name="roleId" required>
                     <option value="">Chọn vai trò</option>
                     <c:forEach var="role" items="${roles}">
-                        <option value="${role.key}" ${not empty editUser and editUser.roleId eq role.key ? 'selected' : ''}>
+                        <option value="${role.key}" ${not empty formUser and formUser.roleId eq role.key ? 'selected' : ''}>
                             <c:out value="${role.value}" />
                         </option>
                     </c:forEach>

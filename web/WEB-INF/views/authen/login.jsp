@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Đăng nhập - Việt À la carte</title>
-    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/auth.css?v=1.1">
+    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/auth.css?v=1.1">
 </head>
 <body>
 
     <div class="auth-container">
         <!-- Nửa trái: Ảnh món ăn & Slogan -->
-        <div class="auth-banner" style="background-image: url('${pageContext.request.contextPath}/images/login.jpg');">
+        <div class="auth-banner" style="background-image: url('${pageContext.request.contextPath}/assets/images/login.jpg');">
             <div class="banner-content">
                 <p class="banner-subtitle">ẨM THỰC BA MIỀN</p>
                 <h1 class="banner-title">“Hương vị quê nhà,<br>trọn vẹn từng món.”</h1>
@@ -60,7 +60,7 @@
                 </form>
 
                 <div class="auth-footer">
-                    Chưa có tài khoản? <a href="register.jsp">Đăng ký ngay</a>
+                    Chưa có tài khoản? <a href="${pageContext.request.contextPath}/register">Đăng ký ngay</a>
                 </div>
             </div>
         </div>

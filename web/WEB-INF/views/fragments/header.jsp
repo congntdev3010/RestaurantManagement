@@ -18,19 +18,19 @@
         boolean showStaffSidebar = isAdmin || isManager || canViewTables || isChef;
 %>
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/header.css?v=1.7">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/header.css?v=1.7">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <% if (!hideHeader) { %>
 <header class="site-header">
     <!-- Logo -->
-    <a href="${pageContext.request.contextPath}/home.jsp" class="header-logo">
+    <a href="${pageContext.request.contextPath}/home" class="header-logo">
         Việt <span>À la carte</span>
     </a>
 
     <!-- Điều hướng -->
     <nav class="header-nav">
-        <a href="${pageContext.request.contextPath}/home.jsp" class="<%= currentURI.contains("home") ? "active" : "" %>">Trang chủ</a>
+        <a href="${pageContext.request.contextPath}/home" class="<%= currentURI.contains("home") ? "active" : "" %>">Trang chủ</a>
         <a href="${pageContext.request.contextPath}/menu" class="<%= currentURI.contains("menu") ? "active" : "" %>">Thực đơn</a>
         <a href="${pageContext.request.contextPath}/booking" class="<%= currentURI.contains("booking") ? "active" : "" %>">Đặt bàn</a>
         <a href="${pageContext.request.contextPath}/news" class="<%= currentURI.contains("news") ? "active" : "" %>">Tin tức</a>
@@ -41,8 +41,8 @@
     <div class="header-auth">
         <% if (currentUser == null) { %>
             <!-- GUEST: Chưa đăng nhập -->
-            <a href="${pageContext.request.contextPath}/login.jsp" class="btn-login">Đăng nhập</a>
-            <a href="${pageContext.request.contextPath}/register.jsp" class="btn-register">Đăng ký</a>
+            <a href="${pageContext.request.contextPath}/login" class="btn-login">Đăng nhập</a>
+            <a href="${pageContext.request.contextPath}/register" class="btn-register">Đăng ký</a>
         <% } else { %>
             <!-- CUSTOMER: Đã đăng nhập -> Hiển thị icon user + Tên khách hàng -->
             <div class="user-account">
@@ -82,7 +82,7 @@
     </div>
     <nav class="staff-sidebar-nav">
         <a class="sidebar-link <%= currentURI.contains("home") ? "active" : "" %>"
-           href="${pageContext.request.contextPath}/home.jsp" title="Trang chủ" aria-label="Trang chủ">
+           href="${pageContext.request.contextPath}/home" title="Trang chủ" aria-label="Trang chủ">
             <i class="fa-solid fa-house" aria-hidden="true"></i><span>Trang chủ</span>
         </a>
         <% if (!isAdmin) { %>

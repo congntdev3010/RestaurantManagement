@@ -1,4 +1,4 @@
-package controller;
+package controller.authen;
 
 import dao.UserDAO;
 import utils.EmailUtils;
@@ -26,7 +26,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         if (!dao.checkEmailExists(email)) {
             request.setAttribute("forgotError", "Email này chưa được đăng ký trong hệ thống!");
             request.setAttribute("showForgotModal", true); // Giữ modal mở nếu có lỗi
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/login.jsp").forward(request, response);
             return;
         }
 
@@ -39,11 +39,11 @@ public class ForgotPasswordServlet extends HttpServlet {
             
             // Đặt thông báo thành công để hiển thị ở trang Đăng nhập
             request.setAttribute("success", "Hệ thống đã gửi mật khẩu mới qua email của bạn!");
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/login.jsp").forward(request, response);
         } else {
             request.setAttribute("forgotError", "Đã có lỗi xảy ra, vui lòng thử lại sau!");
             request.setAttribute("showForgotModal", true);
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/authen/login.jsp").forward(request, response);
         }
     }
 }

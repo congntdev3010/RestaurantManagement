@@ -1,4 +1,4 @@
-package controller;
+package controller.staff;
 
 import dao.RestaurantTableDAO;
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class ManageTablesServlet extends HttpServlet {
         request.setAttribute("tableMessageType", session.getAttribute("tableMessageType"));
         session.removeAttribute("tableMessage");
         session.removeAttribute("tableMessageType");
-        request.getRequestDispatcher("/manage-tables.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/staff/manage-tables.jsp").forward(request, response);
     }
 
     // Kiểm tra quyền, thực hiện thao tác bàn và chuyển hướng kèm thông báo.

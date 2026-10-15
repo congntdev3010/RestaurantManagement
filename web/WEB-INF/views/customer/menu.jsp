@@ -22,13 +22,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thực Đơn - Việt À la carte</title>
-    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/menu.css?v=1.0">
+    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/menu.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
     <!-- Header -->
-    <jsp:include page="includes/header.jsp" />
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
     <div class="menu-container">
         
@@ -87,7 +87,7 @@
                 for (Dish d : dishes) { %>
                     <div class="dish-card">
                         <div class="dish-img-wrapper">
-                            <img src="${pageContext.request.contextPath}/<%= d.getImage() %>" alt="<%= d.getDishName() %>">
+                            <img src="${pageContext.request.contextPath}/<%= d.getImage() != null && d.getImage().startsWith("images/") ? "assets/" + d.getImage() : d.getImage() %>" alt="<%= d.getDishName() %>">
                             <% if (d.isIsFeatured()) { %>
                                 <span class="badge-featured"><i class="fa-solid fa-fire"></i> Best Seller</span>
                             <% } %>

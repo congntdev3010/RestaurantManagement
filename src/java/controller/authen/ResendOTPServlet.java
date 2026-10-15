@@ -1,4 +1,4 @@
-package controller;
+package controller.authen;
 
 import model.User;
 import utils.EmailUtils;
@@ -30,7 +30,7 @@ public class ResendOTPServlet extends HttpServlet {
 
         // Nếu hoàn toàn không có email trong Session -> mới chuyển hướng về register.jsp
         if (email == null || email.trim().isEmpty()) {
-            response.sendRedirect("register.jsp");
+            response.sendRedirect(request.getContextPath() + "/register");
             return;
         }
 
@@ -51,6 +51,6 @@ public class ResendOTPServlet extends HttpServlet {
             request.setAttribute("error", "Gửi email thất bại. Vui lòng thử lại sau!");
         }
 
-        request.getRequestDispatcher("verify-otp.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/authen/verify-otp.jsp").forward(request, response);
     }
 }

@@ -10,10 +10,10 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Quản lý tài khoản - Việt À la carte</title>
-        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/css/manage-users.css">
+        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/manage-users.css">
     </head>
     <body>
-        <jsp:include page="includes/header.jsp" />
+        <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
         <main class="manage-page">
             <header class="manage-heading">
@@ -32,13 +32,13 @@
 
             <c:choose>
                 <c:when test="${empty editUser}">
-            <details class="account-form-section account-create-section">
+            <details class="account-form-section account-create-section" ${not empty createUserForm ? 'open' : ''}>
                 <summary class="button-primary">Thêm tài khoản</summary>
                 <div class="account-form-content">
                 <div class="section-heading">
                     <h2 id="account-form-title">Thông tin tài khoản mới</h2>
                 </div>
-                    <jsp:include page="/WEB-INF/fragments/managed-user-form.jsp" />
+                    <jsp:include page="/WEB-INF/views/fragments/managed-user-form.jsp" />
                 </div>
             </details>
                 </c:when>
@@ -52,7 +52,7 @@
                     </c:url>
                     <a href="${cancelEditUrl}">Hủy chỉnh sửa</a>
                 </div>
-                <jsp:include page="/WEB-INF/fragments/managed-user-form.jsp" />
+                <jsp:include page="/WEB-INF/views/fragments/managed-user-form.jsp" />
             </section>
                 </c:otherwise>
             </c:choose>

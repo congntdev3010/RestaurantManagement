@@ -1,4 +1,4 @@
-package controller;
+package controller.admin;
 
 import dao.UserDAO;
 import java.io.IOException;
@@ -67,11 +67,16 @@ public class ManageUsersServlet extends HttpServlet {
         }
 
         HttpSession session = request.getSession();
+        User createUserForm = (User) session.getAttribute("createUserForm");
+        if (createUserForm != null) {
+            request.setAttribute("createUserForm", createUserForm);
+            session.removeAttribute("createUserForm");
+        }
         request.setAttribute("manageMessage", session.getAttribute("manageMessage"));
         request.setAttribute("manageMessageType", session.getAttribute("manageMessageType"));
         session.removeAttribute("manageMessage");
         session.removeAttribute("manageMessageType");
-        request.getRequestDispatcher("/manage-users.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/admin/manage-users.jsp").forward(request, response);
     }
 
     // Thực hiện thao tác được gửi từ form quản lý tài khoản.
@@ -102,9 +107,14 @@ public class ManageUsersServlet extends HttpServlet {
                 if (dao.createManagedUser(user, isAdmin)) {
                     message = "Đã tạo tài khoản.";
                     messageType = "success";
+                    request.getSession().removeAttribute("createUserForm");
                 } else {
                     message = "Không thể tạo tài khoản. Email hoặc tên đăng nhập có thể đã tồn tại.";
                 }
+            }
+            if (!"success".equals(messageType)) {
+                user.setPassword(null);
+                request.getSession().setAttribute("createUserForm", user);
             }
         } else if ("update".equals(action)) {
             // Khi sửa, mật khẩu để trống nghĩa là giữ nguyên mật khẩu cũ.
@@ -223,9 +233,12 @@ public class ManageUsersServlet extends HttpServlet {
         if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 30) {
             return "Tên đăng nhập là bắt buộc và tối đa 30 ký tự.";
         }
-        if (user.getEmail() == null || user.getEmail().length() > 50
+        if (user.getEmail() == null || user.getEmail().isEmpty()
                 || !EMAIL_PATTERN.matcher(user.getEmail()).matches()) {
-            return "Email không hợp lệ hoặc dài quá 50 ký tự.";
+            return "Email không đúng định dạng.";
+        }
+        if (user.getEmail().length() > 50) {
+            return "Email không được dài quá 50 ký tự.";
         }
         if (user.getFullName() == null || user.getFullName().isEmpty() || user.getFullName().length() > 30) {
             return "Họ và tên là bắt buộc và tối đa 30 ký tự.";
