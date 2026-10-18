@@ -41,9 +41,9 @@
         <a href="${pageContext.request.contextPath}/news" class="<%= currentURI.contains("news") ? "active" : "" %>">Tin tức</a>
         <a href="${pageContext.request.contextPath}/review" class="<%= currentURI.contains("review") ? "active" : "" %>">Đánh giá</a>
     </nav>
-    <% if ("Customer".equalsIgnoreCase(roleName)) { %>
+    <% if (currentUser == null || "Customer".equalsIgnoreCase(roleName)) { %>
     <a class="cart-nav-link" href="${pageContext.request.contextPath}/cart" aria-label="Giỏ hàng, <%= cartQuantity %> món">
-        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i><span>Giỏ hàng</span><b class="cart-badge"><%= cartQuantity %></b>
+        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i><span>Giỏ hàng</span><b class="cart-badge" data-cart-count><%= cartQuantity %></b>
     </a>
     <% } %>
 

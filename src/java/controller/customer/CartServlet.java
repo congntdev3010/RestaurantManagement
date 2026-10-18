@@ -53,19 +53,19 @@ public class CartServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
         String action = request.getParameter("action");
-        if (session == null || !validToken(session, request.getParameter("csrfToken"))) {
+        boolean addAction = "add".equals(action);
+        if (session == null && addAction) session = request.getSession(true);
+        if (session == null || (!addAction && !validToken(session, request.getParameter("csrfToken")))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN); return;
         }
         if ("add".equals(action)) {
             int dishId = parseInt(request.getParameter("dishId"), -1);
             int quantity = parseInt(request.getParameter("quantity"), 1);
-            try (DishDAO dao = new DishDAO()) {
-                if (dishId > 0 && quantity > 0 && quantity <= 99 && dao.getActiveDishById(dishId) != null) {
-                    Map<Integer,Integer> cart = getCart(session);
-                    cart.put(dishId, Math.min(99, cart.getOrDefault(dishId, 0) + quantity));
-                    session.setAttribute(CART, cart);
-                    session.setAttribute("cartMessage", "Đã thêm món vào giỏ.");
-                }
+            if (dishId > 0 && quantity > 0 && quantity <= 99) {
+                Map<Integer,Integer> cart = getCart(session);
+                cart.put(dishId, Math.min(99, cart.getOrDefault(dishId, 0) + quantity));
+                session.setAttribute(CART, cart);
+                session.setAttribute("cartMessage", "Đã thêm món vào giỏ.");
             }
         } else if ("update".equals(action)) {
             Map<Integer,Integer> cart = getCart(session);
@@ -85,7 +85,14 @@ public class CartServlet extends HttpServlet {
         } else if ("clear".equals(action)) {
             session.removeAttribute(CART);
         }
-        response.sendRedirect(request.getContextPath() + "/cart");
+        String returnTo = request.getParameter("returnTo");
+        String menuPath = request.getContextPath() + "/menu";
+        if ("add".equals(action) && returnTo != null && (returnTo.equals(menuPath) || returnTo.startsWith(menuPath + "?"))
+                && !returnTo.contains("\r") && !returnTo.contains("\n")) {
+            response.sendRedirect(returnTo);
+        } else {
+            response.sendRedirect(request.getContextPath() + "/cart");
+        }
     }
 
     @SuppressWarnings("unchecked")

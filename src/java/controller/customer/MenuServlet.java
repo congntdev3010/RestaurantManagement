@@ -11,10 +11,10 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import jakarta.servlet.http.HttpSession;
-import controller.customer.CartServlet;
 
 @WebServlet(name = "MenuServlet", urlPatterns = {"/menu"})
 public class MenuServlet extends HttpServlet {
@@ -73,6 +73,12 @@ public class MenuServlet extends HttpServlet {
         request.setAttribute("categoryId", categoryId);
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("currentPage", page);
+        request.setAttribute("cartMessage", session.getAttribute("cartMessage"));
+        session.removeAttribute("cartMessage");
+        String returnTo = request.getContextPath() + "/menu?page=" + page + "&categoryId=" + categoryId
+                + "&sortBy=" + URLEncoder.encode(sortBy == null ? "" : sortBy, StandardCharsets.UTF_8)
+                + "&keyword=" + URLEncoder.encode(keyword == null ? "" : keyword, StandardCharsets.UTF_8);
+        request.setAttribute("menuReturnTo", returnTo);
 
         request.getRequestDispatcher("/WEB-INF/views/customer/menu.jsp").forward(request, response);
     }
