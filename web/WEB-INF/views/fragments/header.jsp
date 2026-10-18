@@ -125,7 +125,7 @@
             <i class="fa-solid fa-users-gear" aria-hidden="true"></i><span>Quản lý tài khoản</span>
         </a>
         <% } %>
-        <% if (isAdmin) { %>
+        <% if (isManager) { %>
         <a class="sidebar-link <%= currentURI.contains("manage-news") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-news" title="Quản lý tin tức" aria-label="Quản lý tin tức">
             <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Quản lý tin tức</span>

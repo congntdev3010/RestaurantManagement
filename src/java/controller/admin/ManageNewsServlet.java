@@ -21,7 +21,7 @@ public class ManageNewsServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        User actor = requireAdmin(request, response);
+        User actor = requireManager(request, response);
         if (actor == null) return;
         response.setHeader("Cache-Control", "no-store");
         String keyword = trim(request.getParameter("keyword"));
@@ -68,7 +68,7 @@ public class ManageNewsServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        User actor = requireAdmin(request, response);
+        User actor = requireManager(request, response);
         if (actor == null) return;
         String action = request.getParameter("action");
         String message = "Thao tác không hợp lệ.";
@@ -110,10 +110,10 @@ public class ManageNewsServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/manage-news");
     }
 
-    private User requireAdmin(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private User requireManager(HttpServletRequest request, HttpServletResponse response) throws IOException {
         User user = (User) request.getSession().getAttribute("user");
         if (user == null) { response.sendRedirect(request.getContextPath() + "/login"); return null; }
-        if (!"Admin".equalsIgnoreCase(user.getRoleName())) { response.sendError(HttpServletResponse.SC_FORBIDDEN); return null; }
+        if (!"Manager".equalsIgnoreCase(user.getRoleName())) { response.sendError(HttpServletResponse.SC_FORBIDDEN); return null; }
         return user;
     }
 
