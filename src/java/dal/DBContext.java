@@ -8,7 +8,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class DBContext {
+public class DBContext implements AutoCloseable {
     protected Connection connection;
     public DBContext()
     {
@@ -19,6 +19,15 @@ public class DBContext {
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             connection = DriverManager.getConnection(url, username, password);
         } catch (ClassNotFoundException | SQLException ex) {
+            System.out.println(ex);
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            if (connection != null && !connection.isClosed()) connection.close();
+        } catch (SQLException ex) {
             System.out.println(ex);
         }
     }

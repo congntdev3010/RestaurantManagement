@@ -16,9 +16,14 @@
         boolean canViewTables = isManager || "Server".equalsIgnoreCase(roleName)
             || "Receptionist".equalsIgnoreCase(roleName);
         boolean showStaffSidebar = isAdmin || isManager || canViewTables || isChef;
+        java.util.Map cartForBadge = (java.util.Map) session.getAttribute("orderCart");
+        int cartQuantity = 0;
+        if (cartForBadge != null) for (Object value : cartForBadge.values()) {
+            if (value instanceof Number) cartQuantity += ((Number) value).intValue();
+        }
 %>
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/header.css?v=1.7">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/header.css?v=1.8">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <% if (!hideHeader) { %>
@@ -36,6 +41,11 @@
         <a href="${pageContext.request.contextPath}/news" class="<%= currentURI.contains("news") ? "active" : "" %>">Tin tức</a>
         <a href="${pageContext.request.contextPath}/review" class="<%= currentURI.contains("review") ? "active" : "" %>">Đánh giá</a>
     </nav>
+    <% if (currentUser == null || "Customer".equalsIgnoreCase(roleName)) { %>
+    <a class="cart-nav-link" href="${pageContext.request.contextPath}/cart" aria-label="Giỏ hàng, <%= cartQuantity %> món">
+        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i><span>Giỏ hàng</span><b class="cart-badge" data-cart-count><%= cartQuantity %></b>
+    </a>
+    <% } %>
 
     <!-- Khu vực Tài khoản -->
     <div class="header-auth">
@@ -59,6 +69,9 @@
                 <!-- Dropdown Menu khi di chuột -->
                 <div class="dropdown-menu">
                     <a href="${pageContext.request.contextPath}/profile"><i class="fa-regular fa-id-card"></i> Thông tin cá nhân</a>
+                    <% if ("Customer".equalsIgnoreCase(roleName)) { %>
+                    <a href="${pageContext.request.contextPath}/my-orders"><i class="fa-solid fa-receipt"></i> Đơn hàng của tôi</a>
+                    <% } %>
                     <% if (!"Server".equalsIgnoreCase(roleName)) { %>
                     <a href="${pageContext.request.contextPath}/my-bookings"><i class="fa-solid fa-utensils"></i> Lịch sử đặt bàn</a>
                     <% } %>
@@ -95,6 +108,11 @@
         <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-tables" title="Sơ đồ bàn" aria-label="Sơ đồ bàn">
             <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Sơ đồ bàn</span>
+        </a>
+        <% } %>
+        <% if ("Server".equalsIgnoreCase(roleName) || isManager) { %>
+        <a class="sidebar-link <%= currentURI.contains("manage-orders") ? "active" : "" %>" href="${pageContext.request.contextPath}/manage-orders" title="Quản lý đơn hàng" aria-label="Quản lý đơn hàng">
+            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Đơn hàng</span>
         </a>
         <% } %>
         <% if (isManager || isAdmin) { %>

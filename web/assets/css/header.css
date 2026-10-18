@@ -63,6 +63,77 @@ html, body {
     border-radius: 2px;
 }
 
+/* Cart link follows the same color and hover treatment as the main navigation. */
+.cart-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    padding: 6px 0;
+    color: #f2e3d5;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.25s ease;
+}
+
+.cart-nav-link i {
+    color: #d89b36;
+    transition: color 0.25s ease;
+}
+
+.cart-nav-link:hover,
+.cart-nav-link:focus-visible {
+    color: #d89b36;
+}
+
+.cart-nav-link::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    margin: 0 auto;
+    border-radius: 2px;
+    background: #d89b36;
+    transition: width 0.25s ease;
+}
+
+.cart-nav-link:hover::after,
+.cart-nav-link:focus-visible::after {
+    width: 100%;
+}
+
+.cart-nav-link:focus-visible {
+    outline: 2px solid #d89b36;
+    outline-offset: 5px;
+}
+
+.cart-badge {
+    display: inline-flex;
+    min-width: 21px;
+    height: 21px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border: 1px solid #d89b36;
+    border-radius: 50%;
+    background: #d89b36;
+    color: #421217;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.cart-nav-link:hover .cart-badge,
+.cart-nav-link:focus-visible .cart-badge {
+    border-color: #f0bd5e;
+    background: #f0bd5e;
+}
+
 /* Khu vực Auth nút bấm & Profile */
 .header-auth {
     display: flex;
