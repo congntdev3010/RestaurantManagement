@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
+import jakarta.servlet.http.HttpSession;
+import controller.customer.CartServlet;
 
 @WebServlet(name = "MenuServlet", urlPatterns = {"/menu"})
 public class MenuServlet extends HttpServlet {
@@ -24,6 +26,8 @@ public class MenuServlet extends HttpServlet {
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
+        HttpSession session = request.getSession();
+        CartServlet.ensureToken(session);
 
         // Lấy các tham số lọc từ URL
         // Lấy tham số keyword từ URL và xử lý giải mã chuẩn UTF-8

@@ -10,6 +10,22 @@ import java.util.List;
 
 public class DishDAO extends DBContext {
 
+    public Dish getActiveDishById(int dishId) {
+        String sql = "SELECT d.*, c.category_name FROM Dish d JOIN Category c ON d.category_id=c.category_id "
+                + "WHERE d.dish_id=? AND d.status=1 AND c.status=1";
+        if (connection == null) return null;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, dishId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                return new Dish(rs.getInt("dish_id"), rs.getInt("category_id"), rs.getNString("category_name"),
+                        rs.getNString("dish_name"), rs.getNString("description"), rs.getBigDecimal("price"),
+                        rs.getNString("unit"), rs.getString("image"), rs.getBoolean("is_featured"),
+                        rs.getBoolean("status"), rs.getTimestamp("created_at"));
+            }
+        } catch (SQLException e) { e.printStackTrace(); return null; }
+    }
+
     // Lấy danh sách món ăn: Search + Filter Category + Sort Price + Pagination
     public List<Dish> getDishes(String keyword, int categoryId, String sortBy, int pageIndex, int pageSize) {
         List<Dish> list = new ArrayList<>();
