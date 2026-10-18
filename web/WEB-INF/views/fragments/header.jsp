@@ -104,6 +104,10 @@
             <i class="fa-solid fa-book-open" aria-hidden="true"></i><span>Thực đơn</span>
         </a>
         <% } %>
+        <a class="sidebar-link <%= currentURI.endsWith("/news") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/news" title="Tin tức" aria-label="Tin tức">
+            <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Tin tức</span>
+        </a>
         <% if (canViewTables) { %>
         <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-tables" title="Sơ đồ bàn" aria-label="Sơ đồ bàn">
@@ -119,6 +123,12 @@
         <a class="sidebar-link <%= currentURI.contains("manage-users") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-users" title="Quản lý tài khoản" aria-label="Quản lý tài khoản">
             <i class="fa-solid fa-users-gear" aria-hidden="true"></i><span>Quản lý tài khoản</span>
+        </a>
+        <% } %>
+        <% if (isAdmin) { %>
+        <a class="sidebar-link <%= currentURI.contains("manage-news") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manage-news" title="Quản lý tin tức" aria-label="Quản lý tin tức">
+            <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Quản lý tin tức</span>
         </a>
         <% } %>
     </nav>
