@@ -5,6 +5,9 @@ html, body {
 }
 /* ================= HEADER STYLES ================= */
 .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 1050;
     background-color: #421217;
     display: flex;
     justify-content: space-between;
