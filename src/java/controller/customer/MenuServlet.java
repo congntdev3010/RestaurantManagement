@@ -30,9 +30,12 @@ public class MenuServlet extends HttpServlet {
         CartServlet.ensureToken(session);
 
         // Lấy các tham số lọc từ URL
-        // Lấy tham số keyword từ URL và xử lý giải mã chuẩn UTF-8
+        // Servlet container đã giải mã query string theo UTF-8.
         String keyword = request.getParameter("keyword");
-        keyword = fixUtf8GetParameter(keyword);
+        if (keyword != null) {
+            keyword = keyword.trim();
+            keyword = keyword.isEmpty() ? null : Normalizer.normalize(keyword, Normalizer.Form.NFC);
+        }
         String categoryIdRaw = request.getParameter("categoryId");
         String sortBy = request.getParameter("sortBy");
         String pageRaw = request.getParameter("page");
@@ -70,6 +73,7 @@ public class MenuServlet extends HttpServlet {
 
         // Giữ lại trạng thái lọc trên thanh công cụ
         request.setAttribute("keyword", keyword);
+        request.setAttribute("keywordUrlEncoded", URLEncoder.encode(keyword == null ? "" : keyword, StandardCharsets.UTF_8));
         request.setAttribute("categoryId", categoryId);
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("currentPage", page);
@@ -83,31 +87,6 @@ public class MenuServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/customer/order.jsp").forward(request, response);
         } else {
             request.getRequestDispatcher("/WEB-INF/views/customer/menu.jsp").forward(request, response);
-        }
-    }
-    /**
-     * Hàm tự động phát hiện và sửa lỗi mã hóa UTF-8 cho phương thức GET
-     */
-    private String fixUtf8GetParameter(String param) {
-        if (param == null || param.trim().isEmpty()) {
-            return null;
-        }
-        param = param.trim();
-
-        // Check 1: Nếu chuỗi đã chứa ký tự Tiếng Việt chuẩn (Unicode > 255) -> Tomcat 10 đã giải mã đúng
-        for (char c : param.toCharArray()) {
-            if (c > 255) {
-                return Normalizer.normalize(param, Normalizer.Form.NFC);
-            }
-        }
-
-        // Check 2: Nếu Tomcat giải mã nhầm theo ISO-8859-1, chuyển lại về UTF-8
-        try {
-            byte[] bytes = param.getBytes(StandardCharsets.ISO_8859_1);
-            String decoded = new String(bytes, StandardCharsets.UTF_8);
-            return Normalizer.normalize(decoded, Normalizer.Form.NFC);
-        } catch (Exception e) {
-            return Normalizer.normalize(param, Normalizer.Form.NFC);
         }
     }
 }
