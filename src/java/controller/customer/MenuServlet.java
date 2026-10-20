@@ -11,10 +11,12 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import jakarta.servlet.http.HttpSession;
 
-@WebServlet(name = "MenuServlet", urlPatterns = {"/menu"})
+@WebServlet(name = "MenuServlet", urlPatterns = {"/menu", "/order"})
 public class MenuServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 8; // Hiển thị 8 món / trang
@@ -24,6 +26,8 @@ public class MenuServlet extends HttpServlet {
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
+        HttpSession session = request.getSession();
+        CartServlet.ensureToken(session);
 
         // Lấy các tham số lọc từ URL
         // Lấy tham số keyword từ URL và xử lý giải mã chuẩn UTF-8
@@ -69,8 +73,17 @@ public class MenuServlet extends HttpServlet {
         request.setAttribute("categoryId", categoryId);
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("currentPage", page);
-
-        request.getRequestDispatcher("/WEB-INF/views/customer/menu.jsp").forward(request, response);
+        request.setAttribute("cartMessage", session.getAttribute("cartMessage"));
+        session.removeAttribute("cartMessage");
+        String returnTo = request.getContextPath() + "/menu?page=" + page + "&categoryId=" + categoryId
+                + "&sortBy=" + URLEncoder.encode(sortBy == null ? "" : sortBy, StandardCharsets.UTF_8)
+                + "&keyword=" + URLEncoder.encode(keyword == null ? "" : keyword, StandardCharsets.UTF_8);
+        request.setAttribute("orderReturnTo", returnTo.replace("/menu?", "/order?"));
+        if ("/order".equals(request.getServletPath())) {
+            request.getRequestDispatcher("/WEB-INF/views/customer/order.jsp").forward(request, response);
+        } else {
+            request.getRequestDispatcher("/WEB-INF/views/customer/menu.jsp").forward(request, response);
+        }
     }
     /**
      * Hàm tự động phát hiện và sửa lỗi mã hóa UTF-8 cho phương thức GET

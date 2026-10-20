@@ -3,6 +3,7 @@
 <%@ page import="model.Dish" %>
 <%@ page import="model.Category" %>
 <%@ page import="java.text.DecimalFormat" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
     List<Category> categories = (List<Category>) request.getAttribute("categories");
     List<Dish> dishes = (List<Dish>) request.getAttribute("dishes");
@@ -31,7 +32,7 @@
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
     <div class="menu-container">
-        
+
         <div class="menu-title-section">
             <span class="menu-subtitle">Mỹ vị Đất Việt</span>
             <h1 class="menu-main-title">Thực Đơn Á La Carte</h1>
