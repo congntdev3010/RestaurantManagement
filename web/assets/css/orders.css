@@ -101,7 +101,7 @@ body {
 .orders-page button:focus-visible,
 .orders-page a:focus-visible,
 .cart-nav-link:focus-visible,
-.add-to-cart-form button:focus-visible {
+.order-add-form button:focus-visible {
     outline: 3px solid #d89b36;
     outline-offset: 3px;
 }

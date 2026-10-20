@@ -87,7 +87,10 @@ public class CartServlet extends HttpServlet {
         }
         String returnTo = request.getParameter("returnTo");
         String menuPath = request.getContextPath() + "/menu";
-        if ("add".equals(action) && returnTo != null && (returnTo.equals(menuPath) || returnTo.startsWith(menuPath + "?"))
+        String orderPath = request.getContextPath() + "/order";
+        if ("add".equals(action) && returnTo != null
+            && (returnTo.equals(menuPath) || returnTo.startsWith(menuPath + "?")
+            || returnTo.equals(orderPath) || returnTo.startsWith(orderPath + "?"))
                 && !returnTo.contains("\r") && !returnTo.contains("\n")) {
             response.sendRedirect(returnTo);
         } else {

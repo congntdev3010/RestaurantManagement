@@ -16,11 +16,6 @@
         boolean canViewTables = isManager || "Server".equalsIgnoreCase(roleName)
             || "Receptionist".equalsIgnoreCase(roleName);
         boolean showStaffSidebar = isAdmin || isManager || canViewTables || isChef;
-        java.util.Map cartForBadge = (java.util.Map) session.getAttribute("orderCart");
-        int cartQuantity = 0;
-        if (cartForBadge != null) for (Object value : cartForBadge.values()) {
-            if (value instanceof Number) cartQuantity += ((Number) value).intValue();
-        }
 %>
 
 <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/header.css?v=1.9">
@@ -41,12 +36,6 @@
         <a href="${pageContext.request.contextPath}/news" class="<%= currentURI.contains("news") ? "active" : "" %>">Tin tức</a>
         <a href="${pageContext.request.contextPath}/review" class="<%= currentURI.contains("review") ? "active" : "" %>">Đánh giá</a>
     </nav>
-    <% if (currentUser == null || "Customer".equalsIgnoreCase(roleName)) { %>
-    <a class="cart-nav-link" href="${pageContext.request.contextPath}/cart" aria-label="Giỏ hàng, <%= cartQuantity %> món">
-        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i><span>Giỏ hàng</span><b class="cart-badge" data-cart-count><%= cartQuantity %></b>
-    </a>
-    <% } %>
-
     <!-- Khu vực Tài khoản -->
     <div class="header-auth">
         <% if (currentUser == null) { %>
