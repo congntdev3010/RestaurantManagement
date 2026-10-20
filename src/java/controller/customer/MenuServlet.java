@@ -16,7 +16,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet(name = "MenuServlet", urlPatterns = {"/menu"})
+@WebServlet(name = "MenuServlet", urlPatterns = {"/menu", "/order"})
 public class MenuServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 8; // Hiển thị 8 món / trang
@@ -78,9 +78,12 @@ public class MenuServlet extends HttpServlet {
         String returnTo = request.getContextPath() + "/menu?page=" + page + "&categoryId=" + categoryId
                 + "&sortBy=" + URLEncoder.encode(sortBy == null ? "" : sortBy, StandardCharsets.UTF_8)
                 + "&keyword=" + URLEncoder.encode(keyword == null ? "" : keyword, StandardCharsets.UTF_8);
-        request.setAttribute("menuReturnTo", returnTo);
-
-        request.getRequestDispatcher("/WEB-INF/views/customer/menu.jsp").forward(request, response);
+        request.setAttribute("orderReturnTo", returnTo.replace("/menu?", "/order?"));
+        if ("/order".equals(request.getServletPath())) {
+            request.getRequestDispatcher("/WEB-INF/views/customer/order.jsp").forward(request, response);
+        } else {
+            request.getRequestDispatcher("/WEB-INF/views/customer/menu.jsp").forward(request, response);
+        }
     }
     /**
      * Hàm tự động phát hiện và sửa lỗi mã hóa UTF-8 cho phương thức GET
