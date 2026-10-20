@@ -81,6 +81,10 @@ public class ManageOrdersServlet extends HttpServlet {
             else if ("start".equals(action)) ok=dao.startServing(id);
             else if ("paid".equals(action)) ok=dao.markPaid(id);
             else if ("cancel".equals(action)) ok=dao.cancelStaffOrder(id,trim(request.getParameter("reason")),actor.getUserId());
+            else if ("chefStart".equals(action) && "Server".equalsIgnoreCase(actor.getRoleName()))
+                ok=dao.startChefPreparation(id);
+            else if ("chefComplete".equals(action) && "Server".equalsIgnoreCase(actor.getRoleName()))
+                ok=dao.completeChefPreparation(id);
             else if ("updateItems".equals(action)) {
                 Map<Integer,Integer> quantities=readQuantities(request); addNewDish(request,quantities);
                 ok=dao.updateStaffOpenOrder(id,quantities);
