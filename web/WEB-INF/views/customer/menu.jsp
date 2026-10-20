@@ -24,7 +24,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thực Đơn - Việt À la carte</title>
     <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/menu.css?v=1.0">
-    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/orders.css?v=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -34,8 +33,6 @@
 
     <div class="menu-container">
 
-        <c:if test="${not empty cartMessage}"><div class="cart-feedback" role="status"><i class="fa-solid fa-check" aria-hidden="true"></i><span><c:out value="${cartMessage}"/></span></div></c:if>
-        
         <div class="menu-title-section">
             <span class="menu-subtitle">Mỹ vị Đất Việt</span>
             <h1 class="menu-main-title">Thực Đơn Á La Carte</h1>
@@ -106,14 +103,6 @@
                                     <span class="dish-unit">/ <%= d.getUnit() %></span>
                                 </span>
                             </div>
-                            <form action="${pageContext.request.contextPath}/cart" method="post" class="add-to-cart-form">
-                                <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
-                                <input type="hidden" name="action" value="add">
-                                <input type="hidden" name="returnTo" value="${menuReturnTo}">
-                                <input type="hidden" name="dishId" value="<%= d.getDishId() %>">
-                                <label>Số lượng <input type="number" name="quantity" min="1" max="99" value="1"></label>
-                                <button type="submit">Thêm vào giỏ</button>
-                            </form>
                         </div>
                     </div>
             <%   } 
