@@ -373,6 +373,61 @@ body {
     padding: 0 5px;
 }
 
+.chef-order-list {
+    display: grid;
+    gap: 16px;
+}
+
+.chef-order-card {
+    background: #fff;
+    border: 1px solid #e8dfd8;
+    border-left: 5px solid #d89b36;
+    border-radius: 8px;
+    padding: 18px 20px;
+}
+
+.chef-order-heading,
+.chef-order-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.chef-order-heading h2 {
+    margin: 0 0 5px;
+}
+
+.chef-order-heading p,
+.chef-order-time,
+.chef-order-footer p {
+    margin: 5px 0;
+    color: #6a6259;
+}
+
+.chef-order-card table {
+    margin: 14px 0;
+    box-shadow: none;
+    border: 1px solid #eee5da;
+    border-radius: 6px;
+}
+
+.chef-order-card th:last-child,
+.chef-order-card td:last-child {
+    width: 150px;
+    text-align: right;
+}
+
+.chef-order-footer {
+    border-top: 1px solid #eee5da;
+    padding-top: 14px;
+}
+
+.chef-empty {
+    padding: 20px 0;
+    color: #6a6259;
+}
+
 @media (max-width: 650px) {
     .orders-page {
         margin: 26px auto;
@@ -391,5 +446,20 @@ body {
     .page-heading {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .chef-order-card {
+        padding: 14px;
+    }
+
+    .chef-order-heading,
+    .chef-order-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .chef-order-card th:last-child,
+    .chef-order-card td:last-child {
+        width: auto;
     }
 }

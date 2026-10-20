@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="model.User" %>
+<%@ page import="java.util.Map" %>
 <%
     User currentUser = (User) session.getAttribute("user");
     String currentURI = request.getRequestURI();
@@ -13,6 +14,13 @@
         boolean isChef = "Chef".equalsIgnoreCase(roleName);
         boolean canViewNews = "User".equalsIgnoreCase(roleName)
             || "Customer".equalsIgnoreCase(roleName) || isManager;
+        int cartItemCount = 0;
+        Object storedCart = session.getAttribute("orderCart");
+        if (storedCart instanceof Map<?, ?>) {
+            for (Object quantity : ((Map<?, ?>) storedCart).values()) {
+                if (quantity instanceof Number) cartItemCount += ((Number) quantity).intValue();
+            }
+        }
         boolean hideHeader = isAdmin || isManager || "Server".equalsIgnoreCase(roleName)
             || "Receptionist".equalsIgnoreCase(roleName) || isChef;
         boolean canViewTables = isManager || "Server".equalsIgnoreCase(roleName)
@@ -20,7 +28,7 @@
         boolean showStaffSidebar = isAdmin || isManager || canViewTables || isChef;
 %>
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/header.css?v=1.9">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/header.css?v=2.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <% if (!hideHeader) { %>
@@ -109,6 +117,12 @@
             <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Sơ đồ bàn</span>
         </a>
         <% } %>
+        <% if (isChef) { %>
+        <a class="sidebar-link <%= currentURI.contains("chef-orders") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/chef-orders" title="Đơn hàng bếp" aria-label="Đơn hàng bếp">
+            <i class="fa-solid fa-fire-burner" aria-hidden="true"></i><span>Đơn hàng bếp</span>
+        </a>
+        <% } %>
         <% if ("Server".equalsIgnoreCase(roleName) || isManager) { %>
         <a class="sidebar-link <%= currentURI.contains("manage-orders") ? "active" : "" %>" href="${pageContext.request.contextPath}/manage-orders" title="Quản lý đơn hàng" aria-label="Quản lý đơn hàng">
             <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Đơn hàng</span>
@@ -149,6 +163,13 @@
 <script>
     document.body.classList.add("has-staff-sidebar");
 </script>
+<% } %>
+
+<% if ("Customer".equalsIgnoreCase(roleName)) { %>
+<a class="floating-cart" href="${pageContext.request.contextPath}/cart" aria-label="Xem giỏ hàng, <%= cartItemCount %> món">
+    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+    <% if (cartItemCount > 0) { %><span class="floating-cart-count"><%= cartItemCount %></span><% } %>
+</a>
 <% } %>
 
 <%!

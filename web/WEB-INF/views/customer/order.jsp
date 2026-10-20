@@ -35,7 +35,6 @@
                 <span class="menu-subtitle">Chọn món yêu thích</span>
                 <h1 class="menu-main-title">Gọi món</h1>
             </div>
-            <a class="button" href="${pageContext.request.contextPath}/cart"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> Xem giỏ hàng</a>
         </header>
         <form action="${pageContext.request.contextPath}/order" method="get" accept-charset="UTF-8" class="filter-bar">
             <div class="search-box">
