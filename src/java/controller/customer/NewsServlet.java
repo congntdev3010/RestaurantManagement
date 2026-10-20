@@ -9,7 +9,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import model.News;
+import model.User;
 
 @WebServlet(name = "NewsServlet", urlPatterns = {"/news"})
 public class NewsServlet extends HttpServlet {
@@ -21,6 +23,17 @@ public class NewsServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Cache-Control", "no-store");
+        HttpSession session = request.getSession(false);
+        Object value = session == null ? null : session.getAttribute("user");
+        if (!(value instanceof User)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        String roleName = ((User) value).getRoleName();
+        if (!hasNewsAccess(roleName)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
         String id = request.getParameter("id");
         try (NewsDAO dao = new NewsDAO()) {
             if (id != null && !id.trim().isEmpty()) {
@@ -49,6 +62,12 @@ public class NewsServlet extends HttpServlet {
             getServletContext().log("Could not load published news", ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể tải tin tức lúc này.");
         }
+    }
+
+    private boolean hasNewsAccess(String roleName) {
+        return "User".equalsIgnoreCase(roleName)
+                || "Customer".equalsIgnoreCase(roleName)
+                || "Manager".equalsIgnoreCase(roleName);
     }
 
     private int positiveInt(String value, int fallback) {
