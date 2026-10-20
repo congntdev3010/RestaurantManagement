@@ -61,7 +61,7 @@ public class CustomerOrdersServlet extends HttpServlet {
                             user.getFullName(), user.getPhone(), user.getEmail(), trim(request.getParameter("note")), cart);
                     if (createdId > 0) {
                         session.removeAttribute("orderCart"); session.setAttribute("orderMessage", "Đơn hàng đã gửi, đang chờ nhân viên duyệt.");
-                        response.sendRedirect(request.getContextPath() + "/my-orders?id=" + createdId); return;
+                        response.sendRedirect(request.getContextPath() + "/my-orders"); return;
                     }
                 }
             } else if ("cancel".equals(action)) {

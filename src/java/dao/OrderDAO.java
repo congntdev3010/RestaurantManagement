@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import model.Order;
@@ -134,6 +135,38 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         return orders;
     }
 
+    public List<Order> getChefOrders() {
+        Map<Integer, Order> ordersById = new LinkedHashMap<>();
+        if (connection == null) return new ArrayList<>();
+        String sql = "SELECT o.*, t.table_name FROM Orders o "
+                + "LEFT JOIN RestaurantTables t ON t.table_id=o.table_id "
+                + "WHERE o.order_status IN ('APPROVED','OPEN') "
+                + "AND o.chef_status IN ('PENDING','PREPARING') "
+                + "ORDER BY COALESCE(o.approved_at,o.created_at), o.order_id";
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Order order = readOrder(rs);
+                ordersById.put(order.getOrderId(), order);
+            }
+            if (ordersById.isEmpty()) return new ArrayList<>();
+
+            String placeholders = String.join(",", java.util.Collections.nCopies(ordersById.size(), "?"));
+            try (PreparedStatement lines = connection.prepareStatement(
+                    "SELECT * FROM OrderItems WHERE order_id IN (" + placeholders + ") ORDER BY order_id, order_item_id")) {
+                int index = 1;
+                for (Integer orderId : ordersById.keySet()) lines.setInt(index++, orderId);
+                try (ResultSet itemRows = lines.executeQuery()) {
+                    while (itemRows.next()) {
+                        Order order = ordersById.get(itemRows.getInt("order_id"));
+                        if (order != null) order.getItems().add(readItem(itemRows));
+                    }
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return new ArrayList<>(ordersById.values());
+    }
+
     public Order getOrder(int orderId, Integer ownerId) {
         if (connection == null) return null;
         String sql = "SELECT o.*, t.table_name FROM Orders o LEFT JOIN RestaurantTables t ON t.table_id=o.table_id "
@@ -216,6 +249,16 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         return execute("UPDATE Orders SET order_status='OPEN' WHERE order_id=? AND order_status='APPROVED'", orderId);
     }
 
+    public boolean startChefPreparation(int orderId) {
+        return execute("UPDATE Orders SET chef_status='PREPARING' WHERE order_id=? "
+                + "AND order_status IN ('APPROVED','OPEN') AND chef_status='PENDING'", orderId);
+    }
+
+    public boolean completeChefPreparation(int orderId) {
+        return execute("UPDATE Orders SET chef_status='COMPLETED' WHERE order_id=? "
+                + "AND order_status IN ('APPROVED','OPEN') AND chef_status='PREPARING'", orderId);
+    }
+
     public boolean markPaid(int orderId) {
         return execute("UPDATE Orders SET order_status='PAID', closed_at=SYSDATETIME() WHERE order_id=? AND order_status='OPEN'", orderId);
     }
@@ -257,7 +300,8 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         o.setTableName(rs.getNString("table_name")); o.setUserId(nullableInt(rs,"user_id"));
         o.setCreatedBy(nullableInt(rs,"created_by")); o.setCustomerName(rs.getNString("customer_name"));
         o.setCustomerPhone(rs.getString("customer_phone")); o.setCustomerEmail(rs.getString("customer_email"));
-        o.setStatus(rs.getString("order_status")); o.setTotalAmount(rs.getBigDecimal("total_amount"));
+        o.setStatus(rs.getString("order_status")); o.setChefStatus(rs.getString("chef_status"));
+        o.setTotalAmount(rs.getBigDecimal("total_amount"));
         o.setNote(rs.getNString("note")); o.setCreatedAt(rs.getTimestamp("created_at")); o.setClosedAt(rs.getTimestamp("closed_at"));
         o.setApprovedBy(nullableInt(rs,"approved_by")); o.setApprovedAt(rs.getTimestamp("approved_at"));
         o.setCancelledBy(nullableInt(rs,"cancelled_by")); o.setCancelledAt(rs.getTimestamp("cancelled_at"));

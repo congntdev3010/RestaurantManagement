@@ -16,6 +16,7 @@ public class Order {
     private String customerPhone;
     private String customerEmail;
     private String status;
+    private String chefStatus;
     private BigDecimal totalAmount;
     private String note;
     private Timestamp createdAt;
@@ -47,6 +48,8 @@ public class Order {
     public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getChefStatus() { return chefStatus; }
+    public void setChefStatus(String chefStatus) { this.chefStatus = chefStatus; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public String getNote() { return note; }
