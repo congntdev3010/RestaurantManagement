@@ -210,6 +210,22 @@ body {
     object-fit: cover;
 }
 
+.news-detail-placeholder {
+    display: grid;
+    min-height: 240px;
+    place-content: center;
+    justify-items: center;
+    gap: 10px;
+    border-radius: 10px;
+    background: #f3ece4;
+    color: #856d58;
+    font-size: 14px;
+}
+
+.news-detail-placeholder i {
+    font-size: 38px;
+}
+
 .news-detail-summary {
     margin: 26px 0 20px;
     color: #67585a;

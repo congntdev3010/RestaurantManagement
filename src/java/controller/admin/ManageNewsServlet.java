@@ -21,7 +21,7 @@ public class ManageNewsServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        User actor = requireManager(request, response);
+        User actor = requireNewsManager(request, response);
         if (actor == null) return;
         response.setHeader("Cache-Control", "no-store");
         String keyword = trim(request.getParameter("keyword"));
@@ -68,7 +68,7 @@ public class ManageNewsServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        User actor = requireManager(request, response);
+        User actor = requireNewsManager(request, response);
         if (actor == null) return;
         String action = request.getParameter("action");
         String message = "Thao tác không hợp lệ.";
@@ -110,10 +110,16 @@ public class ManageNewsServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/manage-news");
     }
 
-    private User requireManager(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        User user = (User) request.getSession().getAttribute("user");
+    private User requireNewsManager(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+        Object value = session == null ? null : session.getAttribute("user");
+        User user = value instanceof User ? (User) value : null;
         if (user == null) { response.sendRedirect(request.getContextPath() + "/login"); return null; }
-        if (!"Manager".equalsIgnoreCase(user.getRoleName())) { response.sendError(HttpServletResponse.SC_FORBIDDEN); return null; }
+        String role = user.getRoleName();
+        if (!"Manager".equalsIgnoreCase(role) && !"Admin".equalsIgnoreCase(role)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        }
         return user;
     }
 

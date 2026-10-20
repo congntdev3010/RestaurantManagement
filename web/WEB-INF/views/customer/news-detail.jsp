@@ -15,7 +15,7 @@
         <p class="news-eyebrow">TIN TỨC</p>
         <h1><c:out value="${news.title}"/></h1>
         <p class="news-detail-meta"><time datetime="${news.publishedAt}"><c:out value="${news.publishedAt}"/></time><span>•</span><c:out value="${news.createdByName}"/></p>
-        <c:if test="${not empty news.imageUrl}"><img class="news-detail-image" src="<c:out value='${news.imageUrl}'/>" alt=""></c:if>
+        <c:choose><c:when test="${not empty news.imageUrl}"><img class="news-detail-image" src="<c:out value='${news.imageUrl}'/>" alt=""></c:when><c:otherwise><div class="news-detail-placeholder" aria-label="Tin tức không có ảnh"><i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Không có ảnh</span></div></c:otherwise></c:choose>
         <p class="news-detail-summary"><c:out value="${news.summary}"/></p>
         <div class="news-content"><c:out value="${news.content}"/></div>
     </article>
