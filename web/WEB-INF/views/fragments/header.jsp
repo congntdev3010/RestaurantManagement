@@ -12,7 +12,7 @@
         boolean isAdmin = "Admin".equalsIgnoreCase(roleName);
         boolean isManager = "Manager".equalsIgnoreCase(roleName);
         boolean isChef = "Chef".equalsIgnoreCase(roleName);
-        boolean canViewNews = "User".equalsIgnoreCase(roleName)
+        boolean canViewNews = currentUser == null || "User".equalsIgnoreCase(roleName)
             || "Customer".equalsIgnoreCase(roleName) || isManager;
         int cartItemCount = 0;
         Object storedCart = session.getAttribute("orderCart");

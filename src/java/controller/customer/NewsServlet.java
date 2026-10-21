@@ -25,12 +25,7 @@ public class NewsServlet extends HttpServlet {
         response.setHeader("Cache-Control", "no-store");
         HttpSession session = request.getSession(false);
         Object value = session == null ? null : session.getAttribute("user");
-        if (!(value instanceof User)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
-        String roleName = ((User) value).getRoleName();
-        if (!hasNewsAccess(roleName)) {
+        if (value instanceof User && !hasNewsAccess(((User) value).getRoleName())) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
