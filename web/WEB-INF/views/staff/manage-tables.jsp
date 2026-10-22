@@ -133,6 +133,12 @@
                                     <c:if test="${not empty table.description}">
                                         <p class="table-description"><c:out value="${table.description}" /></p>
                                     </c:if>
+                                    <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
+                                        <div class="table-actions">
+                                            <a href="${pageContext.request.contextPath}/manage-orders?action=new&tableId=${table.tableId}">Order cho bàn</a>
+                                            <a href="${pageContext.request.contextPath}/table-qr?id=${table.tableId}">Mã QR</a>
+                                        </div>
+                                    </c:if>
                                     <%-- Manager quản lý thông tin bàn; Server/Receptionist chỉ đổi trạng thái. --%>
                                     <c:choose>
                                         <c:when test="${canManage}">

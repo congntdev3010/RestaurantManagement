@@ -8,6 +8,15 @@ public class RestaurantTable {
     private int capacity;
     private String status;
     private String description;
+    private String qrToken;
+
+    public String getQrToken() {
+        return qrToken;
+    }
+
+    public void setQrToken(String qrToken) {
+        this.qrToken = qrToken;
+    }
 
     public int getTableId() {
         return tableId;

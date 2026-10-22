@@ -12,7 +12,7 @@ public class RestaurantTableDAO extends DBContext {
 
     // Dùng chung danh sách cột cho các truy vấn đọc bàn.
     private static final String TABLE_COLUMNS
-            = "table_id, table_name, table_type, capacity, table_status, description";
+            = "table_id, table_name, table_type, capacity, table_status, description, qr_token";
 
     // Chỉ cho phép giữ nguyên trạng thái hoặc chuyển giữa các trạng thái hợp lệ.
     private static final String STATUS_TRANSITION_CONDITION = "(table_status = ? "
@@ -57,6 +57,23 @@ public class RestaurantTableDAO extends DBContext {
             try (ResultSet results = statement.executeQuery()) {
                 return results.next() ? readTable(results) : null;
             }
+        }
+    }
+
+    /** Tìm bàn theo token QR; null nếu token sai. Không ném lỗi để trang khách xử lý nhẹ nhàng. */
+    public RestaurantTable getTableByQrToken(String token) {
+        if (token == null || token.length() != 36 || connection == null) {
+            return null;
+        }
+        String sql = "SELECT " + TABLE_COLUMNS + " FROM RestaurantTables WHERE qr_token = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, token);
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? readTable(results) : null;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -147,6 +164,7 @@ public class RestaurantTableDAO extends DBContext {
         table.setCapacity(results.getInt("capacity"));
         table.setStatus(results.getString("table_status"));
         table.setDescription(results.getNString("description"));
+        table.setQrToken(results.getString("qr_token"));
         return table;
     }
 }

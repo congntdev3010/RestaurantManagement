@@ -90,11 +90,11 @@
             <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Sơ đồ bàn</span>
         </a>
         <a class="sidebar-link <%= currentURI.contains("manage-orders") ? "active" : "" %>"
-           href="${pageContext.request.contextPath}/manage-orders" title="Duyệt đơn" aria-label="Duyệt đơn">
-            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Duyệt đơn</span>
+           href="${pageContext.request.contextPath}/manage-orders" title="Quản lý order" aria-label="Quản lý order">
+            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Quản lý order</span>
         </a>
         <% } else { %>
-        <% if (!isAdmin) { %>
+        <% if (!isAdmin && !isChef) { %>
         <% if (!isManager && !isReceptionist) { %>
         <a class="sidebar-link <%= currentURI.contains("home") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/home" title="Trang chủ" aria-label="Trang chủ">
@@ -117,6 +117,18 @@
             <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Sơ đồ bàn</span>
         </a>
         <% } %>
+        <% } %>
+        <% if (isChef || isManager) { %>
+        <a class="sidebar-link <%= currentURI.contains("kitchen") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/kitchen" title="Màn hình bếp" aria-label="Màn hình bếp">
+            <i class="fa-solid fa-fire-burner" aria-hidden="true"></i><span>Màn hình bếp</span>
+        </a>
+        <% } %>
+        <% if (isManager) { %>
+        <a class="sidebar-link <%= currentURI.contains("manage-orders") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manage-orders" title="Quản lý order" aria-label="Quản lý order">
+            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Quản lý order</span>
+        </a>
         <% } %>
         <% if (isManager || isAdmin) { %>
         <a class="sidebar-link <%= currentURI.contains("manage-users") ? "active" : "" %>"

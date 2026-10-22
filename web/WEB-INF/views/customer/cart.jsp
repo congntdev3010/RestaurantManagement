@@ -21,6 +21,6 @@
 <td><button type="button" onclick="this.form.dishId.value='<%=dish.getDishId()%>';this.form.querySelector('input[name=action]').value='remove';this.form.submit();">Xóa</button></td></tr>
 <% } %></tbody></table><input type="hidden" name="dishId" value="">
 <div class="order-actions"><button type="submit">Cập nhật giỏ</button><strong>Tạm tính: <%=fmt.format((java.math.BigDecimal)request.getAttribute("cartTotal"))%> đ</strong></div></form>
-<% if (current == null || !"Customer".equalsIgnoreCase(current.getRoleName())) { %><p>Vui lòng đăng nhập bằng tài khoản Customer để xác nhận đặt hàng.</p><% } else { %>
-<form action="${pageContext.request.contextPath}/my-orders" method="post" class="checkout-form"><input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}"><input type="hidden" name="action" value="checkout"><label>Ghi chú <textarea name="note" maxlength="500"></textarea></label><button type="submit">Xác nhận đặt hàng</button></form>
+<% if (request.getAttribute("orderTableName") == null) { %><p>Vui lòng quét mã QR trên bàn để gọi món.</p><% } else { %>
+<p>Bàn của bạn: <strong><c:out value="${orderTableName}"/></strong></p><a class="button" href="${pageContext.request.contextPath}/cart?review=1">Xem lại và gửi order</a>
 <% } } %></main></body></html>

@@ -29,6 +29,27 @@ public class MenuServlet extends HttpServlet {
         HttpSession session = request.getSession();
         CartServlet.ensureToken(session);
 
+        // Khách quét QR của bàn: /order?table=<token>. Token hợp lệ thì gắn bàn vào phiên; sai thì báo lỗi.
+        String tableToken = request.getParameter("table");
+        if (tableToken != null) {
+            dao.RestaurantTableDAO tableDAO = new dao.RestaurantTableDAO();
+            model.RestaurantTable qrTable = tableDAO.getTableByQrToken(tableToken.trim());
+            tableDAO.close();
+            if (qrTable == null || "UNAVAILABLE".equals(qrTable.getStatus())) {
+                session.removeAttribute(CartServlet.TABLE_ID);
+                session.removeAttribute(CartServlet.TABLE_NAME);
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Mã QR bàn không hợp lệ.");
+                return;
+            }
+            Object oldTable = session.getAttribute(CartServlet.TABLE_ID);
+            if (oldTable != null && !oldTable.equals(qrTable.getTableId())) {
+                session.removeAttribute("orderCart"); // đổi bàn thì bỏ giỏ cũ
+            }
+            session.setAttribute(CartServlet.TABLE_ID, qrTable.getTableId());
+            session.setAttribute(CartServlet.TABLE_NAME, qrTable.getTableName());
+        }
+        request.setAttribute("orderTableName", session.getAttribute(CartServlet.TABLE_NAME));
+
         // Lấy các tham số lọc từ URL
         // Lấy tham số keyword từ URL và xử lý giải mã chuẩn UTF-8
         String keyword = request.getParameter("keyword");
@@ -53,14 +74,16 @@ public class MenuServlet extends HttpServlet {
             }
         }
 
+        // Trang gọi món hiển thị cả thực đơn trên một trang cuộn; trang /menu vẫn phân trang.
+        final int pageSize = "/order".equals(request.getServletPath()) ? 200 : PAGE_SIZE;
         DishDAO dishDAO = new DishDAO();
         CategoryDAO categoryDAO = new CategoryDAO();
 
         // Lấy dữ liệu
         List<Category> categories = categoryDAO.getAllCategories();
-        List<Dish> dishes = dishDAO.getDishes(keyword, categoryId, sortBy, page, PAGE_SIZE);
+        List<Dish> dishes = dishDAO.getDishes(keyword, categoryId, sortBy, page, pageSize);
         int totalDishes = dishDAO.getTotalDishesCount(keyword, categoryId);
-        int totalPages = (int) Math.ceil((double) totalDishes / PAGE_SIZE);
+        int totalPages = (int) Math.ceil((double) totalDishes / pageSize);
 
         // Đẩy sang JSP
         request.setAttribute("categories", categories);
@@ -79,6 +102,23 @@ public class MenuServlet extends HttpServlet {
                 + "&sortBy=" + URLEncoder.encode(sortBy == null ? "" : sortBy, StandardCharsets.UTF_8)
                 + "&keyword=" + URLEncoder.encode(keyword == null ? "" : keyword, StandardCharsets.UTF_8);
         request.setAttribute("orderReturnTo", returnTo.replace("/menu?", "/order?"));
+        // Giỏ hiện tại: số lượng từng món + tổng, để vẽ nút +/- và thanh giỏ hàng.
+        java.util.Map<Integer, Integer> cart = CartServlet.getCart(session);
+        java.util.List<model.Dish> cartDishes = new java.util.ArrayList<>();
+        int cartCount = 0;
+        java.math.BigDecimal cartTotal = java.math.BigDecimal.ZERO;
+        for (java.util.Map.Entry<Integer, Integer> e : cart.entrySet()) {
+            cartCount += e.getValue();
+            model.Dish d = dishDAO.getActiveDishById(e.getKey());
+            if (d != null) {
+                cartDishes.add(d);
+                cartTotal = cartTotal.add(d.getPrice().multiply(java.math.BigDecimal.valueOf(e.getValue())));
+            }
+        }
+        request.setAttribute("cartQuantities", cart);
+        request.setAttribute("cartCount", cartCount);
+        request.setAttribute("cartDishes", cartDishes);
+        request.setAttribute("cartTotal", cartTotal);
         if ("/order".equals(request.getServletPath())) {
             request.getRequestDispatcher("/WEB-INF/views/customer/order.jsp").forward(request, response);
         } else {

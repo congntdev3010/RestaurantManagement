@@ -1,0 +1,8 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %><%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mã QR bàn</title><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/orders.css">
+<style>.qr-grid{display:flex;flex-wrap:wrap;gap:16px}.qr-card{border:1px solid #ccc;border-radius:8px;padding:12px;text-align:center;width:240px;background:#fff;page-break-inside:avoid}.qr-card img{width:200px;height:200px}.qr-card small{display:block;word-break:break-all;color:#777;font-size:.7rem}@media print{.no-print,.staff-sidebar{display:none !important}body.has-staff-sidebar{padding-left:0 !important}}</style></head><body><jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
+<main class="orders-page"><div class="no-print"><h1>Mã QR gọi món theo bàn</h1>
+<p><a class="button secondary" href="${pageContext.request.contextPath}/manage-tables">← Về sơ đồ bàn</a> <button type="button" onclick="window.print()">In</button></p>
+<p>Địa chỉ website: <strong><c:out value="${baseUrl}"/></strong></p></div>
+<div class="qr-grid"><c:forEach var="t" items="${tables}"><div class="qr-card"><img class="qr" alt="QR <c:out value='${t.tableName}'/>" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&amp;data=<c:out value='${baseUrl}'/>%2Forder%3Ftable%3D<c:out value='${t.qrToken}'/>"><h2><c:out value="${t.tableName}"/></h2><p>Quét để gọi món</p><small><c:out value="${baseUrl}"/>/order?table=<c:out value="${t.qrToken}"/></small></div></c:forEach></div>
+</main></body></html>
