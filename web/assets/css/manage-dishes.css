@@ -1,0 +1,276 @@
+/* Bổ sung riêng cho trang Quản lý thực đơn (dùng chung nền manage-news.css) */
+
+/* Sửa lỗi bố cục: .news-form gốc là lưới 2 cột nên form món bị dồn nửa trái */
+.news-form.dish-form {
+    display: block;
+}
+
+.news-form.dish-form label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.news-form.dish-form label > span {
+    display: inline;
+    margin-left: 3px;
+}
+
+.news-form.dish-form label > input:not([type="checkbox"]),
+.news-form.dish-form label > select,
+.news-form.dish-form label > textarea {
+    display: block;
+    margin-top: 7px;
+}
+
+.news-form.dish-form label.check {
+    display: flex;
+}
+
+.news-form.dish-form .form-actions {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid #efe6dd;
+}
+
+.dish-form-grid {
+    grid-template-columns: minmax(0, 1fr) 320px !important;
+    gap: 32px !important;
+}
+
+.dish-form-image {
+    padding: 16px;
+    border: 1px solid #efe6dd;
+    border-radius: 12px;
+    background: #fdfaf6;
+}
+
+.image-drop [hidden],
+.image-drop img[hidden] {
+    display: none !important;
+}
+
+.image-drop {
+    min-height: 200px;
+}
+
+.field-row .check {
+    padding: 10px 12px;
+    border: 1px solid #e4d9cf;
+    border-radius: 8px;
+    background: #fdfaf6;
+}
+
+.manage-heading .button-primary {
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.dish-form-section > summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.dish-form-section > summary::-webkit-details-marker {
+    display: none;
+}
+
+.dish-form-section > summary h2::before {
+    content: '▸ ';
+    color: #d89b36;
+}
+
+.dish-form-section[open] > summary h2::before {
+    content: '▾ ';
+}
+
+.dish-form {
+    margin-top: 18px;
+}
+
+.dish-form-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 24px;
+    align-items: start;
+}
+
+.dish-form-fields {
+    display: grid;
+    gap: 16px;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 14px;
+}
+
+.field-row.checks {
+    grid-template-columns: 1fr 1fr;
+}
+
+.dish-form label.check {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.dish-form label.check input {
+    width: 18px;
+    height: 18px;
+    accent-color: #421217;
+}
+
+.dish-form label.check.small {
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.image-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #302628;
+}
+
+.image-label span {
+    color: #b3261e;
+}
+
+.image-drop {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    border: 2px dashed #d8c7b6;
+    border-radius: 12px;
+    background: #faf6f1;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    padding: 0 !important;
+}
+
+.image-drop:hover {
+    border-color: #d89b36;
+}
+
+.image-drop img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-drop span {
+    display: grid;
+    gap: 4px;
+    text-align: center;
+    color: #71666a;
+}
+
+.image-drop strong {
+    color: #421217;
+}
+
+#imageFile {
+    margin-top: 10px;
+    width: 100%;
+    font-size: 13px;
+}
+
+.image-error {
+    display: block;
+    margin-top: 6px;
+    color: #b3261e;
+}
+
+.button-secondary {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 18px;
+    border: 1px solid #d8c7b6;
+    border-radius: 8px;
+    color: #421217;
+    text-decoration: none;
+    font-weight: 600;
+    background: #fff;
+}
+
+/* Bảng */
+.dish-thumb {
+    display: block;
+    width: 64px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #f3ebe3;
+}
+
+.dish-thumb.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a99a8f;
+}
+
+.price-cell {
+    white-space: nowrap;
+    font-weight: 700;
+    color: #421217;
+}
+
+.price-cell small {
+    display: block;
+    font-weight: 400;
+    color: #71666a;
+}
+
+.featured-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #d89b36;
+    color: #2b0b0e;
+    font-size: 11px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+tr.is-hidden td {
+    opacity: 0.6;
+}
+
+tr.is-hidden td:last-child {
+    opacity: 1;
+}
+
+.news-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.news-filters input[type="search"] {
+    flex: 1;
+    min-width: 220px;
+}
+
+@media (max-width: 860px) {
+    .dish-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dish-form-image {
+        max-width: 360px;
+    }
+
+    .field-row,
+    .field-row.checks {
+        grid-template-columns: 1fr;
+    }
+}

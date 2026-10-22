@@ -119,6 +119,10 @@
            href="${pageContext.request.contextPath}/manage-news" title="Quản lý tin tức" aria-label="Quản lý tin tức">
             <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Quản lý tin tức</span>
         </a>
+        <a class="sidebar-link <%= currentURI.contains("manage-dishes") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manage-dishes" title="Quản lý thực đơn" aria-label="Quản lý thực đơn">
+            <i class="fa-solid fa-utensils" aria-hidden="true"></i><span>Quản lý thực đơn</span>
+        </a>
         <% } %>
     </nav>
     <div class="sidebar-profile">
