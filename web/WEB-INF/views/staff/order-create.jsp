@@ -20,6 +20,10 @@
 .oc-send{width:100%;padding:13px;border:0;border-radius:12px;background:#7a1f1f;color:#fff;font-weight:700;cursor:pointer}
 .oc-send:disabled{background:#c9c4bb;cursor:not-allowed}
 .oc-empty{color:#888}
+.oc-grand{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px;padding:12px 14px;border-radius:12px;background:#7a1f1f;color:#fff}
+.oc-grand span{font-size:.9rem;font-weight:600;line-height:1.2}.oc-grand small{display:block;font-weight:400;opacity:.8;font-size:.72rem}
+.oc-grand strong{font-size:1.6rem;font-weight:800;white-space:nowrap}
+.oc-sub{padding:8px 0;font-weight:600}
 /* Chỉ dùng trên máy tính: mở rộng khung trang và xếp món thành lưới 2 cột. */
 .orders-page.oc-page{max-width:none;width:auto;margin:24px 24px 40px;padding:0}
 .oc-page .order-form{max-width:none;width:100%}
@@ -40,9 +44,12 @@
 <div class="oc-cats" id="ocCat"><button type="button" class="active" data-cat="">Tất cả</button><c:forEach var="cat" items="${categories}"><button type="button" data-cat="${cat.categoryId}"><c:out value="${cat.categoryName}"/></button></c:forEach></div>
 <p class="oc-none" id="ocNone">Không tìm thấy món phù hợp.</p>
 <div class="dish-choice"><c:forEach var="dish" items="${dishes}"><label class="dish-choice-row" data-cat="${dish.categoryId}" data-search="<c:out value='${dish.dishName}'/>"><span><c:out value="${dish.dishName}"/> — <fmt:formatNumber value="${dish.price}" pattern="#,###"/> đ / <c:out value="${dish.unit}"/></span><input type="number" min="0" max="99" name="quantity_${dish.dishId}" value="" placeholder="0" data-name="<c:out value='${dish.dishName}'/>" data-price="${dish.price}" aria-label="Số lượng ${dish.dishName}"></label></c:forEach></div></div>
-<aside class="oc-panel" aria-label="Món đã chọn"><c:if test="${not empty approvedItems}">
+<aside class="oc-panel" aria-label="Món đã chọn"><c:set var="approvedTotal" value="0"/><c:forEach var="ai" items="${approvedItems}"><c:set var="approvedTotal" value="${approvedTotal + ai.lineTotal}"/></c:forEach>
+<div class="oc-grand"><span>Tổng cả bàn<small>đã gọi + món mới chọn</small></span><strong id="ocGrand" data-base="${approvedTotal}"><fmt:formatNumber value="${approvedTotal}" pattern="#,###"/> đ</strong></div>
+<c:if test="${not empty approvedItems}">
 <h2>Đã gọi (đã duyệt)</h2>
 <ul class="oc-lines oc-done"><c:forEach var="it" items="${approvedItems}"><li><div><c:out value="${it.dishName}"/><c:if test="${not empty it.itemNote}"><small style="color:#666;font-weight:400">Note: <c:out value="${it.itemNote}"/></small></c:if></div><div class="oc-right"><strong>x<c:out value="${it.quantity}"/></strong><span style="font-size:.7rem;width:42px;text-align:center;color:${it.itemStatus eq 'SERVED' ? '#14532d' : '#b34100'}">${it.itemStatus eq 'SERVED' ? 'Đã phục vụ' : 'Đang nấu'}</span></div></li></c:forEach></ul>
+<div class="oc-total oc-sub">Tổng đã gọi <strong><fmt:formatNumber value="${approvedTotal}" pattern="#,###"/> đ</strong></div>
 <hr style="border:0;border-top:2px dashed #e3ddd3;margin:12px 0">
 </c:if>
 <h2>Món mới chọn <span id="ocCount"></span></h2>
@@ -54,7 +61,7 @@
 (function(){
   var form=document.getElementById('orderForm'),inputs=form.querySelectorAll('input[data-price]'),
       lines=document.getElementById('ocLines'),empty=document.getElementById('ocEmpty'),
-      totalEl=document.getElementById('ocTotal'),countEl=document.getElementById('ocCount'),send=document.getElementById('ocSend');
+      totalEl=document.getElementById('ocTotal'),grandEl=document.getElementById('ocGrand'),base=Math.round(parseFloat(grandEl.dataset.base)||0),countEl=document.getElementById('ocCount'),send=document.getElementById('ocSend');
   var notes={},open={};
   function fmt(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',')+' đ';}
   function render(){
@@ -66,18 +73,29 @@
       name.textContent=i.dataset.name;s.textContent=fmt(sub);name.appendChild(s);qty.textContent='x'+q;
       btn.type='button';btn.className='oc-note-btn'+(notes[id]?' has':'');btn.textContent='Note';
       right.className='oc-right';right.appendChild(qty);right.appendChild(btn);li.appendChild(name);li.appendChild(right);
-      var inp=document.createElement('input');inp.type='text';inp.name='note_'+id;inp.maxLength=255;inp.className='oc-note';inp.placeholder='Ví dụ: không hành, ít cay';inp.value=notes[id]||'';
+      var inp=document.createElement('input');inp.type='text';inp.name='note_'+id;inp.maxLength=255;inp.className='oc-note';inp.value=notes[id]||'';
       inp.style.display=(open[id]||notes[id])?'block':'none';
       inp.addEventListener('input',function(){notes[id]=inp.value;btn.className='oc-note-btn'+(inp.value?' has':'');});
       inp.addEventListener('keydown',function(e){if(e.key==='Enter')e.preventDefault();});
       btn.addEventListener('click',function(){var show=inp.style.display==='none';inp.style.display=show?'block':'none';open[id]=show;if(show)inp.focus();});
       li.appendChild(inp);lines.appendChild(li);
     });
-    empty.style.display=count?'none':'block';totalEl.textContent=fmt(total);
+    empty.style.display=count?'none':'block';totalEl.textContent=fmt(total);grandEl.textContent=fmt(base+Math.round(total));
     countEl.textContent=count?'('+count+')':'';send.disabled=!count;
   }
   var rows=form.querySelectorAll('.dish-choice-row'),q=document.getElementById('ocSearch'),cat={value:''},catBox=document.getElementById('ocCat'),none=document.getElementById('ocNone');
-  function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d');}
+  function norm(str){
+    if(!str)return'';
+    str=(''+str).toLowerCase();
+    str=str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a");
+    str=str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e");
+    str=str.replace(/ì|í|ị|ỉ|ĩ/g,"i");
+    str=str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o");
+    str=str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u");
+    str=str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y");
+    str=str.replace(/đ/g,"d");
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  }
   function filter(){
     var k=norm(q.value.trim()),c=cat.value,shown=0;
     rows.forEach(function(r){var ok=(!c||r.dataset.cat===c)&&(!k||norm(r.dataset.search).indexOf(k)>-1);r.style.display=ok?'':'none';if(ok)shown++;});

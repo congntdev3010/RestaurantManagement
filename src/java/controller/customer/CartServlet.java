@@ -54,7 +54,9 @@ public class CartServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/customer/order-review.jsp").forward(request, response);
             return;
         }
-        request.getRequestDispatcher("/WEB-INF/views/customer/cart.jsp").forward(request, response);
+        // Không còn màn giỏ hàng riêng: về màn gọi món, giữ lại thông báo (nếu có) để màn đó hiện.
+        if (request.getAttribute("message") != null) session.setAttribute("cartMessage", request.getAttribute("message"));
+        response.sendRedirect(request.getContextPath() + "/order");
     }
 
     @Override protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -103,7 +105,7 @@ public class CartServlet extends HttpServlet {
                 && !returnTo.contains("\r") && !returnTo.contains("\n")) {
             response.sendRedirect(returnTo);
         } else {
-            response.sendRedirect(request.getContextPath() + "/cart");
+            response.sendRedirect(request.getContextPath() + "/order");
         }
     }
 

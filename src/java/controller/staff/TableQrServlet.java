@@ -24,7 +24,8 @@ public class TableQrServlet extends HttpServlet {
         Object value = session == null ? null : session.getAttribute("user");
         if (!(value instanceof User)) { response.sendRedirect(request.getContextPath() + "/login"); return; }
         String role = ((User) value).getRoleName();
-        if (!"Manager".equalsIgnoreCase(role) && !"Server".equalsIgnoreCase(role)) { response.sendError(403); return; }
+        if (!"Manager".equalsIgnoreCase(role) && !"Server".equalsIgnoreCase(role)
+                && !"Receptionist".equalsIgnoreCase(role)) { response.sendError(403); return; }
         List<RestaurantTable> tables = new ArrayList<>();
         try (RestaurantTableDAO dao = new RestaurantTableDAO()) {
             tables = dao.getAllTables();

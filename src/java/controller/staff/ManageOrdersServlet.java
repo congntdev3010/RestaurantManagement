@@ -39,6 +39,7 @@ public class ManageOrdersServlet extends HttpServlet {
                 Order order = orders.getOrder(id, null);
                 if (order == null) { response.sendError(404); return; }
                 request.setAttribute("order", order);
+                request.setAttribute("listStatus", listStatus(request.getParameter("status")));
                 request.getRequestDispatcher("/WEB-INF/views/staff/order-detail.jsp").forward(request, response);
             } else if ("new".equals(request.getParameter("action"))) {
                 // Bắt đầu order từ sơ đồ bàn: phải chọn bàn trước.
@@ -49,6 +50,11 @@ public class ManageOrdersServlet extends HttpServlet {
                 } catch (SQLException e) { throw new ServletException(e); }
                 if (table == null || "UNAVAILABLE".equals(table.getStatus())) {
                     session.setAttribute("tableMessage", "Hãy chọn một bàn trên sơ đồ để bắt đầu order.");
+                    session.setAttribute("tableMessageType", "error");
+                    response.sendRedirect(request.getContextPath() + "/manage-tables"); return;
+                }
+                if (orders.hasPendingOrder(table.getTableId())) {
+                    session.setAttribute("tableMessage", "Bàn đang có order chờ duyệt, hãy duyệt xong rồi mới order thêm.");
                     session.setAttribute("tableMessageType", "error");
                     response.sendRedirect(request.getContextPath() + "/manage-tables"); return;
                 }
@@ -68,6 +74,11 @@ public class ManageOrdersServlet extends HttpServlet {
         }
     }
 
+    /** Mục của danh sách (PENDING/OPEN/CANCELLED/ALL) mà nhân viên đang xem; giá trị lạ thì bỏ. */
+    private static String listStatus(String s) {
+        return ("PENDING".equals(s) || "OPEN".equals(s) || "CANCELLED".equals(s) || "ALL".equals(s)) ? s : "";
+    }
+
     private void loadCreateForm(HttpServletRequest request) throws ServletException, IOException {
         List<Category> categories; List<Dish> dishes;
         try (DishDAO dishDAO = new DishDAO(); CategoryDAO categoryDAO = new CategoryDAO()) {
@@ -84,10 +95,16 @@ public class ManageOrdersServlet extends HttpServlet {
         if (session==null || !CartServlet.validToken(session,request.getParameter("csrfToken"))) { response.sendError(403); return; }
         String action=request.getParameter("action"); int id=parseInt(request.getParameter("orderId"),-1);
         String message="Không thể thực hiện thao tác với đơn hàng."; String anchor="";
+        String ls=listStatus(request.getParameter("listStatus"));
         try (OrderDAO dao=new OrderDAO()) {
             if ("create".equals(action)) {
                 Integer tableId=parsePositive(request.getParameter("tableId"));
                 Map<Integer,Integer> quantities=readQuantities(request);
+                if (tableId!=null && dao.hasPendingOrder(tableId)) {
+                    session.setAttribute("tableMessage","Bàn đang có order chờ duyệt, hãy duyệt xong rồi mới order thêm.");
+                    session.setAttribute("tableMessageType","error");
+                    response.sendRedirect(request.getContextPath()+"/manage-tables"); return;
+                }
                 if (tableId!=null && !quantities.isEmpty()) {
                     // Order của server cũng phải qua bước chờ duyệt, giống order của khách.
                     int created=dao.createOrder(null,actor.getUserId(),tableId,null,"PENDING",
@@ -121,8 +138,8 @@ public class ManageOrdersServlet extends HttpServlet {
             }
         }
         session.setAttribute("staffOrderMessage",message);
-        if (id>0 && anchor!=null) response.sendRedirect(request.getContextPath()+"/manage-orders?id="+id+anchor);
-        else response.sendRedirect(request.getContextPath()+"/manage-orders");
+        if (id>0 && anchor!=null) response.sendRedirect(request.getContextPath()+"/manage-orders?id="+id+(ls.isEmpty()?"":"&status="+ls)+anchor);
+        else response.sendRedirect(request.getContextPath()+"/manage-orders"+(ls.isEmpty()?"":"?status="+ls));
     }
 
     /** Ghi chú từng món (note_<dishId>), chỉ lấy cho món có số lượng, tối đa 255 ký tự. */

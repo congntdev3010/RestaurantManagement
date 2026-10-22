@@ -305,6 +305,17 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 orderId);
     }
 
+    /** Bàn này còn đơn đang chờ duyệt không (còn thì chưa được order thêm). */
+    public boolean hasPendingOrder(int tableId) {
+        if (connection == null) return false;
+        String sql = "SELECT 1 FROM Orders WHERE table_id = ? AND order_status = 'PENDING'";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, tableId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
     /** Các món đã được duyệt (đang nấu / đã phục vụ) trong những đơn đang phục vụ của một bàn, theo thứ tự gọi. */
     public List<OrderItem> getApprovedItemsForTable(int tableId) {
         List<OrderItem> items = new ArrayList<>();

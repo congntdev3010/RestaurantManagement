@@ -63,17 +63,32 @@ public class CustomerOrdersServlet extends HttpServlet {
                 Map<Integer,Integer> cart = CartServlet.getCart(session);
                 if (!(tableId instanceof Integer)) {
                     session.setAttribute("cartMessage", "Vui lòng quét mã QR trên bàn để gọi món.");
-                    response.sendRedirect(request.getContextPath() + "/cart"); return;
+                    response.sendRedirect(request.getContextPath() + "/order"); return;
                 }
                 if (cart.isEmpty()) {
-                    session.setAttribute("cartMessage", "Giỏ hàng đang trống.");
-                    response.sendRedirect(request.getContextPath() + "/cart"); return;
+                    session.setAttribute("cartMessage", "Bạn chưa chọn món nào.");
+                    response.sendRedirect(request.getContextPath() + "/order"); return;
                 }
-                String name = user != null ? user.getFullName() : trim(request.getParameter("customerName"));
-                String phone = user != null ? user.getPhone() : null;
+                if (dao.hasPendingOrder((Integer) tableId)) {
+                    session.setAttribute("cartMessage", "Bàn đang có order chờ nhân viên duyệt, vui lòng đợi duyệt xong rồi gọi thêm.");
+                    response.sendRedirect(request.getContextPath() + "/order"); return;
+                }
+                Object guestName = session.getAttribute(MenuServlet.GUEST_NAME);
+                Object guestPhone = session.getAttribute(MenuServlet.GUEST_PHONE);
+                if (guestName == null || guestPhone == null) {
+                    // Chưa điền tên + SĐT: đưa về bước vào bàn.
+                    response.sendRedirect(request.getContextPath() + "/order"); return;
+                }
+                String name = guestName.toString();
+                String phone = guestPhone.toString();
                 String email = user != null ? user.getEmail() : null;
+                Map<Integer,String> itemNotes = new java.util.LinkedHashMap<>();
+                for (Integer dishId : cart.keySet()) {
+                    String n = trim(request.getParameter("note_" + dishId));
+                    if (n != null) itemNotes.put(dishId, n.length() > 255 ? n.substring(0, 255) : n);
+                }
                 int createdId = dao.createOrder(user == null ? null : user.getUserId(), null, (Integer) tableId, null,
-                        "PENDING", name, phone, email, trim(request.getParameter("note")), cart);
+                        "PENDING", name, phone, email, null, cart, itemNotes);
                 if (createdId > 0) {
                     myOrderIds(session).add(createdId);
                     session.removeAttribute("orderCart");
@@ -81,7 +96,7 @@ public class CustomerOrdersServlet extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/my-orders?id=" + createdId); return;
                 }
                 session.setAttribute("cartMessage", "Không thể gửi order. Món có thể đã ngừng phục vụ hoặc bàn không khả dụng.");
-                response.sendRedirect(request.getContextPath() + "/cart"); return;
+                response.sendRedirect(request.getContextPath() + "/order"); return;
             }
             boolean ok = false;
             if ("cancel".equals(action) && user != null) {

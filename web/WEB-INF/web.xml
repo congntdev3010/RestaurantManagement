@@ -10,6 +10,11 @@
         <param-name>qrBaseUrl</param-name>
         <param-value></param-value>
     </context-param>
+    <!-- Mọi địa chỉ không tồn tại (404) đều đưa khách về trang chủ thay vì trang lỗi. -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error-404</location>
+    </error-page>
     <welcome-file-list>
         <welcome-file>home</welcome-file>
     </welcome-file-list>

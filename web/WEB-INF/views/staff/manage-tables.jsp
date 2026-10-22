@@ -7,21 +7,26 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Sơ đồ bàn - Việt À la carte</title>
-        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/manage-tables.css?v=1.1">
+        <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/manage-tables.css?v=1.2">
     </head>
     <body>
         <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
         <main class="tables-page">
             <%-- Tổng quan và thông báo flash do servlet chuẩn bị trước khi forward. --%>
-            <header class="tables-heading">
+                        <header class="tables-heading">
                 <div>
                     <p class="tables-eyebrow">VẬN HÀNH NHÀ HÀNG</p>
                     <h1>Sơ đồ bàn</h1>
                     <p class="tables-intro">Danh sách bàn được sắp xếp theo từng khu vực.</p>
                 </div>
-                <c:if test="${not tableLoadFailed}">
-                    <p class="table-count"><strong><c:out value="${tableCount}" /></strong> bàn</p>
-                </c:if>
+                <div class="tables-heading-actions">
+                    <c:if test="${not tableLoadFailed}">
+                        <p class="table-count"><strong><c:out value="${tableCount}" /></strong> bàn</p>
+                    </c:if>
+                    <a class="button-secondary qr-all-btn" href="${pageContext.request.contextPath}/table-qr" aria-label="In mã QR tất cả bàn">
+                        <i class="fa-solid fa-qrcode" aria-hidden="true"></i> Mã QR từng bàn
+                    </a>
+                </div>
             </header>
 
             <c:if test="${not empty tableMessage}">
@@ -128,7 +133,9 @@
                                             </c:choose>
                                         </span>
                                     </div>
-                                    <h3><c:out value="${table.tableName}" /></h3>
+                                    <div class="table-name-row">
+                                        <h3><c:out value="${table.tableName}" /></h3>
+                                    </div>
                                     <p class="capacity"><c:out value="${table.capacity}" /> khách</p>
                                     <c:if test="${not empty table.description}">
                                         <p class="table-description"><c:out value="${table.description}" /></p>
@@ -136,7 +143,6 @@
                                     <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
                                         <div class="table-actions">
                                             <a href="${pageContext.request.contextPath}/manage-orders?action=new&tableId=${table.tableId}">Order cho bàn</a>
-                                            <a href="${pageContext.request.contextPath}/table-qr?id=${table.tableId}">Mã QR</a>
                                         </div>
                                     </c:if>
                                     <%-- Manager quản lý thông tin bàn; Server/Receptionist chỉ đổi trạng thái. --%>

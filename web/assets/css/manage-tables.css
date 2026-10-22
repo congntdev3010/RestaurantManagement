@@ -282,6 +282,23 @@ body {
     font-weight: 700;
 }
 
+.table-name-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin: 15px 0 5px;
+}
+
+.table-qr-link {
+    color: #7c2028;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+}
+
 .table-card h3 {
     margin: 15px 0 5px;
     color: #421217;

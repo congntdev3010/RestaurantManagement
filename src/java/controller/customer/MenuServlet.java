@@ -20,6 +20,37 @@ import jakarta.servlet.http.HttpSession;
 public class MenuServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 8; // Hiển thị 8 món / trang
+    /** Tên + SĐT khách nhập khi vào bàn (lưu trong phiên). */
+    public static final String GUEST_NAME = "orderGuestName";
+    public static final String GUEST_PHONE = "orderGuestPhone";
+
+    /** Khách gửi tên + SĐT ở bước vào bàn. */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        HttpSession session = request.getSession();
+        if (!CartServlet.validToken(session, request.getParameter("csrfToken"))) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN); return;
+        }
+        String name = request.getParameter("customerName") == null ? "" : request.getParameter("customerName").trim();
+        String phone = request.getParameter("customerPhone") == null ? "" : request.getParameter("customerPhone").trim();
+        // Quy tắc giống trang hồ sơ (ProfileServlet): tên ≤ 30 ký tự, SĐT bắt đầu bằng 0 và đúng 10 chữ số.
+        // Giữ lại những gì khách đã gõ để form không bị xoá khi nhập sai.
+        session.setAttribute("infoName", name);
+        session.setAttribute("infoPhone", phone);
+        if (name.isEmpty() || name.length() > 30) {
+            session.setAttribute("infoError", "Họ và tên là bắt buộc và tối đa 30 ký tự.");
+        } else if (!phone.matches("0\\d{9}")) {
+            session.setAttribute("infoError", "Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số.");
+        } else {
+            session.setAttribute(GUEST_NAME, name);
+            session.setAttribute(GUEST_PHONE, phone);
+            session.removeAttribute("infoName");
+            session.removeAttribute("infoPhone");
+        }
+        response.sendRedirect(request.getContextPath() + "/order");
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -48,7 +79,26 @@ public class MenuServlet extends HttpServlet {
             session.setAttribute(CartServlet.TABLE_ID, qrTable.getTableId());
             session.setAttribute(CartServlet.TABLE_NAME, qrTable.getTableName());
         }
+        // Màn gọi món tại bàn chỉ mở được khi đã quét QR hợp lệ (phiên có bàn).
+        // Khách tự gõ /order trên thanh địa chỉ thì đưa về trang chủ.
+        if ("/order".equals(request.getServletPath()) && session.getAttribute(CartServlet.TABLE_ID) == null) {
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
+        }
         request.setAttribute("orderTableName", session.getAttribute(CartServlet.TABLE_NAME));
+
+        // Quét QR vào bàn: phải điền tên + SĐT một lần trước khi sang màn gọi món.
+        if ("/order".equals(request.getServletPath()) && session.getAttribute(CartServlet.TABLE_ID) != null
+                && (session.getAttribute(GUEST_NAME) == null || session.getAttribute(GUEST_PHONE) == null)) {
+            request.setAttribute("infoError", session.getAttribute("infoError"));
+            session.removeAttribute("infoError");
+            request.setAttribute("infoName", session.getAttribute("infoName"));
+            request.setAttribute("infoPhone", session.getAttribute("infoPhone"));
+            session.removeAttribute("infoName");
+            session.removeAttribute("infoPhone");
+            request.getRequestDispatcher("/WEB-INF/views/customer/order-info.jsp").forward(request, response);
+            return;
+        }
 
         // Lấy các tham số lọc từ URL
         // Lấy tham số keyword từ URL và xử lý giải mã chuẩn UTF-8
@@ -102,7 +152,7 @@ public class MenuServlet extends HttpServlet {
                 + "&sortBy=" + URLEncoder.encode(sortBy == null ? "" : sortBy, StandardCharsets.UTF_8)
                 + "&keyword=" + URLEncoder.encode(keyword == null ? "" : keyword, StandardCharsets.UTF_8);
         request.setAttribute("orderReturnTo", returnTo.replace("/menu?", "/order?"));
-        // Giỏ hiện tại: số lượng từng món + tổng, để vẽ nút +/- và thanh giỏ hàng.
+        // Món khách đã chọn: số lượng từng món + tổng, để vẽ nút +/- và panel "Món đã chọn".
         java.util.Map<Integer, Integer> cart = CartServlet.getCart(session);
         java.util.List<model.Dish> cartDishes = new java.util.ArrayList<>();
         int cartCount = 0;

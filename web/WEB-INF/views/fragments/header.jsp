@@ -107,10 +107,12 @@
             <i class="fa-solid fa-book-open" aria-hidden="true"></i><span>Thực đơn</span>
         </a>
         <% } %>
+        <% if (!isManager) { %>
         <a class="sidebar-link <%= currentURI.endsWith("/news") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/news" title="Tin tức" aria-label="Tin tức">
             <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Tin tức</span>
         </a>
+        <% } %>
         <% if (canViewTables) { %>
         <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-tables" title="Sơ đồ bàn" aria-label="Sơ đồ bàn">
@@ -118,16 +120,10 @@
         </a>
         <% } %>
         <% } %>
-        <% if (isChef || isManager) { %>
+        <% if (isChef) { %>
         <a class="sidebar-link <%= currentURI.contains("kitchen") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/kitchen" title="Màn hình bếp" aria-label="Màn hình bếp">
             <i class="fa-solid fa-fire-burner" aria-hidden="true"></i><span>Màn hình bếp</span>
-        </a>
-        <% } %>
-        <% if (isManager) { %>
-        <a class="sidebar-link <%= currentURI.contains("manage-orders") ? "active" : "" %>"
-           href="${pageContext.request.contextPath}/manage-orders" title="Quản lý order" aria-label="Quản lý order">
-            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Quản lý order</span>
         </a>
         <% } %>
         <% if (isManager || isAdmin) { %>

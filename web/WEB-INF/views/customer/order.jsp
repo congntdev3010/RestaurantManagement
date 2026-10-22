@@ -8,7 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gọi món - Việt À la carte</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/order-menu.css?v=1.0">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/order-menu.css?v=1.1">
 </head>
 <body class="qr-order">
     <c:set var="ctx" value="${pageContext.request.contextPath}"/>
@@ -23,29 +23,26 @@
     </c:if>
     <c:if test="${not empty cartMessage}"><p class="qr-flash" role="status"><c:out value="${cartMessage}"/></p></c:if>
 
-    <form class="qr-search" action="${ctx}/order" method="get" accept-charset="UTF-8">
-        <input type="search" name="keyword" placeholder="Tìm món ăn" value="<c:out value='${keyword}'/>">
-        <c:if test="${categoryId > 0}"><input type="hidden" name="categoryId" value="${categoryId}"></c:if>
-        <button type="submit">Tìm</button>
-    </form>
+    <div class="qr-search">
+        <input type="search" id="qrSearchInput" placeholder="Tìm món ăn (gõ để tìm ngay...)" value="<c:out value='${keyword}'/>" autocomplete="off" aria-label="Tìm món ăn">
+    </div>
 
-    <nav class="qr-cats" aria-label="Danh mục món ăn">
-        <c:url var="allUrl" value="/order"><c:param name="keyword" value="${keyword}"/></c:url>
-        <a href="${allUrl}" class="${categoryId == 0 ? 'active' : ''}">Tất cả</a>
+    <nav class="qr-cats" id="qrCats" aria-label="Danh mục món ăn">
+        <a href="javascript:void(0)" data-cat="" class="${categoryId == 0 ? 'active' : ''}">Tất cả</a>
         <c:forEach var="cat" items="${categories}">
-            <c:url var="catUrl" value="/order"><c:param name="categoryId" value="${cat.categoryId}"/><c:param name="keyword" value="${keyword}"/></c:url>
-            <a href="${catUrl}" class="${categoryId == cat.categoryId ? 'active' : ''}"><c:out value="${cat.categoryName}"/></a>
+            <a href="javascript:void(0)" data-cat="${cat.categoryId}" class="${categoryId == cat.categoryId ? 'active' : ''}"><c:out value="${cat.categoryName}"/></a>
         </c:forEach>
     </nav>
 
     <div class="qr-layout">
-    <main class="qr-list">
+    <main class="qr-list" id="qrDishList">
+        <p class="qr-empty" id="qrEmptySearch" style="display:none;">Không tìm thấy món phù hợp.</p>
         <c:choose>
             <c:when test="${empty dishes}"><p class="qr-empty">Không tìm thấy món phù hợp.</p></c:when>
             <c:otherwise>
                 <c:forEach var="dish" items="${dishes}">
                     <c:set var="qty" value="${empty cartQuantities[dish.dishId] ? 0 : cartQuantities[dish.dishId]}"/>
-                    <article class="qr-dish">
+                    <article class="qr-dish" data-cat="${dish.categoryId}" data-name="<c:out value='${dish.dishName}'/>" data-desc="<c:out value='${dish.description}'/>">
                         <div class="qr-dish-info">
                             <h2><c:out value="${dish.dishName}"/><c:if test="${dish.isFeatured}"><span class="qr-hot">Bán chạy</span></c:if></h2>
                             <p><c:out value="${dish.description}"/></p>
@@ -93,23 +90,26 @@
                         <c:set var="q" value="${cartQuantities[d.dishId]}"/>
                         <li>
                             <div class="qr-line-name"><c:out value="${d.dishName}"/><small><fmt:formatNumber value="${d.price * q}" pattern="#,###"/> đ</small></div>
-                            <div class="qr-step qr-step-inline">
-                                <form action="${ctx}/cart" method="post">
-                                    <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
-                                    <input type="hidden" name="action" value="update">
-                                    <input type="hidden" name="returnTo" value="${orderReturnTo}">
-                                    <input type="hidden" name="quantity_${d.dishId}" value="${q - 1}">
-                                    <button type="submit" aria-label="Bớt một ${d.dishName}">−</button>
-                                </form>
-                                <span><c:out value="${q}"/></span>
-                                <form action="${ctx}/cart" method="post">
-                                    <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
-                                    <input type="hidden" name="action" value="add">
-                                    <input type="hidden" name="returnTo" value="${orderReturnTo}">
-                                    <input type="hidden" name="dishId" value="${d.dishId}">
-                                    <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" aria-label="Thêm một ${d.dishName}">+</button>
-                                </form>
+                            <div class="qr-line-right">
+                                <div class="qr-step qr-step-inline qr-step-sm">
+                                    <form action="${ctx}/cart" method="post">
+                                        <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
+                                        <input type="hidden" name="action" value="update">
+                                        <input type="hidden" name="returnTo" value="${orderReturnTo}">
+                                        <input type="hidden" name="quantity_${d.dishId}" value="${q - 1}">
+                                        <button type="submit" aria-label="Bớt một ${d.dishName}">−</button>
+                                    </form>
+                                    <span><c:out value="${q}"/></span>
+                                    <form action="${ctx}/cart" method="post">
+                                        <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="returnTo" value="${orderReturnTo}">
+                                        <input type="hidden" name="dishId" value="${d.dishId}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" aria-label="Thêm một ${d.dishName}">+</button>
+                                    </form>
+                                </div>
+                                <span class="qr-unit-price"><small>Đơn giá: </small><fmt:formatNumber value="${d.price}" pattern="#,###"/> đ</span>
                             </div>
                         </li>
                     </c:forEach>
@@ -118,11 +118,129 @@
         </c:choose>
         <div class="qr-total">Tổng tiền <strong><fmt:formatNumber value="${cartTotal}" pattern="#,###"/> đ</strong></div>
         <c:choose>
-            <c:when test="${cartCount > 0 and not empty orderTableName}"><a class="qr-send" href="${ctx}/cart?review=1">Gửi order chờ duyệt</a></c:when>
+            <c:when test="${cartCount > 0 and not empty orderTableName}"><a class="qr-send" href="${ctx}/cart?review=1">Chi tiết order</a></c:when>
             <c:otherwise><span class="qr-send disabled"><c:out value="${empty orderTableName ? 'Quét QR bàn để gửi order' : 'Hãy chọn món'}"/></span></c:otherwise>
         </c:choose>
     </aside>
     </div>
 
+    <script>
+    (function () {
+        var KEY = 'qrOrderScroll';
+        var KEY_SEARCH = 'qrSearchKey';
+        var KEY_CAT = 'qrSearchCat';
+
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        try {
+            var saved = sessionStorage.getItem(KEY);
+            if (saved !== null) {
+                sessionStorage.removeItem(KEY);
+                var y = parseInt(saved, 10) || 0;
+                window.scrollTo(0, y);
+                window.addEventListener('load', function () { window.scrollTo(0, y); });
+            }
+        } catch (e) {}
+
+        // Tìm kiếm realtime và lọc danh mục
+        var searchInput = document.getElementById('qrSearchInput');
+        var dishes = document.querySelectorAll('.qr-dish');
+        var emptySearch = document.getElementById('qrEmptySearch');
+        var catNav = document.getElementById('qrCats');
+        var currentCat = '${categoryId > 0 ? categoryId : ""}';
+
+        function norm(str) {
+            if (!str) return '';
+            str = ('' + str).toLowerCase();
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        }
+
+        function applyFilter() {
+            var query = norm(searchInput ? searchInput.value : '');
+            var matchedCount = 0;
+            dishes.forEach(function (dish) {
+                var dishCat = dish.getAttribute('data-cat') || '';
+                var dishName = norm(dish.getAttribute('data-name'));
+                var dishDesc = norm(dish.getAttribute('data-desc'));
+
+                var catMatch = !currentCat || dishCat === currentCat;
+                var queryMatch = !query || dishName.indexOf(query) > -1 || dishDesc.indexOf(query) > -1;
+
+                if (catMatch && queryMatch) {
+                    dish.style.display = '';
+                    matchedCount++;
+                } else {
+                    dish.style.display = 'none';
+                }
+            });
+
+            if (emptySearch) {
+                emptySearch.style.display = (matchedCount === 0 && dishes.length > 0) ? 'block' : 'none';
+            }
+        }
+
+        if (searchInput) {
+            ['input', 'keyup', 'change', 'search'].forEach(function (evt) {
+                searchInput.addEventListener(evt, function () {
+                    try { sessionStorage.setItem(KEY_SEARCH, searchInput.value); } catch(e) {}
+                    applyFilter();
+                });
+            });
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') e.preventDefault();
+            });
+        }
+
+        if (catNav) {
+            catNav.addEventListener('click', function (e) {
+                var btn = e.target.closest('a[data-cat]');
+                if (!btn) return;
+                e.preventDefault();
+                catNav.querySelectorAll('a[data-cat]').forEach(function (a) {
+                    a.classList.toggle('active', a === btn);
+                });
+                currentCat = btn.getAttribute('data-cat') || '';
+                try { sessionStorage.setItem(KEY_CAT, currentCat); } catch(e) {}
+                applyFilter();
+            });
+        }
+
+        // Khôi phục bộ lọc từ khóa và danh mục sau khi tải lại trang do bấm +/-
+        try {
+            var savedCat = sessionStorage.getItem(KEY_CAT);
+            if (savedCat !== null && catNav) {
+                var targetBtn = catNav.querySelector('a[data-cat="' + savedCat + '"]');
+                if (targetBtn) {
+                    catNav.querySelectorAll('a[data-cat]').forEach(function (a) {
+                        a.classList.toggle('active', a === targetBtn);
+                    });
+                    currentCat = savedCat;
+                }
+            }
+            var savedSearch = sessionStorage.getItem(KEY_SEARCH);
+            if (savedSearch && searchInput) {
+                searchInput.value = savedSearch;
+            }
+        } catch (e) {}
+
+        applyFilter();
+
+        document.querySelectorAll('form[action$="/cart"]').forEach(function (f) {
+            f.addEventListener('submit', function () {
+                try {
+                    sessionStorage.setItem(KEY, String(window.pageYOffset || document.documentElement.scrollTop || 0));
+                    if (searchInput) sessionStorage.setItem(KEY_SEARCH, searchInput.value || '');
+                    sessionStorage.setItem(KEY_CAT, currentCat || '');
+                } catch (e) {}
+            });
+        });
+    })();
+    </script>
 </body>
 </html>
