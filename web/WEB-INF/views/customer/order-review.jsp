@@ -117,6 +117,19 @@
             white-space: nowrap;
         }
         @media (max-width: 600px) {
+            /* Điện thoại: mỗi món là một thẻ thay vì bảng 5 cột */
+            .orders-page { margin: 12px auto; padding: 0 12px 32px; }
+            .rv-table, .rv-table tbody, .rv-table tr, .rv-table td { display: block; width: 100%; }
+            .rv-table colgroup, .rv-table thead { display: none; }
+            .rv-table tr { background: #fff; border: 1px solid #e8dfd8; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+            .rv-table td { padding: 4px 0; box-sizing: border-box; }
+            .rv-table td.rv-name { font-weight: 700; color: #421217; font-size: 1rem; }
+            .rv-table td[data-label] { display: flex; justify-content: space-between; text-align: right; }
+            .rv-table td[data-label]::before { content: attr(data-label); color: #6a6259; text-align: left; }
+            .rv-table td.rv-sum { font-weight: 700; color: #7a1f1f; }
+            .rv-note { font-size: 16px; padding: 10px; }
+            .review-total-bar { justify-content: space-between; }
+            .review-buttons button, .review-buttons .button { padding: 13px 16px; font-size: 1rem; }
             .review-action-row {
                 flex-direction: column;
                 align-items: stretch;
@@ -171,11 +184,11 @@
                 <tbody>
                     <c:forEach var="dish" items="${cartDishes}">
                     <tr>
-                        <td><c:out value="${dish.dishName}"/></td>
-                        <td class="rv-qty"><c:out value="${cartQuantities[dish.dishId]}"/></td>
-                        <td class="rv-price"><fmt:formatNumber value="${dish.price}" pattern="#,###"/> đ</td>
-                        <td><input type="text" class="rv-note" name="note_${dish.dishId}" maxlength="255"></td>
-                        <td class="rv-sum"><fmt:formatNumber value="${dish.price * cartQuantities[dish.dishId]}" pattern="#,###"/> đ</td>
+                        <td class="rv-name"><c:out value="${dish.dishName}"/></td>
+                        <td class="rv-qty" data-label="Số lượng"><c:out value="${cartQuantities[dish.dishId]}"/></td>
+                        <td class="rv-price" data-label="Đơn giá"><fmt:formatNumber value="${dish.price}" pattern="#,###"/> đ</td>
+                        <td class="rv-notecell"><input type="text" class="rv-note" name="note_${dish.dishId}" maxlength="255" placeholder="Ghi chú (ít cay, không hành...)"></td>
+                        <td class="rv-sum" data-label="Tạm tính"><fmt:formatNumber value="${dish.price * cartQuantities[dish.dishId]}" pattern="#,###"/> đ</td>
                     </tr>
                     </c:forEach>
                 </tbody>
