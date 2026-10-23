@@ -124,9 +124,18 @@
     </aside>
     </div>
 
+    <%-- Thanh giỏ hàng cố định dưới đáy (chỉ hiện trên điện thoại/máy tính bảng). --%>
+    <div class="qr-cartbar">
+        <div class="qr-sum"><c:out value="${cartCount}"/> món<strong><fmt:formatNumber value="${cartTotal}" pattern="#,###"/> đ</strong></div>
+        <a href="#cart-panel">Xem món đã chọn</a>
+    </div>
+    <div hidden>
+    </div>
+
     <script>
     (function () {
         var KEY = 'qrOrderScroll';
+        // (thanh giỏ hàng dưới đáy nằm trong thẻ .qr-cartbar phía trên script này)
         var KEY_SEARCH = 'qrSearchKey';
         var KEY_CAT = 'qrSearchCat';
 
