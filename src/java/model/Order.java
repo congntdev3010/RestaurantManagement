@@ -25,6 +25,11 @@ public class Order {
     private Integer cancelledBy;
     private Timestamp cancelledAt;
     private String cancellationReason;
+    /** Số món đã duyệt nhưng chưa phục vụ (chỉ có khi lấy từ danh sách đơn). */
+    private int cookingCount;
+
+    public int getCookingCount() { return cookingCount; }
+    public void setCookingCount(int cookingCount) { this.cookingCount = cookingCount; }
     private List<OrderItem> items = new ArrayList<>();
 
     public int getOrderId() { return orderId; }

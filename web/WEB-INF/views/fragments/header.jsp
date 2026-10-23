@@ -11,6 +11,7 @@
         boolean isAdmin = "Admin".equalsIgnoreCase(roleName);
         boolean isManager = "Manager".equalsIgnoreCase(roleName);
         boolean isChef = "Chef".equalsIgnoreCase(roleName);
+        boolean isReceptionist = "Receptionist".equalsIgnoreCase(roleName);
         boolean hideHeader = isAdmin || isManager || "Server".equalsIgnoreCase(roleName)
             || "Receptionist".equalsIgnoreCase(roleName) || isChef;
         boolean canViewTables = isManager || "Server".equalsIgnoreCase(roleName)
@@ -83,29 +84,46 @@
         </div>
     </div>
     <nav class="staff-sidebar-nav">
+        <% if ("Server".equalsIgnoreCase(roleName)) { %>
+        <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manage-tables" title="Sơ đồ bàn" aria-label="Sơ đồ bàn">
+            <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Sơ đồ bàn</span>
+        </a>
+        <a class="sidebar-link <%= currentURI.contains("manage-orders") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manage-orders" title="Quản lý order" aria-label="Quản lý order">
+            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Quản lý order</span>
+        </a>
+        <% } else { %>
+        <% if (!isAdmin && !isChef) { %>
+        <% if (!isManager && !isReceptionist) { %>
         <a class="sidebar-link <%= currentURI.contains("home") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/home" title="Trang chủ" aria-label="Trang chủ">
             <i class="fa-solid fa-house" aria-hidden="true"></i><span>Trang chủ</span>
         </a>
-        <% if (!isAdmin) { %>
+        <% } %>
+        <% if (!isReceptionist) { %>
         <a class="sidebar-link <%= currentURI.contains("menu") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/menu" title="Thực đơn" aria-label="Thực đơn">
             <i class="fa-solid fa-book-open" aria-hidden="true"></i><span>Thực đơn</span>
         </a>
         <% } %>
+        <% if (!isManager) { %>
         <a class="sidebar-link <%= currentURI.endsWith("/news") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/news" title="Tin tức" aria-label="Tin tức">
             <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Tin tức</span>
         </a>
+        <% } %>
         <% if (canViewTables) { %>
         <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-tables" title="Sơ đồ bàn" aria-label="Sơ đồ bàn">
             <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Sơ đồ bàn</span>
         </a>
         <% } %>
-        <% if ("Server".equalsIgnoreCase(roleName) || isManager) { %>
-        <a class="sidebar-link <%= currentURI.contains("manage-orders") ? "active" : "" %>" href="${pageContext.request.contextPath}/manage-orders" title="Quản lý đơn hàng" aria-label="Quản lý đơn hàng">
-            <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Đơn hàng</span>
+        <% } %>
+        <% if (isChef) { %>
+        <a class="sidebar-link <%= currentURI.contains("kitchen") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/kitchen" title="Màn hình bếp" aria-label="Màn hình bếp">
+            <i class="fa-solid fa-fire-burner" aria-hidden="true"></i><span>Màn hình bếp</span>
         </a>
         <% } %>
         <% if (isManager || isAdmin) { %>
@@ -119,6 +137,7 @@
            href="${pageContext.request.contextPath}/manage-news" title="Quản lý tin tức" aria-label="Quản lý tin tức">
             <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Quản lý tin tức</span>
         </a>
+        <% } %>
         <% } %>
     </nav>
     <div class="sidebar-profile">

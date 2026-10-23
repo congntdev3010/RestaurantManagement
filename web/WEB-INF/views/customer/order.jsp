@@ -1,100 +1,246 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" language="java" %>
-<%@ page import="java.util.List" %>
-<%@ page import="model.Dish" %>
-<%@ page import="model.Category" %>
-<%@ page import="java.text.DecimalFormat" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%
-    List<Category> categories = (List<Category>) request.getAttribute("categories");
-    List<Dish> dishes = (List<Dish>) request.getAttribute("dishes");
-    String keyword = request.getAttribute("keyword") != null ? (String) request.getAttribute("keyword") : "";
-    int categoryId = request.getAttribute("categoryId") != null ? (Integer) request.getAttribute("categoryId") : 0;
-    String sortBy = request.getAttribute("sortBy") != null ? (String) request.getAttribute("sortBy") : "";
-    int currentPage = (Integer) request.getAttribute("currentPage");
-    int totalPages = (Integer) request.getAttribute("totalPages");
-    DecimalFormat formatter = new DecimalFormat("#,###");
-%>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gọi món - Việt À la carte</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/menu.css?v=1.0">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/orders.css?v=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/order-menu.css?v=1.1">
 </head>
-<body>
-    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
-    <main class="menu-container order-menu-page">
-        <c:if test="${not empty cartMessage}">
-            <div class="cart-feedback" role="status"><i class="fa-solid fa-check" aria-hidden="true"></i><span><c:out value="${cartMessage}"/></span></div>
-        </c:if>
-        <header class="order-menu-heading">
-            <div>
-                <span class="menu-subtitle">Chọn món yêu thích</span>
-                <h1 class="menu-main-title">Gọi món</h1>
-            </div>
-            <a class="button" href="${pageContext.request.contextPath}/cart"><i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> Xem giỏ hàng</a>
-        </header>
-        <form action="${pageContext.request.contextPath}/order" method="get" accept-charset="UTF-8" class="filter-bar">
-            <div class="search-box">
-                <input type="text" name="keyword" placeholder="Tìm món ăn" value="<%= keyword %>">
-                <button type="submit" aria-label="Tìm kiếm"><i class="fa-solid fa-magnifying-glass"></i></button>
-            </div>
-            <div class="filter-group">
-                <select name="categoryId" onchange="this.form.submit()">
-                    <option value="0">Tất cả danh mục</option>
-                    <% if (categories != null) for (Category category : categories) { %>
-                        <option value="<%= category.getCategoryId() %>" <%= categoryId == category.getCategoryId() ? "selected" : "" %>><%= category.getCategoryName() %></option>
-                    <% } %>
-                </select>
-                <select name="sortBy" onchange="this.form.submit()">
-                    <option value="">Sắp xếp mặc định</option>
-                    <option value="asc" <%= "asc".equals(sortBy) ? "selected" : "" %>>Giá thấp đến cao</option>
-                    <option value="desc" <%= "desc".equals(sortBy) ? "selected" : "" %>>Giá cao đến thấp</option>
-                </select>
-            </div>
-        </form>
-        <nav class="category-tabs" aria-label="Danh mục món ăn">
-            <a href="${pageContext.request.contextPath}/order?keyword=<%= keyword %>&sortBy=<%= sortBy %>" class="tab-item <%= categoryId == 0 ? "active" : "" %>">Tất cả</a>
-            <% if (categories != null) for (Category category : categories) { %>
-                <a href="${pageContext.request.contextPath}/order?categoryId=<%= category.getCategoryId() %>&keyword=<%= keyword %>&sortBy=<%= sortBy %>" class="tab-item <%= categoryId == category.getCategoryId() ? "active" : "" %>"><%= category.getCategoryName() %></a>
-            <% } %>
-        </nav>
-        <section class="dishes-grid" aria-label="Danh sách món ăn">
-            <% if (dishes != null && !dishes.isEmpty()) for (Dish dish : dishes) { %>
-                <article class="dish-card">
-                    <div class="dish-img-wrapper">
-                        <img src="${pageContext.request.contextPath}/<%= dish.getImage() != null && dish.getImage().startsWith("images/") ? "assets/" + dish.getImage() : dish.getImage() %>" alt="<%= dish.getDishName() %>">
-                        <% if (dish.isIsFeatured()) { %><span class="badge-featured"><i class="fa-solid fa-fire" aria-hidden="true"></i> Bán chạy</span><% } %>
-                    </div>
-                    <div class="dish-info">
-                        <span class="dish-category"><%= dish.getCategoryName() %></span>
-                        <h2 class="dish-name"><%= dish.getDishName() %></h2>
-                        <p class="dish-desc"><%= dish.getDescription() != null ? dish.getDescription() : "" %></p>
-                        <div class="dish-bottom"><span class="dish-price"><%= formatter.format(dish.getPrice()) %> đ <span class="dish-unit">/ <%= dish.getUnit() %></span></span></div>
-                        <form action="${pageContext.request.contextPath}/cart" method="post" class="order-add-form">
-                            <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
-                            <input type="hidden" name="action" value="add">
-                            <input type="hidden" name="returnTo" value="${orderReturnTo}">
-                            <input type="hidden" name="dishId" value="<%= dish.getDishId() %>">
-                            <label>Số lượng <input type="number" name="quantity" min="1" max="99" value="1"></label>
-                            <button type="submit"><i class="fa-solid fa-plus" aria-hidden="true"></i> Thêm món</button>
-                        </form>
-                    </div>
-                </article>
-            <% } else { %>
-                <div class="no-result"><h2>Không tìm thấy món phù hợp</h2><p>Thử đổi từ khóa hoặc danh mục.</p></div>
-            <% } %>
-        </section>
-        <% if (totalPages > 1) { %>
-            <nav class="pagination" aria-label="Phân trang">
-                <% for (int pageNumber = 1; pageNumber <= totalPages; pageNumber++) { %>
-                    <a href="${pageContext.request.contextPath}/order?page=<%= pageNumber %>&keyword=<%= keyword %>&categoryId=<%= categoryId %>&sortBy=<%= sortBy %>" class="page-link <%= pageNumber == currentPage ? "active" : "" %>"><%= pageNumber %></a>
-                <% } %>
-            </nav>
-        <% } %>
+<body class="qr-order">
+    <c:set var="ctx" value="${pageContext.request.contextPath}"/>
+    <header class="qr-top">
+        <small>Việt À la carte</small>
+        <h1>Gọi món</h1>
+        <c:if test="${not empty orderTableName}"><span class="qr-table">Bàn: <strong><c:out value="${orderTableName}"/></strong></span></c:if>
+    </header>
+
+    <c:if test="${empty orderTableName}">
+        <p class="qr-warn">Bạn chưa chọn bàn. Hãy quét mã QR đặt trên bàn để gọi món.</p>
+    </c:if>
+    <c:if test="${not empty cartMessage}"><p class="qr-flash" role="status"><c:out value="${cartMessage}"/></p></c:if>
+
+    <div class="qr-search">
+        <input type="search" id="qrSearchInput" placeholder="Tìm món ăn (gõ để tìm ngay...)" value="<c:out value='${keyword}'/>" autocomplete="off" aria-label="Tìm món ăn">
+    </div>
+
+    <nav class="qr-cats" id="qrCats" aria-label="Danh mục món ăn">
+        <a href="javascript:void(0)" data-cat="" class="${categoryId == 0 ? 'active' : ''}">Tất cả</a>
+        <c:forEach var="cat" items="${categories}">
+            <a href="javascript:void(0)" data-cat="${cat.categoryId}" class="${categoryId == cat.categoryId ? 'active' : ''}"><c:out value="${cat.categoryName}"/></a>
+        </c:forEach>
+    </nav>
+
+    <div class="qr-layout">
+    <main class="qr-list" id="qrDishList">
+        <p class="qr-empty" id="qrEmptySearch" style="display:none;">Không tìm thấy món phù hợp.</p>
+        <c:choose>
+            <c:when test="${empty dishes}"><p class="qr-empty">Không tìm thấy món phù hợp.</p></c:when>
+            <c:otherwise>
+                <c:forEach var="dish" items="${dishes}">
+                    <c:set var="qty" value="${empty cartQuantities[dish.dishId] ? 0 : cartQuantities[dish.dishId]}"/>
+                    <article class="qr-dish" data-cat="${dish.categoryId}" data-name="<c:out value='${dish.dishName}'/>" data-desc="<c:out value='${dish.description}'/>">
+                        <div class="qr-dish-info">
+                            <h2><c:out value="${dish.dishName}"/><c:if test="${dish.isFeatured}"><span class="qr-hot">Bán chạy</span></c:if></h2>
+                            <p><c:out value="${dish.description}"/></p>
+                            <span class="qr-price"><fmt:formatNumber value="${dish.price}" pattern="#,###"/> đ <small>/ <c:out value="${dish.unit}"/></small></span>
+                        </div>
+                        <div class="qr-dish-media">
+                            <c:if test="${not empty dish.image}">
+                                <img loading="lazy" alt="<c:out value='${dish.dishName}'/>"
+                                     src="${ctx}/${fn:startsWith(dish.image, 'images/') ? 'assets/' : ''}${dish.image}">
+                            </c:if>
+                            <div class="qr-step">
+                                <c:if test="${qty > 0}">
+                                    <form action="${ctx}/cart" method="post">
+                                        <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
+                                        <input type="hidden" name="action" value="update">
+                                        <input type="hidden" name="returnTo" value="${orderReturnTo}">
+                                        <input type="hidden" name="quantity_${dish.dishId}" value="${qty - 1}">
+                                        <button type="submit" aria-label="Bớt một ${dish.dishName}">−</button>
+                                    </form>
+                                    <span><c:out value="${qty}"/></span>
+                                </c:if>
+                                <form action="${ctx}/cart" method="post">
+                                    <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
+                                    <input type="hidden" name="action" value="add">
+                                    <input type="hidden" name="returnTo" value="${orderReturnTo}">
+                                    <input type="hidden" name="dishId" value="${dish.dishId}">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" aria-label="Thêm một ${dish.dishName}">+</button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
+                </c:forEach>
+            </c:otherwise>
+        </c:choose>
     </main>
+
+    <aside class="qr-panel" id="cart-panel" aria-label="Các món đã chọn">
+        <h2>Món đã chọn <span>(<c:out value="${cartCount}"/>)</span></h2>
+        <c:choose>
+            <c:when test="${empty cartDishes}"><p class="qr-empty">Chưa chọn món nào.</p></c:when>
+            <c:otherwise>
+                <ul class="qr-lines">
+                    <c:forEach var="d" items="${cartDishes}">
+                        <c:set var="q" value="${cartQuantities[d.dishId]}"/>
+                        <li>
+                            <div class="qr-line-name"><c:out value="${d.dishName}"/><small><fmt:formatNumber value="${d.price * q}" pattern="#,###"/> đ</small></div>
+                            <div class="qr-line-right">
+                                <div class="qr-step qr-step-inline qr-step-sm">
+                                    <form action="${ctx}/cart" method="post">
+                                        <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
+                                        <input type="hidden" name="action" value="update">
+                                        <input type="hidden" name="returnTo" value="${orderReturnTo}">
+                                        <input type="hidden" name="quantity_${d.dishId}" value="${q - 1}">
+                                        <button type="submit" aria-label="Bớt một ${d.dishName}">−</button>
+                                    </form>
+                                    <span><c:out value="${q}"/></span>
+                                    <form action="${ctx}/cart" method="post">
+                                        <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
+                                        <input type="hidden" name="action" value="add">
+                                        <input type="hidden" name="returnTo" value="${orderReturnTo}">
+                                        <input type="hidden" name="dishId" value="${d.dishId}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" aria-label="Thêm một ${d.dishName}">+</button>
+                                    </form>
+                                </div>
+                                <span class="qr-unit-price"><small>Đơn giá: </small><fmt:formatNumber value="${d.price}" pattern="#,###"/> đ</span>
+                            </div>
+                        </li>
+                    </c:forEach>
+                </ul>
+            </c:otherwise>
+        </c:choose>
+        <div class="qr-total">Tổng tiền <strong><fmt:formatNumber value="${cartTotal}" pattern="#,###"/> đ</strong></div>
+        <c:choose>
+            <c:when test="${cartCount > 0 and not empty orderTableName}"><a class="qr-send" href="${ctx}/cart?review=1">Chi tiết order</a></c:when>
+            <c:otherwise><span class="qr-send disabled"><c:out value="${empty orderTableName ? 'Quét QR bàn để gửi order' : 'Hãy chọn món'}"/></span></c:otherwise>
+        </c:choose>
+    </aside>
+    </div>
+
+    <script>
+    (function () {
+        var KEY = 'qrOrderScroll';
+        var KEY_SEARCH = 'qrSearchKey';
+        var KEY_CAT = 'qrSearchCat';
+
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        try {
+            var saved = sessionStorage.getItem(KEY);
+            if (saved !== null) {
+                sessionStorage.removeItem(KEY);
+                var y = parseInt(saved, 10) || 0;
+                window.scrollTo(0, y);
+                window.addEventListener('load', function () { window.scrollTo(0, y); });
+            }
+        } catch (e) {}
+
+        // Tìm kiếm realtime và lọc danh mục
+        var searchInput = document.getElementById('qrSearchInput');
+        var dishes = document.querySelectorAll('.qr-dish');
+        var emptySearch = document.getElementById('qrEmptySearch');
+        var catNav = document.getElementById('qrCats');
+        var currentCat = '${categoryId > 0 ? categoryId : ""}';
+
+        function norm(str) {
+            if (!str) return '';
+            str = ('' + str).toLowerCase();
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        }
+
+        function applyFilter() {
+            var query = norm(searchInput ? searchInput.value : '');
+            var matchedCount = 0;
+            dishes.forEach(function (dish) {
+                var dishCat = dish.getAttribute('data-cat') || '';
+                var dishName = norm(dish.getAttribute('data-name'));
+                var dishDesc = norm(dish.getAttribute('data-desc'));
+
+                var catMatch = !currentCat || dishCat === currentCat;
+                var queryMatch = !query || dishName.indexOf(query) > -1 || dishDesc.indexOf(query) > -1;
+
+                if (catMatch && queryMatch) {
+                    dish.style.display = '';
+                    matchedCount++;
+                } else {
+                    dish.style.display = 'none';
+                }
+            });
+
+            if (emptySearch) {
+                emptySearch.style.display = (matchedCount === 0 && dishes.length > 0) ? 'block' : 'none';
+            }
+        }
+
+        if (searchInput) {
+            ['input', 'keyup', 'change', 'search'].forEach(function (evt) {
+                searchInput.addEventListener(evt, function () {
+                    try { sessionStorage.setItem(KEY_SEARCH, searchInput.value); } catch(e) {}
+                    applyFilter();
+                });
+            });
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') e.preventDefault();
+            });
+        }
+
+        if (catNav) {
+            catNav.addEventListener('click', function (e) {
+                var btn = e.target.closest('a[data-cat]');
+                if (!btn) return;
+                e.preventDefault();
+                catNav.querySelectorAll('a[data-cat]').forEach(function (a) {
+                    a.classList.toggle('active', a === btn);
+                });
+                currentCat = btn.getAttribute('data-cat') || '';
+                try { sessionStorage.setItem(KEY_CAT, currentCat); } catch(e) {}
+                applyFilter();
+            });
+        }
+
+        // Khôi phục bộ lọc từ khóa và danh mục sau khi tải lại trang do bấm +/-
+        try {
+            var savedCat = sessionStorage.getItem(KEY_CAT);
+            if (savedCat !== null && catNav) {
+                var targetBtn = catNav.querySelector('a[data-cat="' + savedCat + '"]');
+                if (targetBtn) {
+                    catNav.querySelectorAll('a[data-cat]').forEach(function (a) {
+                        a.classList.toggle('active', a === targetBtn);
+                    });
+                    currentCat = savedCat;
+                }
+            }
+            var savedSearch = sessionStorage.getItem(KEY_SEARCH);
+            if (savedSearch && searchInput) {
+                searchInput.value = savedSearch;
+            }
+        } catch (e) {}
+
+        applyFilter();
+
+        document.querySelectorAll('form[action$="/cart"]').forEach(function (f) {
+            f.addEventListener('submit', function () {
+                try {
+                    sessionStorage.setItem(KEY, String(window.pageYOffset || document.documentElement.scrollTop || 0));
+                    if (searchInput) sessionStorage.setItem(KEY_SEARCH, searchInput.value || '');
+                    sessionStorage.setItem(KEY_CAT, currentCat || '');
+                } catch (e) {}
+            });
+        });
+    })();
+    </script>
 </body>
 </html>

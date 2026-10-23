@@ -1,9 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
-<c:if test="${requestScope.users == null or requestScope.roles == null}">
-    <c:redirect url="/manage-users" />
-</c:if>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -49,6 +46,8 @@
                     <c:url var="cancelEditUrl" value="/manage-users">
                         <c:param name="roleId" value="${roleFilterId}" />
                         <c:param name="name" value="${nameQuery}" />
+                        <c:param name="archivedRoleId" value="${archivedRoleFilterId}" />
+                        <c:param name="archivedName" value="${archivedNameQuery}" />
                     </c:url>
                     <a href="${cancelEditUrl}">Hủy chỉnh sửa</a>
                 </div>
@@ -83,6 +82,8 @@
                             <c:if test="${not empty nameQuery}">
                                 <c:url var="resetFilterUrl" value="/manage-users">
                                     <c:param name="roleId" value="${roleFilterId}" />
+                                    <c:param name="archivedRoleId" value="${archivedRoleFilterId}" />
+                                    <c:param name="archivedName" value="${archivedNameQuery}" />
                                 </c:url>
                                 <a class="filter-reset" href="${resetFilterUrl}">Xem tất cả</a>
                             </c:if>
@@ -124,6 +125,8 @@
                                             <c:param name="edit" value="${user.userId}" />
                                             <c:param name="roleId" value="${roleFilterId}" />
                                             <c:param name="name" value="${nameQuery}" />
+                                            <c:param name="archivedRoleId" value="${archivedRoleFilterId}" />
+                                            <c:param name="archivedName" value="${archivedNameQuery}" />
                                         </c:url>
                                         <a class="action-link" href="${editUserUrl}">Sửa</a>
                                         <form action="${pageContext.request.contextPath}/manage-users" method="post">
@@ -131,6 +134,8 @@
                                             <input type="hidden" name="userId" value="${user.userId}">
                                             <input type="hidden" name="filterRoleId" value="${roleFilterId}">
                                             <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
+                                            <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
+                                            <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
                                             <button class="action-button" type="submit">${user.isActive ? 'Khóa' : 'Mở khóa'}</button>
                                         </form>
                                         <form action="${pageContext.request.contextPath}/manage-users" method="post"
@@ -139,6 +144,8 @@
                                             <input type="hidden" name="userId" value="${user.userId}">
                                             <input type="hidden" name="filterRoleId" value="${roleFilterId}">
                                             <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
+                                            <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
+                                            <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
                                             <button class="action-button action-danger" type="submit">Xóa</button>
                                         </form>
                                     </div>
