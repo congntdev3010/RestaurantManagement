@@ -37,6 +37,10 @@ public class ManageTablesServlet extends HttpServlet {
         if (actor == null) {
             return;
         }
+        if (hasRole(actor, "Receptionist")) {
+            response.sendRedirect(request.getContextPath() + "/payment");
+            return;
+        }
 
         boolean canManage = isManager(actor);
         // Server không được đổi trạng thái bàn; bàn tự chuyển đang phục vụ khi server order hộ khách.

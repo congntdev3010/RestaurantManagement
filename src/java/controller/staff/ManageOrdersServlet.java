@@ -42,6 +42,10 @@ public class ManageOrdersServlet extends HttpServlet {
             if (id > 0) {
                 Order order = orders.getOrder(id, null);
                 if (order == null) { response.sendError(404); return; }
+                if (isServer(actor) && "PAID".equalsIgnoreCase(order.getStatus())) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
                 request.setAttribute("order", order);
                 request.setAttribute("paymentQrImageUrl", getServletContext().getInitParameter("paymentQrImageUrl"));
                 request.setAttribute("listStatus", listStatus(request.getParameter("status")));
@@ -70,8 +74,18 @@ public class ManageOrdersServlet extends HttpServlet {
                 // Mặc định chỉ hiện đơn chờ duyệt; status=ALL để xem toàn bộ.
                 String status = request.getParameter("status");
                 if (status == null || status.isEmpty()) status = "PENDING";
+                if (isServer(actor) && "PAID".equalsIgnoreCase(status)) {
+                    request.setAttribute("currentStatus", status);
+                    request.setAttribute("orders", java.util.Collections.emptyList());
+                    request.getRequestDispatcher("/WEB-INF/views/staff/manage-orders.jsp").forward(request, response);
+                    return;
+                }
                 request.setAttribute("currentStatus", status);
-                request.setAttribute("orders", orders.getOrders(null, "ALL".equals(status) ? null : status));
+                List<Order> visibleOrders = orders.getOrders(null, "ALL".equals(status) ? null : status);
+                if (isServer(actor)) {
+                    visibleOrders.removeIf(order -> "PAID".equalsIgnoreCase(order.getStatus()));
+                }
+                request.setAttribute("orders", visibleOrders);
                 request.getRequestDispatcher("/WEB-INF/views/staff/manage-orders.jsp").forward(request, response);
             }
         }
@@ -192,6 +206,9 @@ public class ManageOrdersServlet extends HttpServlet {
         User u=(User)v; String role=u.getRoleName();
         if(!"Server".equalsIgnoreCase(role)&&!"Manager".equalsIgnoreCase(role)
                 &&!"Receptionist".equalsIgnoreCase(role)){response.sendError(403);return null;} return u;
+    }
+    private boolean isServer(User user) {
+        return "Server".equalsIgnoreCase(user.getRoleName());
     }
     private int parseInt(String value,int fallback){try{return Integer.parseInt(value);}catch(Exception e){return fallback;}}
     private Integer parsePositive(String value){int i=parseInt(value,-1);return i>0?i:null;}

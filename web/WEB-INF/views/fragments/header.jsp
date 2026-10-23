@@ -134,8 +134,8 @@
             <i class="fa-solid fa-calendar-check" aria-hidden="true"></i><span>Quản lý đặt bàn</span>
         </a>
         <% if (isReceptionist) { %>
-        <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
-           href="${pageContext.request.contextPath}/manage-tables" title="Thanh toán theo bàn" aria-label="Thanh toán theo bàn">
+        <a class="sidebar-link <%= currentURI.contains("payment") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/payment" title="Thanh toán theo bàn" aria-label="Thanh toán theo bàn">
             <i class="fa-solid fa-cash-register" aria-hidden="true"></i><span>Thanh toán</span>
         </a>
         <% } %>

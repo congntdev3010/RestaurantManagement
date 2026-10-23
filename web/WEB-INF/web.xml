@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
-    <!-- Địa chỉ gốc của website dùng trong mã QR bàn, ví dụ http://192.168.1.10:8080/RestaurantManagement
+    <!-- Địa chỉ gốc của website dùng trong QR bàn, ví dụ http://192.168.1.10:8080/RestaurantManagement
     (không có dấu / ở cuối). Để trống thì lấy theo địa chỉ đang truy cập; khi đó mở trang bằng IP/tên miền
     thật chứ không dùng localhost, nếu không điện thoại của khách không quét vào được. -->
     <context-param>

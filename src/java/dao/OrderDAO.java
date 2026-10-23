@@ -153,6 +153,14 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 + "LEFT JOIN RestaurantTables t ON t.table_id=o.table_id WHERE 1=1 ");
         if (ownerId != null) sql.append("AND o.user_id = ? ");
         if (statusFilter != null && !statusFilter.isEmpty()) sql.append("AND o.order_status = ? ");
+        // Order hủy trước thời điểm chốt bill của bàn thuộc phiên đã kết thúc,
+        // nên giữ trong DB nhưng loại khỏi danh sách vận hành "Đã hủy".
+        if (ownerId == null && (statusFilter == null || "CANCELLED".equals(statusFilter))) {
+            sql.append("AND NOT (o.order_status = 'CANCELLED' AND EXISTS ("
+                    + "SELECT 1 FROM ServiceHistory sh WHERE sh.table_id = o.table_id "
+                    + "AND o.created_at <= sh.paid_at "
+                    + "AND sh.paid_at >= COALESCE(o.cancelled_at, o.closed_at))) ");
+        }
         // Đơn chờ duyệt luôn lên đầu danh sách, sau đó đến đơn mới nhất.
         // Đơn đang phục vụ: gọi trước hiện trước; các danh sách khác: mới nhất lên đầu.
         if (ownerId == null) {
