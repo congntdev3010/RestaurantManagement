@@ -25,6 +25,16 @@
                     </c:if>
                 </div>
             </header>
+            <c:if test="${not tableLoadFailed and (canChangeStatus or canManage)}">
+                <form class="table-payment-filter" method="get" action="${pageContext.request.contextPath}/manage-tables">
+                    <label for="paymentFilter">Bàn chưa thanh toán</label>
+                    <select id="paymentFilter" name="paymentFilter" onchange="this.form.submit()">
+                        <option value="ALL" ${paymentFilter eq 'ALL' ? 'selected' : ''}>Tất cả bàn</option>
+                        <option value="UNPAID" ${paymentFilter eq 'UNPAID' ? 'selected' : ''}>Chỉ bàn chưa thanh toán</option>
+                    </select>
+                    <strong><c:out value="${unpaidTableCount}" /></strong> bàn
+                </form>
+            </c:if>
 
             <c:if test="${not empty tableMessage}">
                 <p class="table-message ${tableMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
@@ -138,6 +148,11 @@
                                         <p class="table-description"><c:out value="${table.description}" /></p>
                                     </c:if>
                                     <div class="table-actions">
+                                        <c:if test="${not empty tableBills[table.tableId] and (sessionScope.user.roleName eq 'Receptionist' or sessionScope.user.roleName eq 'Manager')}">
+                                            <button type="button" class="pay-table-open" data-dialog="pay-${table.tableId}">
+                                                <i class="fa-solid fa-cash-register" aria-hidden="true"></i> Thanh toán
+                                            </button>
+                                        </c:if>
                                         <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
                                             <a href="${pageContext.request.contextPath}/manage-orders?action=new&tableId=${table.tableId}">Order</a>
                                         </c:if>
@@ -147,6 +162,72 @@
                                             </a>
                                         </c:if>
                                     </div>
+                                    <c:if test="${not empty tableBills[table.tableId]}">
+                                        <dialog id="pay-${table.tableId}" class="payment-dialog">
+                                            <h2>Bill <c:out value="${table.tableName}"/></h2>
+                                            <c:if test="${not empty tableBills[table.tableId].customerName}">
+                                                <p>Khách: <strong><c:out value="${tableBills[table.tableId].customerName}"/></strong>
+                                                    <c:out value="${tableBills[table.tableId].customerPhone}"/></p>
+                                            </c:if>
+                                            <c:if test="${not empty tableBills[table.tableId].reservationTime}">
+                                                <p>Giờ đặt: <c:out value="${tableBills[table.tableId].reservationTime}"/></p>
+                                            </c:if>
+                                            <c:if test="${not empty tableBills[table.tableId].checkedInAt}">
+                                                <p>Giờ mở bàn: <c:out value="${tableBills[table.tableId].checkedInAt}"/></p>
+                                            </c:if>
+                                            <table class="bill-lines"><thead><tr><th>Món</th><th>SL</th><th>Thành tiền</th></tr></thead><tbody>
+                                            <c:forEach var="line" items="${tableBills[table.tableId].items}">
+                                                <tr><td><c:out value="${line.dishName}"/></td><td><c:out value="${line.quantity}"/></td><td><c:out value="${line.lineTotal}"/> đ</td></tr>
+                                            </c:forEach></tbody></table>
+                                            <p><c:out value="${tableBills[table.tableId].orderCount}"/> order ·
+                                                Tổng cộng: <strong><c:out value="${tableBills[table.tableId].totalAmount}"/> đ</strong></p>
+                                            <c:choose>
+                                                <c:when test="${tableBills[table.tableId].readyForPayment and tableBills[table.tableId].totalAmount gt 0}">
+                                                    <form action="${pageContext.request.contextPath}/manage-tables" method="post">
+                                                        <input type="hidden" name="action" value="payTable">
+                                                        <input type="hidden" name="tableId" value="${table.tableId}">
+                                                        <label>Phương thức
+                                                            <select name="paymentMethod" class="payment-method" data-total="${tableBills[table.tableId].totalAmount}" required>
+                                                                <option value="CASH">Tiền mặt</option>
+                                                                <option value="QR">QR chuyển khoản</option>
+                                                            </select>
+                                                        </label>
+                                                        <div class="cash-fields">
+                                                            <label>Tiền khách đưa
+                                                                <input name="cashReceived" type="number" min="${tableBills[table.tableId].totalAmount}" step="1" inputmode="numeric">
+                                                            </label>
+                                                            <p>Tiền trả lại: <strong class="cash-change">0</strong> đ</p>
+                                                            <input type="hidden" name="cashChange" class="cash-change-value" value="0">
+                                                        </div>
+                                                        <div class="qr-fields" hidden
+                                                             data-bank="${fn:escapeXml(paymentBankCode)}"
+                                                             data-account="${fn:escapeXml(paymentAccountNumber)}"
+                                                             data-name="${fn:escapeXml(paymentAccountName)}"
+                                                             data-configured="${sepayWebhookConfigured}">
+                                                            <c:choose><c:when test="${sepayWebhookConfigured and not empty paymentAccountNumber and not empty paymentAccountName and tableBills[table.tableId].totalAmount gt 0}">
+                                                                <img class="payment-qr-image" alt="QR thanh toán" style="max-width:220px">
+                                                                <p>Chờ SePay xác nhận giao dịch thành công...</p>
+                                                            </c:when><c:otherwise>
+                                                                <p class="payment-warning">QR chưa được cấu hình SePay/webhook, chưa thể xác nhận tự động.</p>
+                                                            </c:otherwise></c:choose>
+                                                            <input name="paymentReference" maxlength="100" placeholder="Mã giao dịch (do webhook điền)">
+                                                        </div>
+                                                        <button type="submit">Xác nhận thanh toán</button>
+                                                        <button type="button" class="pay-table-close">Đóng</button>
+                                                    </form>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:if test="${tableBills[table.tableId].totalAmount le 0}">
+                                                        <p class="payment-warning">Bill 0 đ; order không phát sinh thanh toán.</p>
+                                                    </c:if>
+                                                    <c:if test="${tableBills[table.tableId].totalAmount gt 0}">
+                                                    <p class="payment-warning">Bàn còn <strong><c:out value="${tableBills[table.tableId].unfinishedItemCount}"/> món</strong> chưa phục vụ.</p>
+                                                    </c:if>
+                                                    <button type="button" class="pay-table-close">Đóng</button>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </dialog>
+                                    </c:if>
                                     <%-- Manager quản lý thông tin bàn; Server/Receptionist chỉ đổi trạng thái. --%>
                                     <c:choose>
                                         <c:when test="${canManage}">
@@ -198,6 +279,100 @@
         <script src="${pageContext.request.contextPath}/assets/js/qrcode.min.js"></script>
         <script>
             (function () {
+                document.querySelectorAll('.pay-table-open').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        document.getElementById(button.dataset.dialog).showModal();
+                    });
+                });
+                document.querySelectorAll('.pay-table-close').forEach(function (button) {
+                    button.addEventListener('click', function () { button.closest('dialog').close(); });
+                });
+                document.querySelectorAll('.payment-dialog form').forEach(function (form) {
+                    var method = form.querySelector('.payment-method');
+                    var cash = form.querySelector('.cash-fields');
+                    var qr = form.querySelector('.qr-fields');
+                    var received = form.querySelector('[name="cashReceived"]');
+                    var change = form.querySelector('.cash-change');
+                    var changeValue = form.querySelector('.cash-change-value');
+                    var total = Number(method.dataset.total || 0);
+                    var qrPollTimer = null;
+                    var qrRedirecting = false;
+                    function refresh() {
+                        var isCash = method.value === 'CASH';
+                        cash.hidden = !isCash; qr.hidden = isCash;
+                        if (!isCash) return;
+                        var value = Number(received.value || 0);
+                        var result = Math.max(0, value - total);
+                        change.textContent = result.toLocaleString('vi-VN');
+                        changeValue.value = result;
+                    }
+                    received.addEventListener('input', refresh);
+                    function stopQrPolling() {
+                        if (qrPollTimer !== null) {
+                            window.clearInterval(qrPollTimer);
+                            qrPollTimer = null;
+                        }
+                    }
+                    function pollQrPayment() {
+                        stopQrPolling();
+                        var tableId = form.querySelector('[name="tableId"]').value;
+                        var reference = form.querySelector('[name="paymentReference"]').value;
+                        function checkStatus() {
+                            fetch('${pageContext.request.contextPath}/payment-status?tableId='
+                                + encodeURIComponent(tableId) + '&reference='
+                                + encodeURIComponent(reference) + '&_=' + Date.now(), {
+                                    credentials: 'same-origin', cache: 'no-store'
+                                })
+                                .then(function (response) {
+                                    if (!response.ok) throw new Error('Payment status request failed');
+                                    return response.json();
+                                })
+                                .then(function (status) {
+                                    if (status.paid && !qrRedirecting) {
+                                        qrRedirecting = true;
+                                        stopQrPolling();
+                                        var dialog = form.closest('dialog');
+                                        if (dialog && dialog.open) dialog.close();
+                                        window.location.href = '${pageContext.request.contextPath}/service-history';
+                                    }
+                                });
+                        }
+                        checkStatus();
+                        qrPollTimer = window.setInterval(checkStatus, 2000);
+                    }
+                    method.addEventListener('change', function () {
+                        stopQrPolling();
+                        if (method.value === 'QR') {
+                            if (qr.dataset.configured !== 'true' || !qr.dataset.account || !qr.dataset.name) {
+                                method.value = 'CASH';
+                                alert('QR SePay chưa được cấu hình đầy đủ.');
+                                refresh();
+                                return;
+                            }
+                            var info = 'RM-TABLE-' + form.querySelector('[name="tableId"]').value + '-' + Date.now();
+                            var url = 'https://img.vietqr.io/image/' + encodeURIComponent(qr.dataset.bank)
+                                + '-' + encodeURIComponent(qr.dataset.account) + '-compact2.png?amount='
+                                + encodeURIComponent(Math.round(total)) + '&addInfo=' + encodeURIComponent(info)
+                                + '&accountName=' + encodeURIComponent(qr.dataset.name);
+                            qr.querySelector('.payment-qr-image').src = url;
+                            form.querySelector('[name="paymentReference"]').value = info;
+                            pollQrPayment();
+                        }
+                        refresh();
+                    });
+                    form.closest('dialog').addEventListener('close', stopQrPolling);
+                    form.addEventListener('submit', function (event) {
+                        if (method.value === 'CASH' && Number(received.value || 0) < total) {
+                            event.preventDefault();
+                            alert('Tiền khách đưa chưa đủ.');
+                        }
+                        if (method.value === 'QR') {
+                            event.preventDefault();
+                            alert('Thanh toán QR sẽ tự động hoàn tất sau khi hệ thống nhận webhook.');
+                        }
+                    });
+                    refresh();
+                });
                 var dlg = document.getElementById('qrDialog');
                 var base = dlg.getAttribute('data-base').replace(/\/+$/, '');
                 var title = document.getElementById('qrTitle');

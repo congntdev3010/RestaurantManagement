@@ -4,11 +4,28 @@
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
     <!-- Địa chỉ gốc của website dùng trong mã QR bàn, ví dụ http://192.168.1.10:8080/RestaurantManagement
-         (không có dấu / ở cuối). Để trống thì lấy theo địa chỉ đang truy cập; khi đó mở trang bằng IP/tên miền
-         thật chứ không dùng localhost, nếu không điện thoại của khách không quét vào được. -->
+    (không có dấu / ở cuối). Để trống thì lấy theo địa chỉ đang truy cập; khi đó mở trang bằng IP/tên miền
+    thật chứ không dùng localhost, nếu không điện thoại của khách không quét vào được. -->
     <context-param>
         <param-name>qrBaseUrl</param-name>
         <param-value></param-value>
+    </context-param>
+    <!-- URL ảnh QR tài khoản nhà hàng dùng khi lễ tân thu tiền chuyển khoản. -->
+    <context-param>
+        <param-name>paymentQrImageUrl</param-name>
+        <param-value></param-value>
+    </context-param>
+    <context-param>
+        <param-name>paymentBankCode</param-name>
+        <param-value>970423</param-value>
+    </context-param>
+    <context-param>
+        <param-name>paymentAccountNumber</param-name>
+        <param-value>88802102004</param-value>
+    </context-param>
+    <context-param>
+        <param-name>paymentAccountName</param-name>
+        <param-value>TRUONG KHANH DONG</param-value>
     </context-param>
     <!-- Mọi địa chỉ không tồn tại (404) đều đưa khách về trang chủ thay vì trang lỗi. -->
     <error-page>

@@ -25,6 +25,10 @@ public class Order {
     private Integer cancelledBy;
     private Timestamp cancelledAt;
     private String cancellationReason;
+    private String paymentMethod;
+    private Integer paidBy;
+    private Timestamp paidAt;
+    private String paymentReference;
     /** Số món đã duyệt nhưng chưa phục vụ (chỉ có khi lấy từ danh sách đơn). */
     private int cookingCount;
 
@@ -70,6 +74,14 @@ public class Order {
     public void setCancelledAt(Timestamp cancelledAt) { this.cancelledAt = cancelledAt; }
     public String getCancellationReason() { return cancellationReason; }
     public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    public Integer getPaidBy() { return paidBy; }
+    public void setPaidBy(Integer paidBy) { this.paidBy = paidBy; }
+    public Timestamp getPaidAt() { return paidAt; }
+    public void setPaidAt(Timestamp paidAt) { this.paidAt = paidAt; }
+    public String getPaymentReference() { return paymentReference; }
+    public void setPaymentReference(String paymentReference) { this.paymentReference = paymentReference; }
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
 }
