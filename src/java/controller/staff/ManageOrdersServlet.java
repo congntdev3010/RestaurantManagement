@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -28,8 +29,11 @@ import model.User;
  */
 @WebServlet(name = "ManageOrdersServlet", urlPatterns = {"/manage-orders"})
 public class ManageOrdersServlet extends HttpServlet {
+    private static final String STAFF_ORDER_DRAFTS = "staffOrderDrafts";
+
     @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        response.setHeader("Cache-Control", "no-store");
         User actor = requireStaff(request, response); if (actor == null) return;
         HttpSession session = request.getSession(); CartServlet.ensureToken(session);
         request.setAttribute("orderMessage", session.getAttribute("staffOrderMessage")); session.removeAttribute("staffOrderMessage");
@@ -53,13 +57,11 @@ public class ManageOrdersServlet extends HttpServlet {
                     session.setAttribute("tableMessageType", "error");
                     response.sendRedirect(request.getContextPath() + "/manage-tables"); return;
                 }
-                if (orders.hasPendingOrder(table.getTableId())) {
-                    session.setAttribute("tableMessage", "Bàn đang có order chờ duyệt, hãy duyệt xong rồi mới order thêm.");
-                    session.setAttribute("tableMessageType", "error");
-                    response.sendRedirect(request.getContextPath() + "/manage-tables"); return;
-                }
                 loadCreateForm(request);
                 request.setAttribute("table", table);
+                Order pendingOrder = orders.getPendingOrderForTable(table.getTableId());
+                request.setAttribute("pendingOrder", pendingOrder);
+                request.setAttribute("draftQuantities", getDrafts(session).get(table.getTableId()));
                 // Order lần sau của bàn: hiện kèm các món đã được duyệt ở những lần trước.
                 request.setAttribute("approvedItems", orders.getApprovedItemsForTable(table.getTableId()));
                 request.getRequestDispatcher("/WEB-INF/views/staff/order-create.jsp").forward(request, response);
@@ -101,9 +103,11 @@ public class ManageOrdersServlet extends HttpServlet {
                 Integer tableId=parsePositive(request.getParameter("tableId"));
                 Map<Integer,Integer> quantities=readQuantities(request);
                 if (tableId!=null && dao.hasPendingOrder(tableId)) {
-                    session.setAttribute("tableMessage","Bàn đang có order chờ duyệt, hãy duyệt xong rồi mới order thêm.");
-                    session.setAttribute("tableMessageType","error");
-                    response.sendRedirect(request.getContextPath()+"/manage-tables"); return;
+                    if (tableId != null) {
+                        getDrafts(session).put(tableId, quantities);
+                        session.setAttribute("staffOrderMessage","Đã lưu tạm món mới. Order đang chờ duyệt chưa bị thay đổi.");
+                        response.sendRedirect(request.getContextPath()+"/manage-orders?action=new&tableId="+tableId); return;
+                    }
                 }
                 if (tableId!=null && !quantities.isEmpty()) {
                     // Order của server cũng phải qua bước chờ duyệt, giống order của khách.
@@ -111,6 +115,7 @@ public class ManageOrdersServlet extends HttpServlet {
                             trim(request.getParameter("customerName")),trim(request.getParameter("customerPhone")),
                             null,trim(request.getParameter("note")),quantities,readItemNotes(request,quantities));
                     if (created>0) {
+                        getDrafts(session).remove(tableId);
                         // Gửi xong quay về sơ đồ bàn.
                         session.setAttribute("tableMessage","Đã gửi order #"+created+", đang chờ duyệt.");
                         session.setAttribute("tableMessageType","success");
@@ -177,4 +182,13 @@ public class ManageOrdersServlet extends HttpServlet {
     private int parseInt(String value,int fallback){try{return Integer.parseInt(value);}catch(Exception e){return fallback;}}
     private Integer parsePositive(String value){int i=parseInt(value,-1);return i>0?i:null;}
     private String trim(String value){if(value==null)return null;String s=value.trim();return s.isEmpty()?null:s;}
+
+    @SuppressWarnings("unchecked")
+    private Map<Integer, Map<Integer, Integer>> getDrafts(HttpSession session) {
+        Object value = session.getAttribute(STAFF_ORDER_DRAFTS);
+        if (value instanceof Map<?, ?>) return (Map<Integer, Map<Integer, Integer>>) value;
+        Map<Integer, Map<Integer, Integer>> drafts = new HashMap<>();
+        session.setAttribute(STAFF_ORDER_DRAFTS, drafts);
+        return drafts;
+    }
 }

@@ -1,5 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Quản lý order</title><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/orders.css">
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><c:if test="${empty param.id}"><meta http-equiv="refresh" content="15"></c:if><title>Quản lý order</title><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/orders.css">
 <style>
 .status-filter{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}.status-filter a{padding:8px 18px;border-radius:999px;border:1px solid #e3ddd3;background:#fff;color:#444;text-decoration:none;font-weight:500}.status-filter a:hover{border-color:#7a1f1f;color:#7a1f1f}.status-filter a.active{background:#7a1f1f !important;border-color:#7a1f1f !important;color:#fff !important}
 .so-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px 10px;background:#fff;border:1px solid #e8e1d6;border-left:6px solid #999;border-radius:12px;padding:10px 12px;margin:0 0 10px}

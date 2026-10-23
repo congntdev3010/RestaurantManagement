@@ -19,7 +19,7 @@
         boolean showStaffSidebar = isAdmin || isManager || canViewTables || isChef;
 %>
 
-<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/header.css?v=1.9">
+<link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/header.css?v=2.0">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <% if (!hideHeader) { %>
@@ -35,7 +35,7 @@
         <a href="${pageContext.request.contextPath}/menu" class="<%= currentURI.contains("menu") ? "active" : "" %>">Thực đơn</a>
         <a href="${pageContext.request.contextPath}/booking" class="<%= currentURI.contains("booking") ? "active" : "" %>">Đặt bàn</a>
         <a href="${pageContext.request.contextPath}/news" class="<%= currentURI.contains("news") ? "active" : "" %>">Tin tức</a>
-        <a href="${pageContext.request.contextPath}/review" class="<%= currentURI.contains("review") ? "active" : "" %>">Đánh giá</a>
+        <a href="${pageContext.request.contextPath}/review" class="<%= currentURI.endsWith("/review") ? "active" : "" %>">Đánh giá</a>
     </nav>
     <!-- Khu vực Tài khoản -->
     <div class="header-auth">
@@ -92,6 +92,10 @@
         <a class="sidebar-link <%= currentURI.contains("manage-orders") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-orders" title="Quản lý order" aria-label="Quản lý order">
             <i class="fa-solid fa-receipt" aria-hidden="true"></i><span>Quản lý order</span>
+        </a>
+        <a class="sidebar-link <%= currentURI.contains("kitchen") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/kitchen" title="Màn hình bếp" aria-label="Màn hình bếp">
+            <i class="fa-solid fa-fire-burner" aria-hidden="true"></i><span>Màn hình bếp</span>
         </a>
         <% } else { %>
         <% if (!isAdmin && !isChef) { %>

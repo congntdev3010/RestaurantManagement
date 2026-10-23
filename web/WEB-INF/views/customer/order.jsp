@@ -81,6 +81,74 @@
     </main>
 
     <aside class="qr-panel" id="cart-panel" aria-label="Các món đã chọn">
+        <c:if test="${not empty sentOrders}">
+            <style>
+                .qr-sent{background:#fff8e9;border:1px solid #e7c77d;border-radius:10px;padding:10px 12px;margin-bottom:14px}
+                .qr-sent h2{margin:0 0 8px;font-size:1rem}
+                .qr-sent-order{padding:0}
+                .qr-sent-sum{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #e7c77d;margin-top:6px;padding-top:8px;font-size:.95rem}
+                .qr-sent-sum strong{color:#7a1f1f;font-size:1.05rem}
+                .qs-name{font-weight:600}
+                .qs-total{color:#421217;white-space:nowrap}
+                .qs-calc{color:#6a6259;font-size:.82rem}
+                .qs-st{justify-self:end;align-self:center;border-radius:20px;padding:2px 10px;font-size:.75rem!important;font-weight:700;white-space:nowrap;color:inherit}
+                .qs-pending{background:#dbeafe;color:#1e40af!important}
+                .qs-cooking{background:#fde9c8;color:#b45309!important}
+                .qs-served{background:#dcfce7;color:#166534!important}
+                .qs-out{background:#fee2e2;color:#991b1b!important}
+                .qr-total-sub{font-size:.95rem}
+
+                .qr-sent-head{display:none}
+                .qr-sent-badge{background:#421217;color:#fff;border-radius:20px;padding:2px 10px;font-size:.75rem;font-weight:700;white-space:nowrap}
+                .qr-sent ul{list-style:none;margin:6px 0 0;padding:0}
+                .qr-sent li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:.9rem;padding:7px 0;border-top:1px solid #f0dfb3}
+                .qr-sent li:first-child{border-top:0}
+
+            </style>
+            <script>
+            // Tự làm mới mục "Món đã gửi" mỗi 15 giây, không tải lại cả trang (giữ nguyên giỏ, ô tìm kiếm, vị trí cuộn).
+            setInterval(function () {
+                if (document.hidden) return;
+                fetch(location.href, {credentials: 'same-origin', cache: 'no-store'})
+                    .then(function (r) { return r.ok ? r.text() : null; })
+                    .then(function (html) {
+                        if (!html) return;
+                        var fresh = new DOMParser().parseFromString(html, 'text/html').getElementById('qrSent');
+                        var cur = document.getElementById('qrSent');
+                        if (!cur) return;
+                        var sent = 0;
+                        if (fresh) { cur.innerHTML = fresh.innerHTML; sent = parseFloat((fresh.querySelector('[data-total]') || {getAttribute: function () { return 0; }}).getAttribute('data-total')) || 0; }
+                        else cur.remove();
+                        var g = document.getElementById('qrGrand'), gv = document.getElementById('qrGrandVal');
+                        if (g && gv) gv.textContent = ((parseFloat(g.getAttribute('data-cart')) || 0) + sent).toLocaleString('vi-VN') + ' đ';
+                    })
+                    .catch(function () {});
+            }, 15000);
+            </script>
+            <section class="qr-sent" id="qrSent" aria-label="Món đã gửi">
+                <h2>Món đã gửi</h2>
+                <c:forEach var="so" items="${sentOrders}">
+                    <div class="qr-sent-order">
+                        <div class="qr-sent-head">
+
+
+                        </div>
+                        <ul>
+                            <c:forEach var="it" items="${so.items}">
+                                <li>
+                                    <span class="qs-name"><c:out value="${it.dishName}"/></span>
+                                    <b class="qs-total"><fmt:formatNumber value="${it.lineTotal}" pattern="#,###"/> đ</b>
+                                    <span class="qs-calc"><c:out value="${it.quantity}"/> × <fmt:formatNumber value="${it.unitPrice}" pattern="#,###"/> đ<c:if test="${it.quantity ne it.requestedQuantity}"> (bạn gọi <c:out value="${it.requestedQuantity}"/>)</c:if></span>
+                                    <small style="justify-self:end;align-self:center"><c:choose><c:when test="${it.itemStatus eq 'PENDING'}"><span class="qs-st qs-pending">Chờ duyệt</span></c:when><c:when test="${it.itemStatus eq 'COOKING'}"><span class="qs-st qs-cooking">Đang nấu</span></c:when><c:when test="${it.itemStatus eq 'SERVED'}"><span class="qs-st qs-served">Đã phục vụ</span></c:when><c:otherwise><span class="qs-st qs-out">Hết món</span></c:otherwise></c:choose></small>
+                                </li>
+                            </c:forEach>
+                        </ul>
+
+                    </div>
+                </c:forEach>
+                <div class="qr-sent-sum">Đã gọi trước đó <strong id="qrSentTotal" data-total="${sentTotal}"><fmt:formatNumber value="${sentTotal}" pattern="#,###"/> đ</strong></div>
+            </section>
+        </c:if>
         <h2>Món đã chọn <span>(<c:out value="${cartCount}"/>)</span></h2>
         <c:choose>
             <c:when test="${empty cartDishes}"><p class="qr-empty">Chưa chọn món nào.</p></c:when>
@@ -116,7 +184,15 @@
                 </ul>
             </c:otherwise>
         </c:choose>
-        <div class="qr-total">Tổng tiền <strong><fmt:formatNumber value="${cartTotal}" pattern="#,###"/> đ</strong></div>
+        <c:choose>
+            <c:when test="${not empty sentOrders}">
+                <div class="qr-total qr-total-sub">Gọi thêm lần này <strong><fmt:formatNumber value="${cartTotal}" pattern="#,###"/> đ</strong></div>
+                <div class="qr-total" id="qrGrand" data-cart="${cartTotal}">Tổng cộng <strong id="qrGrandVal"><fmt:formatNumber value="${grandTotal}" pattern="#,###"/> đ</strong></div>
+            </c:when>
+            <c:otherwise>
+                <div class="qr-total">Tổng tiền <strong><fmt:formatNumber value="${cartTotal}" pattern="#,###"/> đ</strong></div>
+            </c:otherwise>
+        </c:choose>
         <c:choose>
             <c:when test="${cartCount > 0 and not empty orderTableName}"><a class="qr-send" href="${ctx}/cart?review=1">Chi tiết order</a></c:when>
             <c:otherwise><span class="qr-send disabled"><c:out value="${empty orderTableName ? 'Quét QR bàn để gửi order' : 'Hãy chọn món'}"/></span></c:otherwise>

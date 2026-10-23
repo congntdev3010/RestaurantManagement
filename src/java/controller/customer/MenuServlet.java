@@ -174,6 +174,29 @@ public class MenuServlet extends HttpServlet {
         request.setAttribute("cartDishes", cartDishes);
         request.setAttribute("cartTotal", cartTotal);
         if ("/order".equals(request.getServletPath())) {
+            // Các order khách đã gửi trong phiên này (đang chờ duyệt / đang phục vụ), mới nhất trước.
+            java.util.List<model.Order> sentOrders = new java.util.ArrayList<>();
+            Object sentIds = session.getAttribute("myOrderIds");
+            if (sentIds instanceof java.util.Set<?>) {
+                try (dao.OrderDAO orderDao = new dao.OrderDAO()) {
+                    for (Object idObj : (java.util.Set<?>) sentIds) {
+                        if (!(idObj instanceof Integer)) continue;
+                        model.Order o = orderDao.getOrder((Integer) idObj, null);
+                        if (o != null && ("PENDING".equals(o.getStatus()) || "OPEN".equals(o.getStatus()))) {
+                            sentOrders.add(0, o);
+                        }
+                    }
+                }
+            }
+            java.math.BigDecimal sentTotal = java.math.BigDecimal.ZERO;
+            for (model.Order so : sentOrders) {
+                if (so.getTotalAmount() != null) sentTotal = sentTotal.add(so.getTotalAmount());
+            }
+            request.setAttribute("sentOrders", sentOrders);
+            request.setAttribute("sentTotal", sentTotal);
+            request.setAttribute("grandTotal", sentTotal.add(cartTotal));
+        }
+        if ("/order".equals(request.getServletPath())) {
             request.getRequestDispatcher("/WEB-INF/views/customer/order.jsp").forward(request, response);
         } else {
             request.getRequestDispatcher("/WEB-INF/views/customer/menu.jsp").forward(request, response);
