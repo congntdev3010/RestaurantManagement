@@ -5,6 +5,8 @@
     <input type="hidden" name="action" value="${empty editUser ? 'create' : 'update'}">
     <input type="hidden" name="filterRoleId" value="${roleFilterId}">
     <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
+    <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
+    <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
     <c:if test="${not empty editUser}">
         <input type="hidden" name="userId" value="${editUser.userId}">
     </c:if>
@@ -26,6 +28,7 @@
                title="Số điện thoại gồm 10 chữ số và bắt đầu bằng 0" required
                value="<c:out value='${formUser.phone}' />">
     </label>
+    <%-- Tài khoản Admin giữ nguyên role; lựa chọn ẩn trong form không thay thế kiểm tra ở DAO. --%>
     <c:choose>
         <c:when test="${not empty editUser and editUser.roleName eq 'Admin'}">
             <input type="hidden" name="roleId" value="${editUser.roleId}">
@@ -40,7 +43,7 @@
                 <select name="roleId" required>
                     <option value="">Chọn vai trò</option>
                     <c:forEach var="role" items="${roles}">
-                        <option value="${role.key}" ${not empty formUser and formUser.roleId eq role.key ? 'selected' : ''}>
+                        <option value="${role.key}" ${formUser.roleId eq role.key ? 'selected' : ''}>
                             <c:out value="${role.value}" />
                         </option>
                     </c:forEach>
@@ -49,18 +52,12 @@
         </c:otherwise>
     </c:choose>
     <label>
+        <%-- Khi cập nhật, mật khẩu rỗng được xử lý như giữ nguyên mật khẩu hiện tại. --%>
         ${empty editUser ? 'Mật khẩu khởi tạo' : 'Mật khẩu mới (để trống nếu không đổi)'}
         <input type="password" name="password" minlength="8" maxlength="30"
                autocomplete="new-password" ${empty editUser ? 'required' : ''}>
     </label>
     <div class="form-actions">
         <button class="button-primary" type="submit">${empty editUser ? 'Tạo tài khoản' : 'Lưu thay đổi'}</button>
-        <c:if test="${not empty editUser}">
-            <c:url var="cancelEditUrl" value="/manage-users">
-                <c:param name="roleId" value="${roleFilterId}" />
-                <c:param name="name" value="${nameQuery}" />
-            </c:url>
-            <a class="button-secondary" href="${cancelEditUrl}">Hủy</a>
-        </c:if>
     </div>
 </form>

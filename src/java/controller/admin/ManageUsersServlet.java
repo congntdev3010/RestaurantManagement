@@ -2,6 +2,8 @@ package controller.admin;
 
 import dao.UserDAO;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.regex.Pattern;
 import model.User;
@@ -18,7 +20,7 @@ public class ManageUsersServlet extends HttpServlet {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9}$");
 
-    // Hiển thị danh sách, bộ lọc và form thêm/sửa tài khoản.
+    /** Hiển thị danh sách tài khoản và nạp dữ liệu cho các bộ lọc/form. */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -55,7 +57,7 @@ public class ManageUsersServlet extends HttpServlet {
         request.setAttribute("archivedRoleFilterId", archivedRoleFilterId);
         request.setAttribute("archivedNameQuery", archivedNameQuery);
 
-        // Khi chọn sửa, tải tài khoản để đưa dữ liệu lên form.
+        // Chỉ tải mục tiêu sửa nếu tài khoản vẫn nằm trong phạm vi vai trò được quản lý.
         String editId = request.getParameter("edit");
         if (editId != null) {
             User editUser = dao.getManageableUserById(parseInt(editId, -1), isAdmin);
@@ -79,7 +81,7 @@ public class ManageUsersServlet extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/admin/manage-users.jsp").forward(request, response);
     }
 
-    // Thực hiện thao tác được gửi từ form quản lý tài khoản.
+    /** Xử lý thao tác tạo, sửa, xóa mềm, khôi phục hoặc khóa/mở tài khoản. */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -99,9 +101,10 @@ public class ManageUsersServlet extends HttpServlet {
         String message;
         String messageType = "error";
 
+        // Mọi thao tác kết thúc bằng redirect để tránh gửi lại POST khi tải lại trang.
         if ("create".equals(action)) {
-            // Tạo mới cần mật khẩu; dữ liệu được kiểm tra trước khi gọi DAO.
             User user = readFormUser(request);
+            user.setIsActive(true);
             message = validateUser(user, true);
             if (message == null) {
                 if (dao.createManagedUser(user, isAdmin)) {
@@ -121,11 +124,6 @@ public class ManageUsersServlet extends HttpServlet {
             User user = readFormUser(request);
             user.setUserId(parseInt(request.getParameter("userId"), -1));
             message = validateUser(user, false);
-            String password = user.getPassword();
-            if (message == null && password != null && !password.isEmpty()
-                    && (password.length() < 8 || password.length() > 30)) {
-                message = "Mật khẩu mới phải có từ 8 đến 30 ký tự.";
-            }
             if (message == null) {
                 if (dao.updateManagedUser(user, isAdmin)) {
                     message = "Đã cập nhật tài khoản.";
@@ -172,21 +170,20 @@ public class ManageUsersServlet extends HttpServlet {
         if (roleFilterId > 0 || (nameQuery != null && !nameQuery.isEmpty())) {
             redirect += "?roleId=" + roleFilterId;
             if (nameQuery != null && !nameQuery.isEmpty()) {
-                redirect += "&name=" + java.net.URLEncoder.encode(nameQuery, java.nio.charset.StandardCharsets.UTF_8);
+                redirect += "&name=" + URLEncoder.encode(nameQuery, StandardCharsets.UTF_8);
             }
         }
         if (archivedRoleFilterId > 0 || (archivedNameQuery != null && !archivedNameQuery.isEmpty())) {
             redirect += redirect.contains("?") ? "&" : "?";
             redirect += "archivedRoleId=" + archivedRoleFilterId;
             if (archivedNameQuery != null && !archivedNameQuery.isEmpty()) {
-                redirect += "&archivedName=" + java.net.URLEncoder.encode(
-                        archivedNameQuery, java.nio.charset.StandardCharsets.UTF_8);
+                redirect += "&archivedName=" + URLEncoder.encode(archivedNameQuery, StandardCharsets.UTF_8);
             }
         }
         response.sendRedirect(redirect);
     }
 
-    // Kiểm tra đăng nhập và quyền trước khi cho phép quản lý tài khoản.
+    /** Xác thực phiên và giới hạn endpoint này cho Admin hoặc Manager. */
     private User requireManagerOrAdmin(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);
@@ -203,19 +200,18 @@ public class ManageUsersServlet extends HttpServlet {
         return actor;
     }
 
-    // Trả về true nếu tài khoản hiện tại có vai trò Admin.
+    /** Trả về true nếu người dùng hiện tại có vai trò Admin. */
     private boolean isAdmin(User user) {
         return user.getRoleName() != null && "Admin".equalsIgnoreCase(user.getRoleName());
     }
 
-    // Trả về true nếu tài khoản hiện tại có vai trò Manager.
+    /** Trả về true nếu người dùng hiện tại có vai trò Manager. */
     private boolean isManager(User user) {
         return user.getRoleName() != null && "Manager".equalsIgnoreCase(user.getRoleName());
     }
 
-    // Đọc các trường trong form và chuyển thành đối tượng User.
+    /** Đọc và chuẩn hóa các trường form thành đối tượng User. */
     private User readFormUser(HttpServletRequest request) {
-        // Gom dữ liệu form thành User để kiểm tra và chuyển xuống DAO.
         User user = new User();
         user.setUsername(trim(request.getParameter("username")));
         user.setEmail(trim(request.getParameter("email")));
@@ -223,13 +219,11 @@ public class ManageUsersServlet extends HttpServlet {
         user.setPhone(trim(request.getParameter("phone")));
         user.setPassword(request.getParameter("password"));
         user.setRoleId(parseInt(request.getParameter("roleId"), -1));
-        user.setIsActive(true);
         return user;
     }
 
-    // Kiểm tra dữ liệu bắt buộc trước khi thêm hoặc sửa tài khoản.
-    private String validateUser(User user, boolean requirePassword) {
-        // Kiểm tra các trường bắt buộc trước khi thêm hoặc cập nhật tài khoản.
+    /** Kiểm tra dữ liệu tài khoản trước khi gọi DAO; mật khẩu có thể tùy chọn khi cập nhật. */
+    private String validateUser(User user, boolean passwordRequired) {
         if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 30) {
             return "Tên đăng nhập là bắt buộc và tối đa 30 ký tự.";
         }
@@ -249,14 +243,15 @@ public class ManageUsersServlet extends HttpServlet {
         if (user.getRoleId() < 1) {
             return "Vui lòng chọn vai trò hợp lệ.";
         }
-        if (requirePassword && (user.getPassword() == null
-                || user.getPassword().length() < 8 || user.getPassword().length() > 30)) {
+        String password = user.getPassword();
+        if ((passwordRequired || (password != null && !password.isEmpty()))
+                && (password == null || password.length() < 8 || password.length() > 30)) {
             return "Mật khẩu phải có từ 8 đến 30 ký tự.";
         }
         return null;
     }
 
-    // Chuyển chuỗi sang số; trả về giá trị mặc định nếu dữ liệu không hợp lệ.
+    /** Chuyển tham số sang số nguyên hoặc trả về giá trị mặc định nếu không hợp lệ. */
     private int parseInt(String value, int fallback) {
         try {
             return Integer.parseInt(value);
@@ -265,12 +260,12 @@ public class ManageUsersServlet extends HttpServlet {
         }
     }
 
-    // Xóa khoảng trắng đầu và cuối, đồng thời xử lý giá trị null.
+    /** Xóa khoảng trắng ở hai đầu chuỗi và giữ nguyên null. */
     private String trim(String value) {
         return value == null ? null : value.trim();
     }
 
-    // Lưu thông báo vào session để hiển thị sau khi chuyển hướng.
+    /** Lưu thông báo một lần trong session cho lần GET kế tiếp (Post/Redirect/Get). */
     private void setFlash(HttpSession session, String message, String messageType) {
         session.setAttribute("manageMessage", message);
         session.setAttribute("manageMessageType", messageType);
