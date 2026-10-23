@@ -23,9 +23,6 @@
                     <c:if test="${not tableLoadFailed}">
                         <p class="table-count"><strong><c:out value="${tableCount}" /></strong> bàn</p>
                     </c:if>
-                    <a class="button-secondary qr-all-btn" href="${pageContext.request.contextPath}/table-qr" aria-label="In mã QR tất cả bàn">
-                        <i class="fa-solid fa-qrcode" aria-hidden="true"></i> Mã QR từng bàn
-                    </a>
                 </div>
             </header>
 
@@ -140,11 +137,16 @@
                                     <c:if test="${not empty table.description}">
                                         <p class="table-description"><c:out value="${table.description}" /></p>
                                     </c:if>
-                                    <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
-                                        <div class="table-actions">
+                                    <div class="table-actions">
+                                        <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
                                             <a href="${pageContext.request.contextPath}/manage-orders?action=new&tableId=${table.tableId}">Order cho bàn</a>
-                                        </div>
-                                    </c:if>
+                                        </c:if>
+                                        <c:if test="${not empty table.qrToken}">
+                                            <a href="#" class="qr-open" data-name="${fn:escapeXml(table.tableName)}" data-token="${fn:escapeXml(table.qrToken)}">
+                                                <i class="fa-solid fa-qrcode" aria-hidden="true"></i> Mã QR
+                                            </a>
+                                        </c:if>
+                                    </div>
                                     <%-- Manager quản lý thông tin bàn; Server/Receptionist chỉ đổi trạng thái. --%>
                                     <c:choose>
                                         <c:when test="${canManage}">
@@ -183,5 +185,52 @@
                 </c:choose>
             </section>
         </main>
+    <c:set var="qrDefaultBase" value="${pageContext.request.scheme}://${pageContext.request.serverName}${(pageContext.request.serverPort == 80 or pageContext.request.serverPort == 443) ? '' : ':'.concat(pageContext.request.serverPort)}${pageContext.request.contextPath}" />
+        <c:set var="qrBase" value="${not empty fn:trim(initParam.qrBaseUrl) ? fn:trim(initParam.qrBaseUrl) : qrDefaultBase}" />
+        <dialog id="qrDialog" data-base="${fn:escapeXml(qrBase)}" style="border:0;border-radius:12px;padding:20px;text-align:center;max-width:340px;width:90%">
+            <h3 id="qrTitle" style="margin:0 0 10px"></h3>
+            <img id="qrImg" alt="Mã QR" width="260" height="260">
+            <p style="margin:8px 0 0">Quét để gọi món</p>
+            <small id="qrUrl" style="display:block;word-break:break-all;color:#777;font-size:.7rem;margin:6px 0 12px"></small>
+            <button type="button" id="qrPrint">In</button>
+            <button type="button" id="qrClose">Đóng</button>
+        </dialog>
+        <script src="${pageContext.request.contextPath}/assets/js/qrcode.min.js"></script>
+        <script>
+            (function () {
+                var dlg = document.getElementById('qrDialog');
+                var base = dlg.getAttribute('data-base').replace(/\/+$/, '');
+                var title = document.getElementById('qrTitle');
+                var img = document.getElementById('qrImg');
+                var preloaded = [];
+                document.querySelectorAll('.qr-open').forEach(function (a) {
+                    var url = base + '/order?table=' + encodeURIComponent(a.dataset.token);
+                    var qr = qrcode(0, 'M'); qr.addData(url); qr.make();
+                    var qrSrc = qr.createDataURL(8, 2); // sinh QR ngay trên trình duyệt, không cần mạng
+                    // Tải sẵn ảnh QR ngay khi mở trang để popup hiện tức thì.
+                    var pre = new Image();
+                    pre.src = qrSrc;
+                    preloaded.push(pre);
+                    a.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        title.textContent = a.dataset.name;
+                        document.getElementById('qrUrl').textContent = url;
+                        img.src = qrSrc;
+                        dlg.showModal();
+                    });
+                });
+                document.getElementById('qrClose').addEventListener('click', function () { dlg.close(); });
+                dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+                document.getElementById('qrPrint').addEventListener('click', function () {
+                    var w = window.open('', '_blank', 'width=400,height=520');
+                    var h = document.createElement('h2');
+                    h.textContent = title.textContent;
+                    w.document.write('<body style="text-align:center;font-family:sans-serif">' + h.outerHTML
+                        + '<img src="' + img.src + '" width="300"><p>Quét để gọi món</p></body>');
+                    w.document.close();
+                    w.onload = function () { w.print(); };
+                });
+            })();
+        </script>
     </body>
 </html>
