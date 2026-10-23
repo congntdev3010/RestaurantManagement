@@ -149,7 +149,6 @@
     </style>
 </head>
 <body>
-<jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
 <main class="orders-page">
     <h1>Chi tiết order</h1>
 

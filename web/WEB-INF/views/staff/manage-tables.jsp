@@ -139,7 +139,7 @@
                                     </c:if>
                                     <div class="table-actions">
                                         <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
-                                            <a href="${pageContext.request.contextPath}/manage-orders?action=new&tableId=${table.tableId}">Order cho bàn</a>
+                                            <a href="${pageContext.request.contextPath}/manage-orders?action=new&tableId=${table.tableId}">Order</a>
                                         </c:if>
                                         <c:if test="${not empty table.qrToken}">
                                             <a href="#" class="qr-open" data-name="${fn:escapeXml(table.tableName)}" data-token="${fn:escapeXml(table.qrToken)}">
@@ -220,7 +220,12 @@
                     });
                 });
                 document.getElementById('qrClose').addEventListener('click', function () { dlg.close(); });
-                dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+                var downOnBackdrop = false;
+                dlg.addEventListener('mousedown', function (e) { downOnBackdrop = (e.target === dlg); });
+                dlg.addEventListener('click', function (e) {
+                    if (e.target === dlg && downOnBackdrop) dlg.close();
+                    downOnBackdrop = false;
+                });
                 document.getElementById('qrPrint').addEventListener('click', function () {
                     var w = window.open('', '_blank', 'width=400,height=520');
                     var h = document.createElement('h2');

@@ -316,6 +316,26 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         return false;
     }
 
+    /** Lấy order đang chờ duyệt của một bàn để Server xem trực tiếp từ sơ đồ bàn. */
+    public Order getPendingOrderForTable(int tableId) {
+        if (connection == null) return null;
+        String sql = "SELECT TOP 1 o.*, t.table_name FROM Orders o "
+                + "LEFT JOIN RestaurantTables t ON t.table_id = o.table_id "
+                + "WHERE o.table_id = ? AND o.order_status = 'PENDING' "
+                + "ORDER BY o.created_at, o.order_id";
+        int pendingOrderId = -1;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, tableId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) pendingOrderId = rs.getInt("order_id");
+            }
+            return pendingOrderId > 0 ? getOrder(pendingOrderId, null) : null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     /** Các món đã được duyệt (đang nấu / đã phục vụ) trong những đơn đang phục vụ của một bàn, theo thứ tự gọi. */
     public List<OrderItem> getApprovedItemsForTable(int tableId) {
         List<OrderItem> items = new ArrayList<>();
@@ -352,34 +372,121 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         return items;
     }
 
+    /**
+     * Server/manager điều chỉnh món đang nấu khi bếp phát hiện không thể phục vụ đủ.
+     * quantity = 0 nghĩa là hủy món; quantity > 0 là số lượng thực tế còn phục vụ được.
+     */
+    public boolean updateKitchenItem(int orderItemId, int quantity) {
+        if (connection == null || quantity < 0) return false;
+        try {
+            connection.setAutoCommit(false);
+            int orderId;
+            int currentQuantity;
+            try (PreparedStatement lock = connection.prepareStatement(
+                    "SELECT oi.order_id, oi.quantity FROM OrderItems oi WITH (UPDLOCK, HOLDLOCK) "
+                    + "JOIN Orders o WITH (UPDLOCK, HOLDLOCK) ON o.order_id = oi.order_id "
+                    + "WHERE oi.order_item_id = ? AND oi.item_status = 'COOKING' AND o.order_status = 'OPEN'")) {
+                lock.setInt(1, orderItemId);
+                try (ResultSet rs = lock.executeQuery()) {
+                    if (!rs.next()) {
+                        rollback();
+                        return false;
+                    }
+                    orderId = rs.getInt("order_id");
+                    currentQuantity = rs.getInt("quantity");
+                }
+            }
+            if (quantity > currentQuantity) {
+                rollback();
+                return false;
+            }
+            try (PreparedStatement update = connection.prepareStatement(
+                    "UPDATE OrderItems SET item_status = ?, quantity = ?, line_total = "
+                    + "CASE WHEN ? = 0 THEN 0 ELSE unit_price * ? END WHERE order_item_id = ?")) {
+                update.setString(1, quantity == 0 ? "REJECTED" : "COOKING");
+                // Quantity có constraint > 0; món bị hủy vẫn giữ số lượng khách gọi,
+                // chỉ đổi trạng thái và đưa thành tiền về 0.
+                update.setInt(2, quantity == 0 ? currentQuantity : quantity);
+                update.setInt(3, quantity);
+                update.setInt(4, quantity);
+                update.setInt(5, orderItemId);
+                if (update.executeUpdate() != 1) {
+                    rollback();
+                    return false;
+                }
+            }
+            try (PreparedStatement total = connection.prepareStatement(
+                    "UPDATE Orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) "
+                    + "FROM OrderItems WHERE order_id = ?) WHERE order_id = ?")) {
+                total.setInt(1, orderId);
+                total.setInt(2, orderId);
+                total.executeUpdate();
+            }
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            resetAutoCommit();
+        }
+    }
+
     /** Khách tự hủy đơn của mình khi còn chờ duyệt. */
     public boolean cancelCustomerOrder(int orderId, int ownerId, String reason, int actorId) {
         if (reason == null || reason.trim().isEmpty()) return false;
-        return cancel("UPDATE Orders SET order_status='CANCELLED', cancelled_by=?, cancelled_at=SYSDATETIME(), "
-                + "cancellation_reason=?, closed_at=SYSDATETIME() WHERE order_id=? AND user_id=? AND order_status='PENDING'",
-                actorId, reason, orderId, ownerId);
+        return cancelPendingOrder(" AND user_id = ?",
+                new int[]{orderId, ownerId}, actorId, reason);
     }
 
     public boolean cancelStaffOrder(int orderId, String reason, int actorId) {
         if (reason == null || reason.trim().isEmpty()) return false;
-        return cancel("UPDATE Orders SET order_status='CANCELLED', cancelled_by=?, cancelled_at=SYSDATETIME(), "
-                + "cancellation_reason=?, closed_at=SYSDATETIME() WHERE order_id=? AND order_status = 'PENDING'",
-                actorId, reason, orderId);
+        return cancelPendingOrder("", new int[]{orderId}, actorId, reason);
+    }
+
+    /**
+     * Hủy đơn và loại các món còn chờ duyệt trong cùng một transaction.
+     * Nếu không cập nhật được đơn thì không thay đổi trạng thái món.
+     */
+    private boolean cancelPendingOrder(String ownerClause, int[] orderIds, int actorId, String reason) {
+        if (connection == null) return false;
+        String updateOrder = "UPDATE Orders SET order_status='CANCELLED', cancelled_by=?, cancelled_at=SYSDATETIME(), "
+                + "cancellation_reason=?, closed_at=SYSDATETIME() WHERE order_id=? AND order_status='PENDING'" + ownerClause;
+        try {
+            connection.setAutoCommit(false);
+            int updated;
+            try (PreparedStatement order = connection.prepareStatement(updateOrder)) {
+                order.setInt(1, actorId);
+                order.setNString(2, reason);
+                for (int i = 0; i < orderIds.length; i++) order.setInt(i + 3, orderIds[i]);
+                updated = order.executeUpdate();
+            }
+            if (updated != 1) {
+                rollback();
+                return false;
+            }
+            try (PreparedStatement items = connection.prepareStatement(
+                    "UPDATE OrderItems SET item_status='REJECTED', line_total=0 "
+                    + "WHERE order_id=? AND item_status='PENDING'")) {
+                items.setInt(1, orderIds[0]);
+                items.executeUpdate();
+            }
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            resetAutoCommit();
+        }
     }
 
     private boolean execute(String sql, int... values) {
         if (connection == null) return false;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             for (int i=0;i<values.length;i++) ps.setInt(i+1, values[i]);
-            return ps.executeUpdate() == 1;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
-    }
-
-    private boolean cancel(String sql, int actorId, String reason, int... ids) {
-        if (connection == null) return false;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setInt(1, actorId); ps.setNString(2, reason);
-            for (int i=0;i<ids.length;i++) ps.setInt(i+3, ids[i]);
             return ps.executeUpdate() == 1;
         } catch (SQLException e) { e.printStackTrace(); return false; }
     }

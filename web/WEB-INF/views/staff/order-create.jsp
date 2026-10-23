@@ -34,8 +34,8 @@
 .oc-page .form-grid{max-width:none}
 .oc-panel{max-height:calc(100vh - 32px);overflow:auto}
 </style></head><body><jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
-<main class="orders-page oc-page"><h1>Order cho <c:out value="${table.tableName}"/></h1><c:if test="${not empty orderMessage}"><p class="notice"><c:out value="${orderMessage}"/></p></c:if>
-<p>Order sẽ ở trạng thái chờ duyệt; bạn xác nhận với bếp rồi duyệt từng món ở bước sau.</p>
+<main class="orders-page oc-page"><h1>Order - <c:out value="${table.tableName}"/></h1><c:if test="${not empty orderMessage}"><p class="notice"><c:out value="${orderMessage}"/></p></c:if>
+<c:choose><c:when test="${not empty pendingOrder}"><p>Bàn đang có order #<c:out value="${pendingOrder.orderId}"/> chờ duyệt. Món mới chọn chỉ được lưu tạm, chưa đưa vào danh sách duyệt.</p></c:when><c:otherwise><p>Order sẽ ở trạng thái chờ duyệt; bạn xác nhận với bếp rồi duyệt từng món ở bước sau.</p></c:otherwise></c:choose>
 <form id="orderForm" action="${pageContext.request.contextPath}/manage-orders" method="post" class="order-form"><input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}"><input type="hidden" name="action" value="create"><input type="hidden" name="tableId" value="${table.tableId}">
 <div class="form-grid"><label>Tên khách (tùy chọn)<input name="customerName" maxlength="100"></label><label>Số điện thoại (tùy chọn)<input name="customerPhone" maxlength="20"></label><label>Ghi chú<input name="note" maxlength="500"></label></div>
 <div class="oc-layout">
@@ -43,19 +43,25 @@
 <div class="oc-filter"><input type="search" id="ocSearch" placeholder="Tìm món ăn" autocomplete="off"></div>
 <div class="oc-cats" id="ocCat"><button type="button" class="active" data-cat="">Tất cả</button><c:forEach var="cat" items="${categories}"><button type="button" data-cat="${cat.categoryId}"><c:out value="${cat.categoryName}"/></button></c:forEach></div>
 <p class="oc-none" id="ocNone">Không tìm thấy món phù hợp.</p>
-<div class="dish-choice"><c:forEach var="dish" items="${dishes}"><label class="dish-choice-row" data-cat="${dish.categoryId}" data-search="<c:out value='${dish.dishName}'/>"><span><c:out value="${dish.dishName}"/> — <fmt:formatNumber value="${dish.price}" pattern="#,###"/> đ / <c:out value="${dish.unit}"/></span><input type="number" min="0" max="99" name="quantity_${dish.dishId}" value="" placeholder="0" data-name="<c:out value='${dish.dishName}'/>" data-price="${dish.price}" aria-label="Số lượng ${dish.dishName}"></label></c:forEach></div></div>
-<aside class="oc-panel" aria-label="Món đã chọn"><c:set var="approvedTotal" value="0"/><c:forEach var="ai" items="${approvedItems}"><c:set var="approvedTotal" value="${approvedTotal + ai.lineTotal}"/></c:forEach>
-<div class="oc-grand"><span>Tổng cả bàn<small>đã gọi + món mới chọn</small></span><strong id="ocGrand" data-base="${approvedTotal}"><fmt:formatNumber value="${approvedTotal}" pattern="#,###"/> đ</strong></div>
+<div class="dish-choice"><c:forEach var="dish" items="${dishes}"><label class="dish-choice-row" data-cat="${dish.categoryId}" data-search="<c:out value='${dish.dishName}'/>"><span><c:out value="${dish.dishName}"/> — <fmt:formatNumber value="${dish.price}" pattern="#,###"/> đ / <c:out value="${dish.unit}"/></span><input type="number" min="0" max="99" name="quantity_${dish.dishId}" value="${draftQuantities[dish.dishId]}" placeholder="0" data-name="<c:out value='${dish.dishName}'/>" data-price="${dish.price}" aria-label="Số lượng ${dish.dishName}"></label></c:forEach></div></div>
+<aside class="oc-panel" aria-label="Món đã chọn"><c:set var="approvedTotal" value="0"/><c:forEach var="ai" items="${approvedItems}"><c:set var="approvedTotal" value="${approvedTotal + ai.lineTotal}"/></c:forEach><c:set var="pendingTotal" value="0"/><c:if test="${not empty pendingOrder}"><c:forEach var="pi" items="${pendingOrder.items}"><c:set var="pendingTotal" value="${pendingTotal + pi.lineTotal}"/></c:forEach></c:if>
+<div class="oc-grand"><span>Tổng cả bàn<small>đã gọi + chờ duyệt + món mới chọn</small></span><strong id="ocGrand" data-base="${approvedTotal + pendingTotal}"><fmt:formatNumber value="${approvedTotal + pendingTotal}" pattern="#,###"/> đ</strong></div>
 <c:if test="${not empty approvedItems}">
 <h2>Đã gọi (đã duyệt)</h2>
 <ul class="oc-lines oc-done"><c:forEach var="it" items="${approvedItems}"><li><div><c:out value="${it.dishName}"/><c:if test="${not empty it.itemNote}"><small style="color:#666;font-weight:400">Note: <c:out value="${it.itemNote}"/></small></c:if></div><div class="oc-right"><strong>x<c:out value="${it.quantity}"/></strong><span style="font-size:.7rem;width:42px;text-align:center;color:${it.itemStatus eq 'SERVED' ? '#14532d' : '#b34100'}">${it.itemStatus eq 'SERVED' ? 'Đã phục vụ' : 'Đang nấu'}</span></div></li></c:forEach></ul>
 <div class="oc-total oc-sub">Tổng đã gọi <strong><fmt:formatNumber value="${approvedTotal}" pattern="#,###"/> đ</strong></div>
 <hr style="border:0;border-top:2px dashed #e3ddd3;margin:12px 0">
 </c:if>
+<c:if test="${not empty pendingOrder.items}">
+<h2>Đang chờ duyệt</h2>
+<ul class="oc-lines oc-done"><c:forEach var="it" items="${pendingOrder.items}"><li><div><c:out value="${it.dishName}"/><c:if test="${not empty it.itemNote}"><small style="color:#666;font-weight:400">Note: <c:out value="${it.itemNote}"/></small></c:if></div><div class="oc-right"><strong>x<c:out value="${it.requestedQuantity}"/></strong><span style="font-size:.7rem;width:42px;text-align:center;color:#e08a00">Chờ duyệt</span></div></li></c:forEach></ul>
+<div class="oc-total oc-sub">Tổng chờ duyệt <strong><fmt:formatNumber value="${pendingTotal}" pattern="#,###"/> đ</strong></div>
+<hr style="border:0;border-top:2px dashed #e3ddd3;margin:12px 0">
+</c:if>
 <h2>Món mới chọn <span id="ocCount"></span></h2>
 <ul class="oc-lines" id="ocLines"></ul><p class="oc-empty" id="ocEmpty">Chưa chọn món nào.</p>
 <div class="oc-total">Tổng tiền <strong id="ocTotal">0 đ</strong></div>
-<button type="submit" class="oc-send" id="ocSend" disabled>Gửi order chờ duyệt</button></aside>
+<button type="submit" class="oc-send" id="ocSend" disabled><c:choose><c:when test="${not empty pendingOrder}">Lưu món tạm</c:when><c:otherwise>Gửi order chờ duyệt</c:otherwise></c:choose></button></aside>
 </div></form></main>
 <script>
 (function(){
