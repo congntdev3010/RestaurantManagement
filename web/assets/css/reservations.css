@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #f7f2e9;
+    color: #302628;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.rsv-page {
+    width: min(100% - 32px, 1100px);
+    margin: 0 auto;
+    padding: 40px 0 72px;
+}
+
+.rsv-narrow { width: min(100% - 32px, 680px); }
+
+.rsv-eyebrow { margin: 0 0 6px; color: #9c6720; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+.rsv-page h1, .rsv-page h2 { color: #421217; font-family: 'Playfair Display', Georgia, serif; margin: 0; }
+.rsv-page h1 { font-size: 32px; }
+.rsv-page h2 { font-size: 20px; margin-bottom: 12px; }
+.rsv-intro { color: #71666a; font-size: 14px; margin: 8px 0 24px; }
+
+.rsv-card {
+    background: #fff;
+    border: 1px solid #e4d8cb;
+    border-radius: 10px;
+    padding: 22px;
+    margin-bottom: 18px;
+}
+
+.rsv-message { padding: 12px 16px; border-radius: 8px; margin: 0 0 18px; font-size: 14px; }
+.rsv-message.is-success { background: #e6f3e8; color: #1f6b34; border: 1px solid #b9dcc1; }
+.rsv-message.is-error { background: #fbe9e7; color: #9b2c1f; border: 1px solid #efc1ba; }
+
+/* Form */
+.rsv-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.rsv-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: #5b4f52; }
+.rsv-form .full { grid-column: 1 / -1; }
+.rsv-form input, .rsv-form select, .rsv-form textarea, .rsv-input {
+    font: inherit; font-weight: 400; padding: 10px 12px; border: 1px solid #d6c8b8;
+    border-radius: 8px; background: #fffdf9; color: #302628;
+}
+.rsv-form input:focus, .rsv-form select:focus, .rsv-form textarea:focus { outline: 2px solid #c9a15b; }
+.rsv-hint { font-size: 12px; color: #8a7e80; font-weight: 400; }
+
+.rsv-btn {
+    display: inline-block; border: 0; border-radius: 8px; padding: 10px 20px; cursor: pointer;
+    font: inherit; font-weight: 600; background: #421217; color: #fff; text-decoration: none;
+}
+.rsv-btn:hover { background: #5c1b22; }
+.rsv-btn.secondary { background: #fff; color: #421217; border: 1px solid #421217; }
+.rsv-btn.danger { background: #fff; color: #9b2c1f; border: 1px solid #9b2c1f; }
+.rsv-btn.small { padding: 6px 12px; font-size: 13px; }
+
+/* Trạng thái */
+.rsv-status { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.st-PENDING { background: #fdf0d5; color: #8a5a00; }
+.st-APPROVED { background: #e0efe3; color: #1f6b34; }
+.st-COMPLETED { background: #e2e8f5; color: #2c4a8a; }
+.st-REJECTED, .st-CANCELLED, .st-NO_SHOW { background: #f2e4e2; color: #8b3a30; }
+
+/* Danh sách (customer) */
+.rsv-list { display: grid; gap: 14px; }
+.rsv-item { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.rsv-item p { margin: 4px 0; font-size: 14px; }
+
+/* Tab + bảng (lễ tân) */
+.rsv-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.rsv-tab {
+    padding: 7px 14px; border-radius: 999px; border: 1px solid #d6c8b8; background: #fff;
+    color: #421217; text-decoration: none; font-size: 13px; font-weight: 600;
+}
+.rsv-tab.active { background: #421217; color: #fff; border-color: #421217; }
+.rsv-tab b { margin-left: 4px; }
+
+.rsv-filter { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+
+.rsv-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e4d8cb; border-radius: 10px; overflow: hidden; }
+.rsv-table th, .rsv-table td { padding: 11px 14px; text-align: left; font-size: 14px; border-bottom: 1px solid #efe6da; }
+.rsv-table th { background: #f3ebde; color: #5b4f52; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+.rsv-table tr:last-child td { border-bottom: 0; }
+.rsv-empty { text-align: center; color: #8a7e80; padding: 30px; background: #fff; border: 1px dashed #d6c8b8; border-radius: 10px; }
+.rsv-tag { font-size: 12px; color: #9c6720; font-weight: 600; }
+
+/* Chi tiết đơn */
+.rsv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.rsv-dl { display: grid; grid-template-columns: 140px 1fr; gap: 8px 12px; margin: 0; font-size: 14px; }
+.rsv-dl dt { color: #8a7e80; }
+.rsv-dl dd { margin: 0; font-weight: 600; }
+
+.rsv-shift-summary { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.rsv-shift-box { flex: 1 1 200px; border: 1px solid #e4d8cb; border-radius: 8px; padding: 12px 14px; background: #fffdf9; }
+.rsv-shift-box.ok strong { color: #1f6b34; }
+.rsv-shift-box.full strong { color: #9b2c1f; }
+.rsv-shift-box.current { outline: 2px solid #9c6720; }
+.rsv-shift-box strong { font-size: 20px; }
+.rsv-alert { background: #fdf0d5; color: #6e4700; border: 1px solid #ecd49a; padding: 10px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 14px; }
+
+.rsv-type-group { margin-bottom: 16px; }
+.rsv-type-group h3 { margin: 0 0 8px; font-size: 15px; color: #421217; }
+.rsv-seats { display: flex; flex-wrap: wrap; gap: 10px; }
+.rsv-seat { position: relative; }
+.rsv-seat input { position: absolute; opacity: 0; pointer-events: none; }
+.rsv-seat span {
+    display: block; min-width: 130px; padding: 10px 12px; border: 1px solid #d6c8b8; border-radius: 8px;
+    background: #fff; cursor: pointer; font-size: 13px;
+}
+.rsv-seat span small { display: block; color: #8a7e80; margin-top: 2px; }
+.rsv-seat input:checked + span { border-color: #421217; background: #f6e9e6; box-shadow: 0 0 0 2px #421217 inset; }
+.rsv-seat input:focus-visible + span { outline: 2px solid #c9a15b; }
+.rsv-seat.disabled span { background: #f0ebe4; color: #a09598; cursor: not-allowed; text-decoration: line-through; }
+.rsv-seat.disabled span small { text-decoration: none; }
+.rsv-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+.rsv-inline { display: inline; }
+
+@media (max-width: 720px) {
+    .rsv-form, .rsv-grid { grid-template-columns: 1fr; }
+    .rsv-table thead { display: none; }
+    .rsv-table, .rsv-table tbody, .rsv-table tr, .rsv-table td { display: block; width: 100%; }
+    .rsv-table tr { border-bottom: 1px solid #e4d8cb; padding: 8px 0; }
+    .rsv-table td { border: 0; padding: 4px 14px; }
+    .rsv-dl { grid-template-columns: 110px 1fr; }
+}

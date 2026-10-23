@@ -107,6 +107,13 @@ public class RestaurantTableDAO extends DBContext {
         });
     }
 
+    /** Mở bàn cho khách vãng lai: chỉ chuyển được khi bàn đang AVAILABLE/RESERVED, bàn đang phục vụ trả về false. */
+    public boolean occupyIfFree(int tableId) {
+        String sql = "UPDATE RestaurantTables SET table_status = 'OCCUPIED' "
+                + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED')";
+        return executeUpdate(sql, statement -> statement.setInt(1, tableId));
+    }
+
     /** Chỉ xóa bàn đang trống. */
     public boolean deleteTable(int tableId) {
         String sql = "DELETE FROM RestaurantTables "

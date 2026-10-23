@@ -107,18 +107,28 @@
             <i class="fa-solid fa-book-open" aria-hidden="true"></i><span>Thực đơn</span>
         </a>
         <% } %>
-        <% if (!isManager) { %>
+        <% if (!isManager && !isReceptionist) { %>
         <a class="sidebar-link <%= currentURI.endsWith("/news") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/news" title="Tin tức" aria-label="Tin tức">
             <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Tin tức</span>
         </a>
         <% } %>
-        <% if (canViewTables) { %>
+        <% if (canViewTables && !isReceptionist) { %>
         <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-tables" title="Sơ đồ bàn" aria-label="Sơ đồ bàn">
             <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Sơ đồ bàn</span>
         </a>
         <% } %>
+        <% } %>
+        <% if (isManager || isReceptionist) { %>
+        <a class="sidebar-link <%= currentURI.contains("checkin") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/checkin" title="Check-in khách" aria-label="Check-in khách">
+            <i class="fa-solid fa-door-open" aria-hidden="true"></i><span>Check-in khách</span>
+        </a>
+        <a class="sidebar-link <%= currentURI.contains("manage-reservations") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manage-reservations" title="Quản lý đặt bàn" aria-label="Quản lý đặt bàn">
+            <i class="fa-solid fa-calendar-check" aria-hidden="true"></i><span>Quản lý đặt bàn</span>
+        </a>
         <% } %>
         <% if (isChef) { %>
         <a class="sidebar-link <%= currentURI.contains("kitchen") ? "active" : "" %>"
