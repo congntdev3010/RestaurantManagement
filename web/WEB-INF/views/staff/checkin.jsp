@@ -93,7 +93,14 @@
                 <%-- ===== Khách chưa đặt: bật bàn trống sang đang phục vụ ===== --%>
                 <c:otherwise>
                     <c:if test="${tableLoadFailed}"><p class="rsv-message is-error">Không tải được danh sách bàn.</p></c:if>
-                    <p class="rsv-hint">Chọn một bàn đang trống để mở cho khách. Bàn có nhãn vàng là bàn hôm nay đã có người đặt nhưng chưa đến.</p>
+                    <p class="rsv-hint">Chọn một bàn đang trống để mở cho khách. Bàn có nhãn vàng là bàn hôm nay đã có người đặt nhưng chưa đến.
+                        Đoàn đông người: tích "gộp bàn" ở nhiều bàn trống rồi bấm nút bên dưới.</p>
+                    <form id="mergeForm" action="${base}" method="post" class="rsv-actions"
+                          onsubmit="var n = this.ownerDocument.querySelectorAll('input[form=mergeForm]:checked').length; if (n < 2) { alert('Hãy tích chọn ít nhất 2 bàn để gộp.'); return false; } return confirm('Mở ' + n + ' bàn gộp cho khách chưa đặt?');">
+                        <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
+                        <input type="hidden" name="action" value="seat">
+                        <button type="submit" class="rsv-btn small">Mở các bàn đã tích (gộp bàn)</button>
+                    </form>
 
                     <c:forEach var="g" items="${tableGroups}">
                         <section class="rsv-card">
@@ -119,6 +126,9 @@
                                                 <small class="rsv-tag">Đặt: <c:out value="${a.customerName}" /> lúc <c:out value="${a.timeText}" /></small>
                                             </c:forEach>
                                             <c:if test="${t.status eq 'AVAILABLE'}">
+                                                <label class="rsv-hint" style="display:block;margin-top:6px">
+                                                    <input type="checkbox" form="mergeForm" name="tableId" value="${t.tableId}"> gộp bàn
+                                                </label>
                                                 <form action="${base}" method="post" style="margin-top:8px"
                                                       onsubmit="return confirm(this.dataset.msg);" data-msg="<c:out value='${confirmText}'/>">
                                                     <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">

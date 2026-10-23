@@ -14,6 +14,7 @@
             <p class="rsv-eyebrow">VẬN HÀNH NHÀ HÀNG</p>
             <h1>Quản lý đặt bàn</h1>
             <p class="rsv-intro">Gọi lại khách để chốt đơn, kiểm tra bàn còn trống rồi duyệt.</p>
+            <p><a class="rsv-btn small" href="${pageContext.request.contextPath}/staff-booking">+ Đặt bàn cho khách (gọi điện)</a></p>
 
             <c:if test="${not empty reservationMessage}">
                 <p class="rsv-message ${reservationMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">

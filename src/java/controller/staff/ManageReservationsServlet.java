@@ -99,7 +99,7 @@ public class ManageReservationsServlet extends HttpServlet {
             int total = 0;
             int free = 0;
             for (RestaurantTable t : tables) {
-                if ((wanted == null || wanted.equals(t.getTableType())) && t.getCapacity() >= r.getGuestCount()) {
+                if (wanted == null || wanted.equals(t.getTableType())) {
                     total++;
                     if (!booked.contains(t.getTableId())) free++;
                 }
@@ -155,13 +155,21 @@ public class ManageReservationsServlet extends HttpServlet {
                         message = success ? "Đã ghi nhận cuộc gọi với khách." : "Không thể cập nhật đơn (đơn đã được xử lý).";
                         break;
                     case "approve": {
-                        int tableId = parseInt(request.getParameter("tableId"), -1);
+                        // Có thể chọn nhiều bàn để gộp (vd 16 khách = 2 bàn 8 chỗ).
+                        List<Integer> tableIds = new ArrayList<>();
+                        String[] rawIds = request.getParameterValues("tableId");
+                        if (rawIds != null) {
+                            for (String raw : rawIds) {
+                                int tid = parseInt(raw, -1);
+                                if (tid > 0) tableIds.add(tid);
+                            }
+                        }
                         String shift = request.getParameter("shift");
-                        if (tableId < 1 || shift == null || !dao.getShifts().containsKey(shift)) {
-                            message = "Vui lòng chọn bàn và ca (trưa/tối) trước khi duyệt.";
+                        if (tableIds.isEmpty() || tableIds.size() > 10 || shift == null || !dao.getShifts().containsKey(shift)) {
+                            message = "Vui lòng chọn bàn (tối đa 10) và ca (trưa/tối) trước khi duyệt.";
                             break;
                         }
-                        String result = dao.approve(id, tableId, shift, actor.getUserId(), note);
+                        String result = dao.approve(id, tableIds, shift, actor.getUserId(), note);
                         success = ReservationDAO.OK.equals(result);
                         message = approveMessage(result);
                         backToDetail = !success;
@@ -181,6 +189,7 @@ public class ManageReservationsServlet extends HttpServlet {
                         break;
                     }
                     case "complete":
+                        // Từ nay check-in đã tự hoàn thành đơn; giữ lại cho đơn cũ còn APPROVED + đã check-in.
                         success = dao.finishApproved(id, "COMPLETED", null);
                         message = success ? "Đã hoàn tất bữa ăn của khách." : "Chỉ hoàn tất được đơn khách đã check-in.";
                         break;
@@ -208,8 +217,8 @@ public class ManageReservationsServlet extends HttpServlet {
     private String approveMessage(String result) {
         switch (result) {
             case ReservationDAO.OK: return "Đã duyệt đơn và giữ bàn cho khách.";
-            case ReservationDAO.CONFLICT: return "Bàn vừa được giữ cho đơn khác trong ca này. Vui lòng chọn bàn khác.";
-            case ReservationDAO.CAPACITY: return "Bàn không đủ chỗ cho số khách của đơn.";
+            case ReservationDAO.CONFLICT: return "Có bàn vừa được giữ cho đơn khác trong ca này. Vui lòng chọn bàn khác.";
+            case ReservationDAO.CAPACITY: return "Tổng sức chứa các bàn đã chọn chưa đủ cho số khách của đơn. Hãy chọn thêm bàn để gộp.";
             case ReservationDAO.NO_TABLE: return "Bàn đã chọn không tồn tại.";
             case ReservationDAO.NOT_PENDING: return "Đơn đã được xử lý trước đó.";
             default: return "Không thể duyệt đơn do lỗi dữ liệu.";

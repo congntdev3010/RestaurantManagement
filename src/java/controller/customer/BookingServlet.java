@@ -24,7 +24,7 @@ import model.User;
 @WebServlet(name = "BookingServlet", urlPatterns = {"/booking"})
 public class BookingServlet extends HttpServlet {
 
-    private static final int MAX_DAYS_AHEAD = 60;
+    private static final int MAX_DAYS_AHEAD = 7;
     private static final int MAX_PENDING_PER_PHONE = 3;
     private static final int MIN_LEAD_MINUTES = 60;
 
@@ -174,7 +174,7 @@ public class BookingServlet extends HttpServlet {
     }
 
     /** Chuẩn hoá số điện thoại VN; trả về null nếu sai định dạng. */
-    static String normalizePhone(String raw) {
+    public static String normalizePhone(String raw) {
         if (raw == null) return null;
         String p = raw.replaceAll("[\\s.\\-]", "");
         if (p.startsWith("+84")) p = "0" + p.substring(3);

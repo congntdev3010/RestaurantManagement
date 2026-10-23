@@ -11,7 +11,9 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +37,10 @@ public class ReservationDAO extends DBContext {
             = "SELECT r.reservation_id, r.user_id, r.table_id, r.customer_name, r.customer_email, r.customer_phone, "
             + "r.reservation_date, r.reservation_time, r.guest_count, r.reservation_status, r.note, "
             + "r.table_type_requested, r.meal_shift, r.staff_note, r.cancel_reason, r.contacted_at, r.checked_in_at, r.created_at, "
-            + "t.table_name, u.full_name AS confirmed_name "
+            + "t.table_name + ISNULL((SELECT ', ' + t2.table_name FROM ReservationTables rt "
+            + "JOIN RestaurantTables t2 ON t2.table_id = rt.table_id WHERE rt.reservation_id = r.reservation_id "
+            + "ORDER BY t2.table_name FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), N'') AS table_name, "
+            + "u.full_name AS confirmed_name "
             + "FROM Reservations r "
             + "LEFT JOIN RestaurantTables t ON t.table_id = r.table_id "
             + "LEFT JOIN Users u ON u.user_id = r.confirmed_by ";
@@ -65,6 +70,22 @@ public class ReservationDAO extends DBContext {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    /**
+     * Lễ tân đặt hộ khách (khách gọi điện): tạo đơn rồi duyệt luôn với các bàn đã chọn.
+     * Nếu duyệt thất bại (bàn bị giữ, thiếu chỗ...) thì xoá đơn vừa tạo để không để lại đơn treo.
+     *
+     * @return {@link #OK} hoặc mã lỗi của {@link #approve}; ERROR nếu không tạo được đơn
+     */
+    public String createApproved(Reservation r, Collection<Integer> tableIds, String shift, int staffId) {
+        int id = createReservation(r);
+        if (id < 1) return ERROR;
+        String result = approve(id, tableIds, shift, staffId, "Lễ tân đặt hộ qua điện thoại");
+        if (!OK.equals(result)) {
+            update("DELETE FROM Reservations WHERE reservation_id = ?", ps -> ps.setInt(1, id));
+        }
+        return result;
     }
 
     /** Số đơn PENDING của một số điện thoại, dùng để chặn spam từ guest. */
@@ -185,10 +206,15 @@ public class ReservationDAO extends DBContext {
         Set<Integer> ids = new HashSet<>();
         if (connection == null || shift == null) return ids;
         String sql = "SELECT table_id FROM Reservations WHERE reservation_date = ? AND meal_shift = ? "
-                + "AND reservation_status IN ('APPROVED', 'COMPLETED')";
+                + "AND reservation_status IN ('APPROVED', 'COMPLETED') AND table_id IS NOT NULL "
+                // Gồm cả các bàn ghép thêm của đơn (ReservationTables), không chỉ bàn chính.
+                + "UNION SELECT x.table_id FROM ReservationTables x JOIN Reservations r ON r.reservation_id = x.reservation_id "
+                + "WHERE r.reservation_date = ? AND r.meal_shift = ? AND r.reservation_status IN ('APPROVED', 'COMPLETED')";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(date));
             ps.setString(2, shift);
+            ps.setDate(3, Date.valueOf(date));
+            ps.setString(4, shift);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) ids.add(rs.getInt(1));
             }
@@ -209,13 +235,16 @@ public class ReservationDAO extends DBContext {
      * Duyệt đơn: gán bàn + ca. Kiểm tra trong một transaction; chỉ mục unique ở DB là chốt chặn
      * cuối cùng nếu hai lễ tân cùng chọn một bàn.
      */
-    public String approve(int id, int tableId, String shift, int staffId, String staffNote) {
+    public String approve(int id, Collection<Integer> tableIdList, String shift, int staffId, String staffNote) {
         if (connection == null) return ERROR;
+        List<Integer> tableIds = new ArrayList<>(new LinkedHashSet<>(tableIdList));
+        if (tableIds.isEmpty()) return NO_TABLE;
         try {
             connection.setAutoCommit(false);
             int guests;
+            Date date;
             try (PreparedStatement ps = connection.prepareStatement(
-                    "SELECT guest_count, reservation_status FROM Reservations WITH (UPDLOCK, ROWLOCK) "
+                    "SELECT guest_count, reservation_status, reservation_date FROM Reservations WITH (UPDLOCK, ROWLOCK) "
                     + "WHERE reservation_id = ?")) {
                 ps.setInt(1, id);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -224,22 +253,47 @@ public class ReservationDAO extends DBContext {
                         return NOT_PENDING;
                     }
                     guests = rs.getInt(1);
+                    date = rs.getDate(3);
                 }
             }
-            try (PreparedStatement ps = connection.prepareStatement(
-                    "SELECT capacity FROM RestaurantTables WHERE table_id = ?")) {
-                ps.setInt(1, tableId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
-                        connection.rollback();
-                        return NO_TABLE;
+            // Gộp bàn: tổng sức chứa các bàn được chọn phải đủ cho số khách.
+            int totalCapacity = 0;
+            for (int tid : tableIds) {
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT capacity FROM RestaurantTables WHERE table_id = ?")) {
+                    ps.setInt(1, tid);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            connection.rollback();
+                            return NO_TABLE;
+                        }
+                        totalCapacity += rs.getInt(1);
                     }
-                    if (rs.getInt(1) < guests) {
-                        connection.rollback();
-                        return CAPACITY;
+                }
+                // Bàn không được nằm trong đơn khác (bàn chính hoặc bàn ghép) cùng ngày + ca.
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "SELECT 1 FROM Reservations r WITH (UPDLOCK, HOLDLOCK) WHERE r.reservation_id <> ? "
+                        + "AND r.reservation_date = ? AND r.meal_shift = ? AND r.reservation_status IN ('APPROVED', 'COMPLETED') "
+                        + "AND (r.table_id = ? OR EXISTS (SELECT 1 FROM ReservationTables x "
+                        + "WHERE x.reservation_id = r.reservation_id AND x.table_id = ?))")) {
+                    ps.setInt(1, id);
+                    ps.setDate(2, date);
+                    ps.setString(3, shift);
+                    ps.setInt(4, tid);
+                    ps.setInt(5, tid);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            connection.rollback();
+                            return CONFLICT;
+                        }
                     }
                 }
             }
+            if (totalCapacity < guests) {
+                connection.rollback();
+                return CAPACITY;
+            }
+            int tableId = tableIds.get(0);
             try (PreparedStatement ps = connection.prepareStatement(
                     "UPDATE Reservations SET reservation_status = 'APPROVED', table_id = ?, meal_shift = ?, "
                     + "confirmed_by = ?, confirmed_at = SYSDATETIME(), updated_at = SYSDATETIME(), "
@@ -250,6 +304,19 @@ public class ReservationDAO extends DBContext {
                 ps.setNString(4, staffNote);
                 ps.setInt(5, id);
                 ps.executeUpdate();
+            }
+            try (PreparedStatement ps = connection.prepareStatement(
+                    "DELETE FROM ReservationTables WHERE reservation_id = ?")) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+            for (int i = 1; i < tableIds.size(); i++) {
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "INSERT INTO ReservationTables (reservation_id, table_id) VALUES (?, ?)")) {
+                    ps.setInt(1, id);
+                    ps.setInt(2, tableIds.get(i));
+                    ps.executeUpdate();
+                }
             }
             connection.commit();
             return OK;
@@ -302,8 +369,9 @@ public class ReservationDAO extends DBContext {
     }
 
     /**
-     * Check-in: khách đã đến. Ghi giờ đến và chuyển bàn sang OCCUPIED trong cùng một transaction.
-     * Chỉ check-in được đơn APPROVED của HÔM NAY; bàn đang có khách thì từ chối.
+     * Check-in: khách đã đến. Ghi giờ đến, chuyển MỌI bàn của đơn (kể cả bàn ghép) sang OCCUPIED và
+     * đặt đơn thành COMPLETED trong cùng một transaction.
+     * Chỉ check-in được đơn APPROVED của HÔM NAY; có bàn đang có khách thì từ chối.
      */
     public String checkIn(int id, int staffId) {
         if (connection == null) return ERROR;
@@ -336,17 +404,28 @@ public class ReservationDAO extends DBContext {
                 connection.rollback();
                 return NO_TABLE;
             }
+            List<Integer> allTables = new ArrayList<>();
+            allTables.add(tableId);
             try (PreparedStatement ps = connection.prepareStatement(
-                    "UPDATE RestaurantTables SET table_status = 'OCCUPIED' "
-                    + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED')")) {
-                ps.setInt(1, tableId);
-                if (ps.executeUpdate() == 0) {
-                    connection.rollback();
-                    return TABLE_BUSY;
+                    "SELECT table_id FROM ReservationTables WHERE reservation_id = ?")) {
+                ps.setInt(1, id);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) allTables.add(rs.getInt(1));
+                }
+            }
+            for (int tid : allTables) {
+                try (PreparedStatement ps = connection.prepareStatement(
+                        "UPDATE RestaurantTables SET table_status = 'OCCUPIED' "
+                        + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED')")) {
+                    ps.setInt(1, tid);
+                    if (ps.executeUpdate() == 0) {
+                        connection.rollback();
+                        return TABLE_BUSY;
+                    }
                 }
             }
             try (PreparedStatement ps = connection.prepareStatement(
-                    "UPDATE Reservations SET checked_in_at = SYSDATETIME(), checked_in_by = ?, "
+                    "UPDATE Reservations SET reservation_status = 'COMPLETED', checked_in_at = SYSDATETIME(), checked_in_by = ?, "
                     + "updated_at = SYSDATETIME() WHERE reservation_id = ?")) {
                 ps.setInt(1, staffId);
                 ps.setInt(2, id);
@@ -363,6 +442,29 @@ public class ReservationDAO extends DBContext {
                 connection.setAutoCommit(true);
             } catch (SQLException ignored) {
             }
+        }
+    }
+
+    /**
+     * Tự huỷ đơn đã duyệt mà khách chưa check-in sau khi quá giờ hẹn {@code graceMinutes} phút.
+     * Chuyển sang CANCELLED nên bàn được nhả lại (chỉ mục chống trùng chỉ tính APPROVED/COMPLETED).
+     *
+     * @return số đơn đã huỷ
+     */
+    public int cancelLateArrivals(int graceMinutes) {
+        if (connection == null) return 0;
+        String sql = "UPDATE Reservations SET reservation_status = 'CANCELLED', "
+                + "cancel_reason = N'Tự động huỷ: khách đến muộn quá " + graceMinutes + " phút', "
+                + "updated_at = SYSDATETIME() "
+                + "WHERE reservation_status = 'APPROVED' AND checked_in_at IS NULL "
+                + "AND DATEADD(MINUTE, ?, DATEADD(SECOND, DATEDIFF(SECOND, 0, reservation_time), "
+                + "CAST(reservation_date AS DATETIME2(0)))) < SYSDATETIME()";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, graceMinutes);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
         }
     }
 

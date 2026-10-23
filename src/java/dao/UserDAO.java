@@ -44,6 +44,59 @@ public class UserDAO extends DBContext {
         return null;
     }
 
+    /**
+     * Đăng nhập Google: tìm tài khoản chưa bị xóa theo email đã được Google xác minh.
+     * Trả về cả tài khoản bị khóa (isActive = false) để servlet báo đúng lý do.
+     */
+    public User findByEmail(String email) {
+        String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active "
+                + "FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.email = ? AND u.is_deleted = 0";
+        if (connection == null) {
+            return null;
+        }
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User u = new User();
+                    u.setUserId(rs.getInt("user_id"));
+                    u.setUsername(rs.getString("username"));
+                    u.setEmail(rs.getString("email"));
+                    u.setFullName(rs.getNString("full_name"));
+                    u.setPhone(rs.getString("phone"));
+                    u.setRoleId(rs.getInt("role_id"));
+                    u.setRoleName(rs.getString("role_name"));
+                    u.setIsActive(rs.getBoolean("is_active"));
+                    return u;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Tạo tài khoản Customer cho người đăng nhập Google lần đầu. Mật khẩu là chuỗi ngẫu nhiên
+     * (không ai biết) nên tài khoản chỉ vào được bằng Google, hoặc qua "Quên mật khẩu" để tự đặt.
+     */
+    public boolean createGoogleCustomer(String email, String fullName) {
+        String sql = "INSERT INTO Users (username, email, password, full_name, phone, role_id, is_active) "
+                + "VALUES (NULL, ?, ?, ?, NULL, 1, 1)";
+        if (connection == null) {
+            return false;
+        }
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setString(2, java.util.UUID.randomUUID().toString());
+            ps.setNString(3, fullName == null || fullName.isBlank() ? email : fullName);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public boolean isUserActive(int userId) {
         String sql = "SELECT 1 FROM Users WHERE user_id = ? AND is_active = 1 AND is_deleted = 0";
         if (connection == null) {

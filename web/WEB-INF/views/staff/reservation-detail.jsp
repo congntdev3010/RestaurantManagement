@@ -24,7 +24,7 @@
                 </p>
             </c:if>
 
-            <div class="rsv-grid">
+            <div class="rsv-grid" style="${canDecide ? '' : 'grid-template-columns:1fr;max-width:720px'}">
                 <section class="rsv-card">
                     <h2>Thông tin khách</h2>
                     <dl class="rsv-dl">
@@ -33,9 +33,13 @@
                         <dt>Điện thoại</dt><dd><a href="tel:${r.customerPhone}"><c:out value="${r.customerPhone}" /></a></dd>
                         <dt>Ngày giờ đến</dt><dd><c:out value="${r.timeText}" /> · <c:out value="${r.dateText}" /></dd>
                         <dt>Số người</dt><dd>${r.guestCount}</dd>
-                        <dt>Loại bàn muốn</dt><dd><c:out value="${empty r.tableTypeRequested ? 'Không yêu cầu' : r.tableTypeRequested}" /></dd>
-                        <dt>Ghi chú khách</dt><dd><c:out value="${empty r.note ? '—' : r.note}" /></dd>
-                        <c:if test="${not empty r.contactedAt}">
+                        <c:if test="${canDecide}">
+                            <dt>Loại bàn muốn</dt><dd><c:out value="${empty r.tableTypeRequested ? 'Không yêu cầu' : r.tableTypeRequested}" /></dd>
+                        </c:if>
+                        <c:if test="${canDecide or not empty r.note}">
+                            <dt>Ghi chú khách</dt><dd><c:out value="${empty r.note ? '—' : r.note}" /></dd>
+                        </c:if>
+                        <c:if test="${canDecide and not empty r.contactedAt}">
                             <dt>Đã gọi lúc</dt><dd><c:out value="${r.contactedAtText}" /></dd>
                         </c:if>
                         <c:if test="${not empty r.staffNote}">
@@ -53,6 +57,8 @@
                     </dl>
                 </section>
 
+                <%-- Chỉ đơn đang chờ duyệt mới cần xem còn bao nhiêu bàn trống --%>
+                <c:if test="${canDecide}">
                 <section class="rsv-card">
                     <h2>Tình trạng bàn ngày <c:out value="${r.dateText}" /></h2>
                     <p class="rsv-hint">
@@ -98,9 +104,12 @@
                         </form>
                     </c:if>
                 </section>
+                </c:if>
             </div>
 
+            <c:if test="${canDecide or r.status eq 'APPROVED'}">
             <section class="rsv-card">
+                <c:if test="${canDecide}">
                 <h2>Sơ đồ bàn — <c:out value="${selectedShiftName}" />, <c:out value="${r.dateText}" /></h2>
 
                 <c:if test="${tableLoadFailed}">
@@ -119,16 +128,16 @@
                             <div class="rsv-seats">
                                 <c:forEach var="slot" items="${g.value}">
                                     <label class="rsv-seat ${(slot.selectable and canDecide) ? '' : 'disabled'}">
-                                        <input type="radio" name="tableId" value="${slot.table.tableId}"
+                                        <input type="checkbox" name="tableId" value="${slot.table.tableId}"
                                                ${(slot.selectable and canDecide) ? '' : 'disabled'}
-                                               ${r.tableId eq slot.table.tableId ? 'checked' : ''}>
+                                               data-cap="${slot.table.capacity}">
                                         <span>
                                             <c:out value="${slot.table.tableName}" />
                                             <small>
                                                 ${slot.table.capacity} chỗ ·
                                                 <c:choose>
                                                     <c:when test="${slot.booked}">đã có người đặt</c:when>
-                                                    <c:when test="${not slot.fits}">không đủ chỗ</c:when>
+                                                    <c:when test="${not slot.fits}">còn trống (cần gộp bàn)</c:when>
                                                     <c:otherwise>còn trống</c:otherwise>
                                                 </c:choose>
                                             </small>
@@ -141,7 +150,25 @@
 
                     <c:if test="${canDecide}">
                         <p class="rsv-hint">Ca đang chọn: <strong><c:out value="${selectedShiftName}" /></strong>
-                            (đổi ca bằng các ô tóm tắt ở trên rồi chọn lại bàn).</p>
+                            (đổi ca bằng các ô tóm tắt ở trên rồi chọn lại bàn).
+                            <strong>Gộp bàn:</strong> tích chọn nhiều bàn khi một bàn không đủ chỗ (vd 16 khách = 2 bàn 8 chỗ).</p>
+                        <p class="rsv-hint" id="capSummary" data-guests="${r.guestCount}">Đã chọn 0 bàn · 0/${r.guestCount} chỗ</p>
+                        <script>
+                            (function () {
+                                var form = document.getElementById('approveForm');
+                                var out = document.getElementById('capSummary');
+                                var guests = parseInt(out.dataset.guests, 10);
+                                function refresh() {
+                                    var boxes = form.querySelectorAll('input[name=tableId]:checked');
+                                    var cap = 0;
+                                    boxes.forEach(function (b) { cap += parseInt(b.dataset.cap, 10); });
+                                    out.textContent = 'Đã chọn ' + boxes.length + ' bàn · ' + cap + '/' + guests + ' chỗ'
+                                            + (cap >= guests ? ' — đủ chỗ' : ' — chưa đủ, chọn thêm bàn');
+                                }
+                                form.addEventListener('change', refresh);
+                                refresh();
+                            })();
+                        </script>
                         <input class="rsv-input" style="width:100%" type="text" name="note" maxlength="500"
                                placeholder="Ghi chú lễ tân (tuỳ chọn)">
                         <div class="rsv-actions">
@@ -149,6 +176,7 @@
                         </div>
                     </c:if>
                 </form>
+                </c:if>
 
                 <c:if test="${canDecide}">
                     <form action="${base}" method="post" class="rsv-actions"
@@ -162,31 +190,27 @@
                 </c:if>
 
                 <c:if test="${r.status eq 'APPROVED'}">
+                    <h2>Khi khách đến</h2>
+                    <c:if test="${not r.today}">
+                        <p class="rsv-hint">Chỉ check-in được vào đúng ngày đến (<c:out value="${r.dateText}" />).</p>
+                    </c:if>
                     <div class="rsv-actions">
                         <form action="${base}" method="post" class="rsv-inline">
                             <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
                             <input type="hidden" name="reservationId" value="${r.reservationId}">
-                            <c:choose>
-                                <c:when test="${not empty r.checkedInAt}">
-                                    <span class="rsv-tag">Khách đã đến lúc <c:out value="${r.checkedInAtText}" /></span>
-                                    <button type="submit" name="action" value="complete" class="rsv-btn small"
-                                            onclick="return confirm('Hoàn tất bữa ăn của khách?');">Hoàn tất bữa ăn</button>
-                                </c:when>
-                                <c:otherwise>
-                                    <c:if test="${r.today}">
+                            <c:if test="${r.today}">
                                         <button type="submit" name="action" value="checkin" class="rsv-btn small"
-                                                onclick="return confirm('Khách đã đến? Bàn sẽ chuyển sang đang phục vụ.');">Khách đã đến (mở bàn)</button>
+                                                onclick="return confirm('Khách đã đến? Bàn sẽ chuyển sang đang phục vụ và đơn đặt bàn được đánh dấu hoàn thành.');">Khách đã đến (mở bàn)</button>
                                     </c:if>
                                     <button type="submit" name="action" value="noshow" class="rsv-btn secondary small"
                                             onclick="return confirm('Đánh dấu khách không đến?');">Khách không đến</button>
                                     <button type="submit" name="action" value="cancel" class="rsv-btn danger small"
                                             onclick="return confirm('Huỷ đơn đã duyệt này?');">Huỷ đơn</button>
-                                </c:otherwise>
-                            </c:choose>
                         </form>
                     </div>
                 </c:if>
             </section>
+            </c:if>
         </main>
     </body>
 </html>

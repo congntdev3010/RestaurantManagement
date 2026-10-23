@@ -114,6 +114,44 @@ public class RestaurantTableDAO extends DBContext {
         return executeUpdate(sql, statement -> statement.setInt(1, tableId));
     }
 
+    /**
+     * Gộp bàn cho khách vãng lai: mở TẤT CẢ các bàn trong một transaction.
+     * Chỉ thành công khi mọi bàn đều đang AVAILABLE/RESERVED; một bàn bận thì không bàn nào được mở.
+     */
+    public boolean occupyAllIfFree(java.util.Collection<Integer> tableIds) {
+        if (connection == null || tableIds.isEmpty()) {
+            return false;
+        }
+        String sql = "UPDATE RestaurantTables SET table_status = 'OCCUPIED' "
+                + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED')";
+        try {
+            connection.setAutoCommit(false);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                for (int id : new java.util.LinkedHashSet<>(tableIds)) {
+                    statement.setInt(1, id);
+                    if (statement.executeUpdate() == 0) {
+                        connection.rollback();
+                        return false;
+                    }
+                }
+            }
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException ignored) {
+            }
+            return false;
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException ignored) {
+            }
+        }
+    }
+
     /** Chỉ xóa bàn đang trống. */
     public boolean deleteTable(int tableId) {
         String sql = "DELETE FROM RestaurantTables "

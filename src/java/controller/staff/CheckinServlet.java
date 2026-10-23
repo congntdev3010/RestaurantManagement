@@ -98,12 +98,21 @@ public class CheckinServlet extends HttpServlet {
         if ("seat".equals(action)) {
             // Khách chưa đặt: bật bàn sang đang phục vụ.
             tab = "walkin";
-            int tableId = parseInt(request.getParameter("tableId"), -1);
-            try (RestaurantTableDAO dao = new RestaurantTableDAO()) {
-                success = tableId > 0 && dao.occupyIfFree(tableId);
+            // Nhiều tableId = gộp bàn cho đoàn đông người.
+            List<Integer> tableIds = new ArrayList<>();
+            String[] rawIds = request.getParameterValues("tableId");
+            if (rawIds != null) {
+                for (String raw : rawIds) {
+                    int tid = parseInt(raw, -1);
+                    if (tid > 0) tableIds.add(tid);
+                }
             }
-            message = success ? "Đã mở bàn, khách vãng lai đang được phục vụ."
-                    : "Không mở được bàn: bàn đang có khách hoặc không tồn tại.";
+            try (RestaurantTableDAO dao = new RestaurantTableDAO()) {
+                success = !tableIds.isEmpty() && tableIds.size() <= 10 && dao.occupyAllIfFree(tableIds);
+            }
+            message = success ? (tableIds.size() > 1 ? "Đã gộp và mở " + tableIds.size() + " bàn, khách đang được phục vụ."
+                            : "Đã mở bàn, khách vãng lai đang được phục vụ.")
+                    : "Không mở được bàn: có bàn đang có khách hoặc không tồn tại. Không bàn nào được mở.";
         } else if ("checkin".equals(action)) {
             int id = parseInt(request.getParameter("reservationId"), -1);
             try (ReservationDAO dao = new ReservationDAO()) {
@@ -123,7 +132,7 @@ public class CheckinServlet extends HttpServlet {
     /** Dùng chung cho màn chi tiết đơn của ManageReservationsServlet. */
     public static String checkinMessage(String result) {
         switch (result) {
-            case ReservationDAO.OK: return "Khách đã đến, bàn đã chuyển sang đang phục vụ.";
+            case ReservationDAO.OK: return "Khách đã đến: bàn đã chuyển sang đang phục vụ và đơn đặt bàn đã hoàn thành.";
             case ReservationDAO.ALREADY_IN: return "Đơn này đã được check-in trước đó.";
             case ReservationDAO.NOT_TODAY: return "Chỉ check-in được đơn có ngày đến là hôm nay.";
             case ReservationDAO.TABLE_BUSY: return "Bàn của đơn này đang có khách. Kiểm tra sơ đồ bàn hoặc đổi bàn cho khách.";

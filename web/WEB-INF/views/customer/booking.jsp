@@ -71,7 +71,7 @@
                 <label class="full">Ghi chú
                     <textarea name="note" rows="3" maxlength="500"
                               placeholder="Ví dụ: tiệc sinh nhật, cần ghế trẻ em..."><c:out value="${formNote}" /></textarea>
-                    <span class="rsv-hint">Cần đặt trước ít nhất 1 giờ và tối đa 60 ngày.</span>
+                    <span class="rsv-hint">Cần đặt trước ít nhất 1 giờ và tối đa 1 tuần (7 ngày).</span>
                 </label>
 
                 <div class="full">

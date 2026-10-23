@@ -21,6 +21,6 @@ public class TableAvailability {
     /** Sức chứa đủ cho số khách của đơn. */
     public boolean isFits() { return fits; }
 
-    /** Có thể chọn để duyệt đơn: chưa ai giữ và đủ chỗ. */
-    public boolean isSelectable() { return !booked && fits; }
+    /** Có thể chọn để duyệt đơn: chưa ai giữ. Bàn nhỏ hơn số khách vẫn chọn được để gộp bàn. */
+    public boolean isSelectable() { return !booked; }
 }
