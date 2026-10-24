@@ -4,8 +4,6 @@ import dao.RestaurantTableDAO;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,11 +20,12 @@ import model.User;
 @WebServlet(name = "ManageTablesServlet", urlPatterns = {"/manage-tables"})
 public class ManageTablesServlet extends HttpServlet {
 
-    // Các trạng thái được phép lưu vào cơ sở dữ liệu.
-    private static final Set<String> TABLE_STATUSES = new HashSet<>(Arrays.asList(
-            "AVAILABLE", "RESERVED", "OCCUPIED"));
+    /** Trạng thái được chấp nhận từ form và lưu vào cơ sở dữ liệu. */
+    private static final Set<String> TABLE_STATUSES = Set.of("AVAILABLE", "RESERVED", "OCCUPIED");
 
-    // Tải danh sách bàn và chỉ mở form sửa cho quản lý.
+    /**
+     * Xác thực quyền xem, tải sơ đồ bàn và chuẩn bị dữ liệu cho view.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -37,10 +36,13 @@ public class ManageTablesServlet extends HttpServlet {
         }
 
         boolean canManage = isManager(actor);
-        boolean canChangeStatus = canManage || hasRole(actor, "Server") || hasRole(actor, "Receptionist");
+        // Server không được đổi trạng thái bàn; bàn tự chuyển đang phục vụ khi server order hộ khách.
+        boolean canChangeStatus = canManage || hasRole(actor, "Receptionist");
         RestaurantTableDAO dao = new RestaurantTableDAO();
         List<RestaurantTable> tables;
         boolean tableLoadFailed = false;
+
+        // Giữ view hoạt động khi đọc danh sách lỗi, đồng thời hiển thị lỗi rõ ràng.
         try {
             tables = dao.getAllTables();
         } catch (SQLException e) {
@@ -48,6 +50,8 @@ public class ManageTablesServlet extends HttpServlet {
             tables = new ArrayList<>();
             tableLoadFailed = true;
         }
+
+        // Gom bàn theo khu vực để view có thể hiển thị từng nhóm.
         Map<String, List<RestaurantTable>> tableGroups = new LinkedHashMap<>();
         for (RestaurantTable table : tables) {
             tableGroups.computeIfAbsent(table.getTableType(), type -> new ArrayList<>()).add(table);
@@ -57,17 +61,25 @@ public class ManageTablesServlet extends HttpServlet {
         request.setAttribute("tableLoadFailed", tableLoadFailed);
         request.setAttribute("canManage", canManage);
         request.setAttribute("canChangeStatus", canChangeStatus);
+        request.setAttribute("canOrder", canManage || hasRole(actor, "Server"));
 
+        // Chỉ Manager được tải dữ liệu cho form sửa; lỗi truy vấn không được báo nhầm là không tồn tại.
         String editId = request.getParameter("edit");
         if (canManage && editId != null && !tableLoadFailed) {
-            RestaurantTable editTable = dao.getTableById(parseInt(editId, -1));
-            if (editTable != null) {
-                request.setAttribute("editTable", editTable);
-            } else {
-                setFlash(request.getSession(), "Không tìm thấy bàn cần chỉnh sửa.", "error");
+            try {
+                RestaurantTable editTable = dao.getTableById(parseInt(editId, -1));
+                if (editTable != null) {
+                    request.setAttribute("editTable", editTable);
+                } else {
+                    setFlash(request.getSession(), "Không tìm thấy bàn cần chỉnh sửa.", "error");
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                setFlash(request.getSession(), "Không thể tải bàn cần chỉnh sửa do lỗi dữ liệu.", "error");
             }
         }
 
+        // Chuyển thông báo flash từ session sang request để chỉ hiển thị một lần.
         HttpSession session = request.getSession();
         request.setAttribute("tableMessage", session.getAttribute("tableMessage"));
         request.setAttribute("tableMessageType", session.getAttribute("tableMessageType"));
@@ -76,7 +88,9 @@ public class ManageTablesServlet extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/staff/manage-tables.jsp").forward(request, response);
     }
 
-    // Kiểm tra quyền, thực hiện thao tác bàn và chuyển hướng kèm thông báo.
+    /**
+     * Kiểm tra quyền theo hành động, xác thực dữ liệu và gọi DAO để thay đổi bàn.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -91,7 +105,11 @@ public class ManageTablesServlet extends HttpServlet {
         String message;
         String messageType = "error";
 
-        // Nhân viên chỉ được đổi trạng thái; mọi thao tác quản trị cần quyền Manager.
+        // Nhân viên chỉ được đổi trạng thái; các thao tác quản lý khác cần quyền Manager.
+        if ("changeStatus".equals(action) && hasRole(actor, "Server")) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
         if (!"changeStatus".equals(action) && !isManager(actor)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
@@ -100,7 +118,8 @@ public class ManageTablesServlet extends HttpServlet {
         if ("changeStatus".equals(action)) {
             int tableId = parseInt(request.getParameter("tableId"), -1);
             String status = request.getParameter("status");
-            // Kiểm tra trạng thái bằng danh sách cho phép thay vì tin dữ liệu từ form.
+
+            // Kiểm tra allowlist tại servlet; DAO còn kiểm tra chuyển trạng thái trong câu SQL.
             if (tableId > 0 && TABLE_STATUSES.contains(status)
                     && dao.updateTableStatus(tableId, status)) {
                 message = "Đã cập nhật trạng thái bàn.";
@@ -110,23 +129,25 @@ public class ManageTablesServlet extends HttpServlet {
             }
         } else if ("create".equals(action) || "update".equals(action)) {
             RestaurantTable table = readFormTable(request);
-            if ("create".equals(action)) {
-                // Bàn mới luôn bắt đầu ở trạng thái còn trống.
+            boolean creating = "create".equals(action);
+
+            // Không nhận trạng thái tạo mới từ client; bàn mới luôn bắt đầu ở trạng thái trống.
+            if (creating) {
                 table.setStatus("AVAILABLE");
             }
+
             message = validateTable(table);
-            if (message == null && "update".equals(action)) {
+            if (message == null && !creating) {
                 table.setTableId(parseInt(request.getParameter("tableId"), -1));
                 if (table.getTableId() < 1) {
                     message = "Bàn cần cập nhật không hợp lệ.";
                 }
             }
+
             if (message == null) {
-                boolean saved = "create".equals(action)
-                        ? dao.createTable(table)
-                        : dao.updateTable(table);
+                boolean saved = creating ? dao.createTable(table) : dao.updateTable(table);
                 if (saved) {
-                    message = "create".equals(action) ? "Đã thêm bàn." : "Đã cập nhật bàn.";
+                    message = creating ? "Đã thêm bàn." : "Đã cập nhật bàn.";
                     messageType = "success";
                 } else {
                     message = "Không thể lưu bàn. Mã bàn có thể bị trùng hoặc trạng thái chuyển đổi không hợp lệ.";
@@ -144,11 +165,14 @@ public class ManageTablesServlet extends HttpServlet {
             message = "Thao tác không hợp lệ.";
         }
 
+        // Dùng POST/Redirect/GET để tránh gửi lại thao tác khi tải lại trang.
         setFlash(request.getSession(), message, messageType);
         response.sendRedirect(request.getContextPath() + "/manage-tables");
     }
 
-    // Xác thực người dùng và kiểm tra quyền xem sơ đồ bàn.
+    /**
+     * Yêu cầu đăng nhập và giới hạn quyền xem sơ đồ cho Manager, Server, Receptionist.
+     */
     private User requireTableViewer(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);
@@ -166,17 +190,17 @@ public class ManageTablesServlet extends HttpServlet {
         return actor;
     }
 
-    // Kiểm tra người dùng có vai trò quản lý hay không.
+    /** Trả về true nếu người dùng có vai trò Manager. */
     private boolean isManager(User user) {
         return hasRole(user, "Manager");
     }
 
-    // So sánh tên vai trò không phân biệt chữ hoa, chữ thường.
+    /** So sánh tên vai trò không phân biệt chữ hoa/thường. */
     private boolean hasRole(User user, String roleName) {
         return user.getRoleName() != null && roleName.equalsIgnoreCase(user.getRoleName());
     }
 
-    // Đọc dữ liệu form và chuyển kiểu cho đối tượng bàn.
+    /** Đọc và chuẩn hóa các trường bàn được gửi từ form. */
     private RestaurantTable readFormTable(HttpServletRequest request) {
         RestaurantTable table = new RestaurantTable();
         table.setTableName(trim(request.getParameter("tableName")));
@@ -187,7 +211,10 @@ public class ManageTablesServlet extends HttpServlet {
         return table;
     }
 
-    // Kiểm tra trường bắt buộc và trạng thái trước khi lưu.
+    /**
+     * Kiểm tra giới hạn độ dài, sức chứa và trạng thái trước khi ghi dữ liệu.
+     * Trả về thông báo lỗi đầu tiên hoặc null nếu dữ liệu hợp lệ.
+     */
     private String validateTable(RestaurantTable table) {
         if (table.getTableName() == null || table.getTableName().isEmpty() || table.getTableName().length() > 50) {
             return "Tên bàn là bắt buộc và tối đa 50 ký tự.";
@@ -207,7 +234,7 @@ public class ManageTablesServlet extends HttpServlet {
         return null;
     }
 
-    // Đọc số nguyên từ request; trả về giá trị dự phòng nếu không hợp lệ.
+    /** Chuyển chuỗi sang số nguyên; dùng giá trị dự phòng khi đầu vào sai định dạng. */
     private int parseInt(String value, int fallback) {
         try {
             return Integer.parseInt(value);
@@ -216,12 +243,12 @@ public class ManageTablesServlet extends HttpServlet {
         }
     }
 
-    // Bỏ khoảng trắng đầu/cuối và giữ null nếu tham số không tồn tại.
+    /** Xóa khoảng trắng hai đầu; giữ null nếu tham số không được gửi. */
     private String trim(String value) {
         return value == null ? null : value.trim();
     }
 
-    // Lưu thông báo một lần để hiển thị sau khi chuyển hướng.
+    /** Lưu thông báo trong session để hiển thị một lần sau redirect. */
     private void setFlash(HttpSession session, String message, String messageType) {
         session.setAttribute("tableMessage", message);
         session.setAttribute("tableMessageType", messageType);

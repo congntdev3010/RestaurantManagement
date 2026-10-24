@@ -1,8 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:if test="${empty sessionScope.user}">
-    <c:redirect url="/profile" />
-</c:if>
+<%-- Tài khoản được ProfileServlet xác thực trước khi forward tới view. --%>
+<c:set var="profileUser" value="${sessionScope.user}" />
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -20,10 +19,11 @@
                 <h1>Thông tin cá nhân</h1>
             </header>
 
+            <%-- Thông báo flash đã được servlet chuyển từ session sang request. --%>
             <c:if test="${not empty profileMessage}">
-            <p class="profile-message ${profileMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
-                <c:out value="${profileMessage}" />
-            </p>
+                <p class="profile-message ${profileMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
+                    <c:out value="${profileMessage}" />
+                </p>
             </c:if>
 
             <section class="profile-summary" aria-label="Thông tin tài khoản">
@@ -31,21 +31,22 @@
                     <i class="fa-solid fa-user"></i>
                 </div>
                 <div class="profile-identity">
-                    <h2><c:out value="${sessionScope.user.fullName}" /></h2>
-                    <p>@<c:out value="${sessionScope.user.username}" /></p>
+                    <h2><c:out value="${profileUser.fullName}" /></h2>
+                    <p>@<c:out value="${profileUser.username}" /></p>
                 </div>
                 <dl class="profile-details">
                     <div>
                         <dt>Email</dt>
-                        <dd><c:out value="${sessionScope.user.email}" /></dd>
+                        <dd><c:out value="${profileUser.email}" /></dd>
                     </div>
                     <div>
                         <dt>Số điện thoại</dt>
-                        <dd><c:out value="${sessionScope.user.phone}" /></dd>
+                        <dd><c:out value="${profileUser.phone}" /></dd>
                     </div>
                 </dl>
             </section>
 
+            <%-- Hai form dùng chung route; action xác định thao tác cần xử lý trong servlet. --%>
             <section class="profile-editors" aria-label="Cập nhật tài khoản">
                 <details class="profile-editor" ${profileOpenSection eq 'profile' ? 'open' : ''}>
                     <summary>
@@ -57,13 +58,13 @@
                         <label>
                             Họ và tên
                             <input type="text" name="fullName" maxlength="30" autocomplete="name" required
-                                value="<c:out value='${sessionScope.user.fullName}' />">
+                                value="<c:out value='${profileUser.fullName}' />">
                         </label>
                         <label>
                             Số điện thoại
                             <input type="tel" name="phone" maxlength="10" pattern="0[0-9]{9}"
                                    title="Số điện thoại gồm 10 chữ số và bắt đầu bằng 0"
-                                   autocomplete="tel" required value="<c:out value='${sessionScope.user.phone}' />">
+                                   autocomplete="tel" required value="<c:out value='${profileUser.phone}' />">
                         </label>
                         <button class="profile-submit" type="submit">Lưu thông tin</button>
                     </form>

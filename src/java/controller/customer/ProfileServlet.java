@@ -14,18 +14,21 @@ import jakarta.servlet.http.HttpSession;
 @WebServlet(name = "ProfileServlet", urlPatterns = {"/profile"})
 public class ProfileServlet extends HttpServlet {
 
+    /** Số điện thoại hợp lệ phải có 10 chữ số và bắt đầu bằng số 0. */
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9}$");
 
-    // Hiển thị hồ sơ và lấy thông báo sau khi người dùng gửi form.
+    /**
+     * Yêu cầu đăng nhập, chuyển flash message sang request và hiển thị trang hồ sơ.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setHeader("Cache-Control", "no-store");
-        User user = requireUser(request, response);
-        if (user == null) {
+        if (requireUser(request, response) == null) {
             return;
         }
 
+        // Chuyển thông báo khỏi session để sau lần hiển thị này nó không lặp lại.
         HttpSession session = request.getSession();
         request.setAttribute("profileMessage", session.getAttribute("profileMessage"));
         request.setAttribute("profileMessageType", session.getAttribute("profileMessageType"));
@@ -36,7 +39,9 @@ public class ProfileServlet extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/customer/profile.jsp").forward(request, response);
     }
 
-    // Xử lý cập nhật thông tin cá nhân hoặc đổi mật khẩu.
+    /**
+     * Xử lý cập nhật hồ sơ hoặc đổi mật khẩu, sau đó redirect để tránh gửi lại form.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -52,8 +57,8 @@ public class ProfileServlet extends HttpServlet {
         String openSection;
         UserDAO dao = new UserDAO();
 
+        // Mỗi action có bộ kiểm tra riêng; chỉ DAO mới quyết định thao tác DB thành công.
         if ("updateProfile".equals(action)) {
-            // Kiểm tra dữ liệu trước khi lưu, rồi cập nhật thông tin trong session.
             openSection = "profile";
             String fullName = trim(request.getParameter("fullName"));
             String phone = trim(request.getParameter("phone"));
@@ -70,7 +75,6 @@ public class ProfileServlet extends HttpServlet {
                 message = "Không thể cập nhật thông tin. Vui lòng thử lại.";
             }
         } else if ("changePassword".equals(action)) {
-            // Chỉ đổi mật khẩu khi mật khẩu hiện tại đúng và xác nhận khớp.
             openSection = "password";
             String currentPassword = request.getParameter("currentPassword");
             String newPassword = request.getParameter("newPassword");
@@ -94,6 +98,7 @@ public class ProfileServlet extends HttpServlet {
             message = "Thao tác không hợp lệ.";
         }
 
+        // Lưu thông báo một lần và mở lại đúng phần form sau redirect.
         HttpSession session = request.getSession();
         session.setAttribute("profileMessage", message);
         session.setAttribute("profileMessageType", messageType);
@@ -101,7 +106,9 @@ public class ProfileServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/profile");
     }
 
-    // Lấy người dùng đã đăng nhập; nếu chưa đăng nhập thì chuyển về trang login.
+    /**
+     * Lấy người dùng từ session; nếu chưa đăng nhập thì chuyển tới trang login.
+     */
     private User requireUser(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);
@@ -113,7 +120,7 @@ public class ProfileServlet extends HttpServlet {
         return (User) sessionUser;
     }
 
-    // Bỏ khoảng trắng thừa trong dữ liệu nhập.
+    /** Xóa khoảng trắng đầu/cuối nhưng giữ nguyên null để validation phát hiện dữ liệu thiếu. */
     private String trim(String value) {
         return value == null ? null : value.trim();
     }

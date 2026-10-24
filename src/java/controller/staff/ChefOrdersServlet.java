@@ -1,6 +1,5 @@
 package controller.staff;
 
-import dao.OrderDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,10 +15,7 @@ public class ChefOrdersServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         if (requireChef(request, response) == null) return;
-        try (OrderDAO orders = new OrderDAO()) {
-            request.setAttribute("orders", orders.getChefOrders());
-        }
-        request.getRequestDispatcher("/WEB-INF/views/staff/chef-orders.jsp").forward(request, response);
+        response.sendRedirect(request.getContextPath() + "/kitchen");
     }
 
     private User requireChef(HttpServletRequest request, HttpServletResponse response) throws IOException {

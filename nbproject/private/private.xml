@@ -2,16 +2,6 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/C:/Users/Admin/Documents/GitHub/RestaurantManagement/web/WEB-INF/views/customer/my-orders.jsp</file>
-            <file>file:/C:/Users/Admin/Documents/GitHub/RestaurantManagement/src/java/controller/customer/CartServlet.java</file>
-            <file>file:/C:/Users/Admin/Documents/GitHub/RestaurantManagement/src/java/controller/customer/NewsServlet.java</file>
-            <file>file:/C:/Users/Admin/Documents/GitHub/RestaurantManagement/web/WEB-INF/views/customer/order-detail.jsp</file>
-            <file>file:/C:/Users/Admin/Documents/GitHub/RestaurantManagement/src/java/dao/DishDAO.java</file>
-            <file>file:/C:/Users/Admin/Documents/GitHub/RestaurantManagement/web/WEB-INF/views/customer/cart.jsp</file>
-            <file>file:/C:/Users/Admin/Documents/GitHub/RestaurantManagement/web/WEB-INF/views/customer/order.jsp</file>
-            <file>file:/C:/Users/Admin/Documents/GitHub/RestaurantManagement/src/java/controller/customer/MenuServlet.java</file>
-            <file>file:/C:/Users/Admin/Documents/GitHub/RestaurantManagement/web/WEB-INF/views/customer/profile.jsp</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>
