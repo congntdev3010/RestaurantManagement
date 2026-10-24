@@ -13,14 +13,21 @@ public class DBContext implements AutoCloseable {
     public DBContext()
     {
         try {
-            String url = "jdbc:sqlserver://localhost:1433;databaseName=AlacarteRestaurantDB;encrypt=true;trustServerCertificate=true";
-            String username = "sa";
-            String password = "123";
+            String url = setting("RESTAURANT_DB_URL",
+                    "jdbc:sqlserver://localhost:1433;databaseName=AlacarteRestaurantDB;encrypt=true;trustServerCertificate=true");
+            String username = setting("RESTAURANT_DB_USERNAME", "sa");
+            String password = setting("RESTAURANT_DB_PASSWORD", "123");
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             connection = DriverManager.getConnection(url, username, password);
         } catch (ClassNotFoundException | SQLException ex) {
-            System.out.println(ex);
+            throw new IllegalStateException("Cannot connect to the restaurant database. Check that SQL Server is running, "
+                    + "the AlacarteRestaurantDB schema has been installed, and RESTAURANT_DB_URL/USERNAME/PASSWORD are correct.", ex);
         }
+    }
+
+    private static String setting(String name, String defaultValue) {
+        String value = System.getenv(name);
+        return value == null || value.trim().isEmpty() ? defaultValue : value.trim();
     }
 
     @Override

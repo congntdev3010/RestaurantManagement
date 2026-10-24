@@ -42,11 +42,9 @@
     <nav class="header-nav">
         <a href="${pageContext.request.contextPath}/home" class="<%= currentURI.contains("home") ? "active" : "" %>">Trang chủ</a>
         <a href="${pageContext.request.contextPath}/menu" class="<%= currentURI.contains("menu") ? "active" : "" %>">Thực đơn</a>
-        <a href="${pageContext.request.contextPath}/booking" class="<%= currentURI.contains("booking") ? "active" : "" %>">Đặt bàn</a>
         <% if (canViewNews) { %>
         <a href="${pageContext.request.contextPath}/news" class="<%= currentURI.contains("news") ? "active" : "" %>">Tin tức</a>
         <% } %>
-        <a href="${pageContext.request.contextPath}/review" class="<%= currentURI.contains("review") ? "active" : "" %>">Đánh giá</a>
     </nav>
     <!-- Khu vực Tài khoản -->
     <div class="header-auth">
@@ -72,9 +70,6 @@
                     <a href="${pageContext.request.contextPath}/profile"><i class="fa-regular fa-id-card"></i> Thông tin cá nhân</a>
                     <% if ("Customer".equalsIgnoreCase(roleName)) { %>
                     <a href="${pageContext.request.contextPath}/my-orders"><i class="fa-solid fa-receipt"></i> Đơn hàng của tôi</a>
-                    <% } %>
-                    <% if (!"Server".equalsIgnoreCase(roleName)) { %>
-                    <a href="${pageContext.request.contextPath}/my-bookings"><i class="fa-solid fa-utensils"></i> Lịch sử đặt bàn</a>
                     <% } %>
                     <hr>
                     <a href="${pageContext.request.contextPath}/logout" class="logout-item"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>

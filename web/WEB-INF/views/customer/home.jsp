@@ -42,9 +42,6 @@
             
             <% if (!isRestaurantStaff) { %>
             <div class="hero-buttons">
-                <a href="${pageContext.request.contextPath}/booking" class="btn-hero-primary">
-                    <i class="fa-regular fa-calendar-check"></i> Đặt bàn ngay
-                </a>
                 <a href="${pageContext.request.contextPath}/menu" class="btn-hero-secondary">
                     <i class="fa-solid fa-utensils"></i> Xem Thực Đơn
                 </a>
