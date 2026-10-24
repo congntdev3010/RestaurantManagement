@@ -4,96 +4,49 @@
 
 <!DOCTYPE html>
 <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Đơn hàng của tôi</title>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/orders.css">
+    </head>
+    <body>
+        <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <main class="orders-page">
+            <h1>Đơn hàng của tôi</h1>
 
-    <title>Đơn hàng của tôi</title>
+            <c:if test="${not empty orderMessage}">
+                <p class="notice">
+                    <c:out value="${orderMessage}" />
+                </p>
+            </c:if>
 
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/orders.css">
-</head>
+            <c:choose>
+                <c:when test="${empty orders}">
+                    <p>Bạn chưa có đơn hàng nào.</p>
+                </c:when>
 
-<body>
+                <c:otherwise>
+                    <div class="order-list">
+                        <c:forEach var="order" items="${orders}">
+                            <article class="order-card">
+                                <div>
+                                    <strong>Đơn #<c:out value="${order.orderId}" /></strong>
+                                    <span class="status"><c:out value="${order.status}" /></span>
+                                </div>
 
-    <!-- Header -->
-    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+                                <p>Tạo lúc: <c:out value="${order.createdAt}" /></p>
+                                <p>Tổng: <c:out value="${order.totalAmount}" /> đ</p>
 
-    <main class="orders-page">
+                                <a class="button" href="${pageContext.request.contextPath}/my-orders?id=${order.orderId}">Xem chi tiết</a>
+                            </article>
+                        </c:forEach>
+                    </div>
+                </c:otherwise>
+            </c:choose>
 
-        <h1>Đơn hàng của tôi</h1>
-
-        <!-- Thông báo -->
-        <c:if test="${not empty orderMessage}">
-            <p class="notice">
-                <c:out value="${orderMessage}" />
-            </p>
-        </c:if>
-
-        <!-- Kiểm tra danh sách đơn hàng -->
-        <c:choose>
-
-            <!-- Chưa có đơn hàng -->
-            <c:when test="${empty orders}">
-                <p>Bạn chưa có đơn hàng nào.</p>
-            </c:when>
-
-            <!-- Hiển thị danh sách đơn hàng -->
-            <c:otherwise>
-
-                <div class="order-list">
-
-                    <c:forEach var="order" items="${orders}">
-
-                        <article class="order-card">
-
-                            <!-- Mã đơn và trạng thái -->
-                            <div>
-                                <strong>
-                                    Đơn #<c:out value="${order.orderId}" />
-                                </strong>
-
-                                <span class="status">
-                                    <c:out value="${order.status}" />
-                                </span>
-                            </div>
-
-                            <!-- Thời gian tạo -->
-                            <p>
-                                Tạo lúc:
-                                <c:out value="${order.createdAt}" />
-                            </p>
-
-                            <!-- Tổng tiền -->
-                            <p>
-                                Tổng:
-                                <c:out value="${order.totalAmount}" /> đ
-                            </p>
-
-                            <!-- Xem chi tiết -->
-                            <a class="button"
-                               href="${pageContext.request.contextPath}/my-orders?id=${order.orderId}">
-                                Xem chi tiết
-                            </a>
-
-                        </article>
-
-                    </c:forEach>
-
-                </div>
-
-            </c:otherwise>
-
-        </c:choose>
-
-        <!-- Tiếp tục chọn món -->
-        <a class="button"
-           href="${pageContext.request.contextPath}/order">
-            Tiếp tục chọn món
-        </a>
-
-    </main>
-
-</body>
+            <a class="button" href="${pageContext.request.contextPath}/order">Tiếp tục chọn món</a>
+        </main>
+    </body>
 </html>
