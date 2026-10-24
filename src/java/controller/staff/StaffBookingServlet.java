@@ -65,7 +65,7 @@ public class StaffBookingServlet extends HttpServlet {
         }
 
         String name = trim(request.getParameter("customerName"));
-        String phone = BookingServlet.normalizePhone(request.getParameter("customerPhone"));
+        String phone = normalizePhone(request.getParameter("customerPhone"));
         String note = trim(request.getParameter("note"));
         int guests = parseInt(request.getParameter("guestCount"), -1);
         List<Integer> tableIds = new ArrayList<>();
@@ -230,6 +230,14 @@ public class StaffBookingServlet extends HttpServlet {
 
     private String trim(String v) {
         return v == null ? null : v.trim();
+    }
+
+    private String normalizePhone(String value) {
+        if (value == null) return null;
+        String phone = value.trim().replaceAll("[\\s().-]", "");
+        if (phone.startsWith("+84")) phone = "0" + phone.substring(3);
+        else if (phone.startsWith("84")) phone = "0" + phone.substring(2);
+        return phone.matches("0\\d{9}") ? phone : null;
     }
 
     private int parseInt(String v, int fallback) {
