@@ -59,6 +59,12 @@
                     <button type="submit" class="btn-submit">Đăng nhập</button>
                 </form>
 
+                <div style="text-align:center;margin:14px 0;color:#888;font-size:13px;">hoặc</div>
+                <a href="${pageContext.request.contextPath}/login/google" class="btn-submit"
+                   style="display:block;text-align:center;text-decoration:none;background:#fff;color:#333;border:1px solid #ccc;box-sizing:border-box;">
+                    Đăng nhập bằng Google
+                </a>
+
                 <div class="auth-footer">
                     Chưa có tài khoản? <a href="${pageContext.request.contextPath}/register">Đăng ký ngay</a>
                 </div>

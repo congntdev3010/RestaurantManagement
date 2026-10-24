@@ -101,7 +101,7 @@ body {
 .orders-page button:focus-visible,
 .orders-page a:focus-visible,
 .cart-nav-link:focus-visible,
-.add-to-cart-form button:focus-visible {
+.order-add-form button:focus-visible {
     outline: 3px solid #d89b36;
     outline-offset: 3px;
 }
@@ -371,6 +371,125 @@ body {
     font-size: 12px;
     font-weight: 700;
     padding: 0 5px;
+}
+
+@media (max-width: 600px) {
+    .orders-page h1 {
+        font-size: 26px;
+    }
+
+    /* Chi tiết đơn hàng: mỗi món là một thẻ thay vì bảng 5 cột */
+    .orders-page .od-table,
+    .orders-page .od-table tbody,
+    .orders-page .od-table tr,
+    .orders-page .od-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .orders-page .od-table {
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
+    }
+
+    .orders-page .od-table thead {
+        display: none;
+    }
+
+    .orders-page .od-table tr {
+        background: #fff;
+        border: 1px solid #e8dfd8;
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+    }
+
+    .orders-page .od-table td {
+        border-bottom: 0;
+        padding: 4px 0;
+    }
+
+    .orders-page .od-table td.od-name {
+        font-weight: 700;
+        color: #421217;
+        font-size: 1rem;
+    }
+
+    .orders-page .od-table td[data-label] {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: right;
+    }
+
+    .orders-page .od-table td[data-label]::before {
+        content: attr(data-label);
+        color: #6a6259;
+        text-align: left;
+    }
+
+    .orders-page .total {
+        font-size: 18px;
+    }
+
+    .orders-page .order-form button,
+    .orders-page .order-form input,
+    .orders-page > .button {
+        width: 100%;
+    }
+
+    .orders-page input,
+    .orders-page select,
+    .orders-page textarea {
+        font-size: 16px;
+    }
+
+    .order-card > div {
+        flex-wrap: wrap;
+    }
+}
+
+/* Danh sách đơn hàng của tôi (my-orders.jsp) trên điện thoại */
+@media (max-width: 600px) {
+    .order-list {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .order-card {
+        padding: 14px;
+    }
+
+    .order-card > div {
+        align-items: center;
+    }
+
+    .order-card p {
+        margin: 8px 0;
+        font-size: 14px;
+    }
+
+    .order-card .button {
+        width: 100%;
+    }
+
+    .orders-page > .button.secondary {
+        width: 100%;
+        margin-top: 14px;
+    }
+
+    .status-filter {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .status-filter a {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
 }
 
 @media (max-width: 650px) {

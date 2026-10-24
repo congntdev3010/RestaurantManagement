@@ -20,6 +20,9 @@ import model.User;
 @WebServlet(name = "CartServlet", urlPatterns = {"/cart"})
 public class CartServlet extends HttpServlet {
     private static final String CART = "orderCart";
+    /** Bàn gắn vào phiên khi khách quét QR (xem MenuServlet). */
+    public static final String TABLE_ID = "orderTableId";
+    public static final String TABLE_NAME = "orderTableName";
 
     @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -45,7 +48,15 @@ public class CartServlet extends HttpServlet {
         request.setAttribute("cartTotal", total);
         request.setAttribute("message", session.getAttribute("cartMessage"));
         session.removeAttribute("cartMessage");
-        request.getRequestDispatcher("/WEB-INF/views/customer/cart.jsp").forward(request, response);
+        request.setAttribute("orderTableName", session.getAttribute(TABLE_NAME));
+        // Bước xem lại: tóm tắt đơn rồi hỏi khách đã chắc chắn gửi chưa. Giỏ trống hoặc chưa có bàn thì quay về giỏ.
+        if ("1".equals(request.getParameter("review")) && !dishes.isEmpty() && session.getAttribute(TABLE_ID) != null) {
+            request.getRequestDispatcher("/WEB-INF/views/customer/order-review.jsp").forward(request, response);
+            return;
+        }
+        // Không còn màn giỏ hàng riêng: về màn gọi món, giữ lại thông báo (nếu có) để màn đó hiện.
+        if (request.getAttribute("message") != null) session.setAttribute("cartMessage", request.getAttribute("message"));
+        response.sendRedirect(request.getContextPath() + "/order");
     }
 
     @Override protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -87,11 +98,14 @@ public class CartServlet extends HttpServlet {
         }
         String returnTo = request.getParameter("returnTo");
         String menuPath = request.getContextPath() + "/menu";
-        if ("add".equals(action) && returnTo != null && (returnTo.equals(menuPath) || returnTo.startsWith(menuPath + "?"))
+        String orderPath = request.getContextPath() + "/order";
+        if (("add".equals(action) || "update".equals(action)) && returnTo != null
+            && (returnTo.equals(menuPath) || returnTo.startsWith(menuPath + "?")
+            || returnTo.equals(orderPath) || returnTo.startsWith(orderPath + "?"))
                 && !returnTo.contains("\r") && !returnTo.contains("\n")) {
             response.sendRedirect(returnTo);
         } else {
-            response.sendRedirect(request.getContextPath() + "/cart");
+            response.sendRedirect(request.getContextPath() + "/order");
         }
     }
 

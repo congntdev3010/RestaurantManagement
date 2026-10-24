@@ -537,6 +537,81 @@ body.has-staff-sidebar {
     box-shadow: inset 3px 0 #d89b36;
 }
 
+/* ===== Header khách hàng trên điện thoại / máy tính bảng nhỏ ===== */
+@media (max-width: 800px) {
+    .site-header {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+        padding: 10px 14px;
+    }
+
+    .header-logo {
+        font-size: 21px;
+        line-height: 1.15;
+        white-space: nowrap;
+    }
+
+    .header-logo span {
+        margin-left: 4px;
+    }
+
+    .header-auth {
+        gap: 6px;
+        margin-left: auto;
+    }
+
+    .btn-login {
+        font-size: 14px;
+        padding: 6px 8px;
+        white-space: nowrap;
+    }
+
+    .btn-register {
+        font-size: 13px;
+        padding: 7px 14px;
+        white-space: nowrap;
+    }
+
+    .user-profile-btn {
+        padding: 6px 12px;
+    }
+
+    .user-name {
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+
+    /* Menu điều hướng xuống hàng riêng, cuộn ngang nếu thiếu chỗ */
+    .header-nav {
+        order: 3;
+        flex: 0 0 100%;
+        gap: 22px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-top: 4px;
+        border-top: 1px solid rgba(242, 227, 213, 0.15);
+    }
+
+    .header-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .header-nav a {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        font-size: 14px;
+        padding: 8px 0;
+    }
+
+    .dropdown-menu {
+        width: 200px;
+    }
+}
+
 @media (max-width: 1100px) {
     body.has-staff-sidebar {
         padding-left: 232px !important;
