@@ -42,7 +42,12 @@ public class ManageOrdersServlet extends HttpServlet {
             if (id > 0) {
                 Order order = orders.getOrder(id, null);
                 if (order == null) { response.sendError(404); return; }
+                if (isServer(actor) && "PAID".equalsIgnoreCase(order.getStatus())) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
                 request.setAttribute("order", order);
+                request.setAttribute("paymentQrImageUrl", getServletContext().getInitParameter("paymentQrImageUrl"));
                 request.setAttribute("listStatus", listStatus(request.getParameter("status")));
                 request.getRequestDispatcher("/WEB-INF/views/staff/order-detail.jsp").forward(request, response);
             } else if ("new".equals(request.getParameter("action"))) {
@@ -69,8 +74,18 @@ public class ManageOrdersServlet extends HttpServlet {
                 // Mặc định chỉ hiện đơn chờ duyệt; status=ALL để xem toàn bộ.
                 String status = request.getParameter("status");
                 if (status == null || status.isEmpty()) status = "PENDING";
+                if (isServer(actor) && "PAID".equalsIgnoreCase(status)) {
+                    request.setAttribute("currentStatus", status);
+                    request.setAttribute("orders", java.util.Collections.emptyList());
+                    request.getRequestDispatcher("/WEB-INF/views/staff/manage-orders.jsp").forward(request, response);
+                    return;
+                }
                 request.setAttribute("currentStatus", status);
-                request.setAttribute("orders", orders.getOrders(null, "ALL".equals(status) ? null : status));
+                List<Order> visibleOrders = orders.getOrders(null, "ALL".equals(status) ? null : status);
+                if (isServer(actor)) {
+                    visibleOrders.removeIf(order -> "PAID".equalsIgnoreCase(order.getStatus()));
+                }
+                request.setAttribute("orders", visibleOrders);
                 request.getRequestDispatcher("/WEB-INF/views/staff/manage-orders.jsp").forward(request, response);
             }
         }
@@ -78,7 +93,8 @@ public class ManageOrdersServlet extends HttpServlet {
 
     /** Mục của danh sách (PENDING/OPEN/CANCELLED/ALL) mà nhân viên đang xem; giá trị lạ thì bỏ. */
     private static String listStatus(String s) {
-        return ("PENDING".equals(s) || "OPEN".equals(s) || "CANCELLED".equals(s) || "ALL".equals(s)) ? s : "";
+        return ("PENDING".equals(s) || "OPEN".equals(s) || "PAID".equals(s)
+                || "CANCELLED".equals(s) || "ALL".equals(s)) ? s : "";
     }
 
     private void loadCreateForm(HttpServletRequest request) throws ServletException, IOException {
@@ -135,8 +151,19 @@ public class ManageOrdersServlet extends HttpServlet {
                 int itemId=parseInt(request.getParameter("itemId"),-1); anchor="#item-"+itemId;
                 if (dao.markItemServed(id,itemId)) message="Đã đánh dấu món đã phục vụ.";
             } else if ("paid".equals(action)) {
-                // Thanh toán do lễ tân làm (chưa xây dựng); server không được đóng đơn.
-                message="Thanh toán do lễ tân thực hiện.";
+                if (!"Receptionist".equalsIgnoreCase(actor.getRoleName())
+                        && !"Manager".equalsIgnoreCase(actor.getRoleName())) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN); return;
+                }
+                String method = trim(request.getParameter("paymentMethod"));
+                String reference = trim(request.getParameter("paymentReference"));
+                if ("QR".equals(method) && reference == null) {
+                    message = "Vui lòng nhập mã giao dịch QR.";
+                } else if (dao.markPaid(id, actor.getUserId(), method, reference)) {
+                    message = "Đã thanh toán bằng " + ("QR".equals(method) ? "QR" : "tiền mặt") + " và giải phóng bàn.";
+                } else {
+                    message = "Chỉ được thanh toán khi tất cả món đã phục vụ hoặc hết món.";
+                }
             } else if ("cancel".equals(action)) {
                 if (dao.cancelStaffOrder(id,trim(request.getParameter("reason")),actor.getUserId())) message="Đã hủy đơn hàng.";
                 else message="Cần nhập lý do để hủy đơn.";
@@ -177,7 +204,11 @@ public class ManageOrdersServlet extends HttpServlet {
         HttpSession s=request.getSession(false); Object v=s==null?null:s.getAttribute("user");
         if(!(v instanceof User)){response.sendRedirect(request.getContextPath()+"/login");return null;}
         User u=(User)v; String role=u.getRoleName();
-        if(!"Server".equalsIgnoreCase(role)&&!"Manager".equalsIgnoreCase(role)){response.sendError(403);return null;} return u;
+        if(!"Server".equalsIgnoreCase(role)&&!"Manager".equalsIgnoreCase(role)
+                &&!"Receptionist".equalsIgnoreCase(role)){response.sendError(403);return null;} return u;
+    }
+    private boolean isServer(User user) {
+        return "Server".equalsIgnoreCase(user.getRoleName());
     }
     private int parseInt(String value,int fallback){try{return Integer.parseInt(value);}catch(Exception e){return fallback;}}
     private Integer parsePositive(String value){int i=parseInt(value,-1);return i>0?i:null;}

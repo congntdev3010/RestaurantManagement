@@ -1,8 +1,10 @@
 package controller.staff;
 
 import dao.RestaurantTableDAO;
+import dao.OrderDAO;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.RestaurantTable;
 import model.User;
+import model.TableBill;
 
 @WebServlet(name = "ManageTablesServlet", urlPatterns = {"/manage-tables"})
 public class ManageTablesServlet extends HttpServlet {
@@ -32,6 +35,10 @@ public class ManageTablesServlet extends HttpServlet {
         response.setHeader("Cache-Control", "no-store");
         User actor = requireTableViewer(request, response);
         if (actor == null) {
+            return;
+        }
+        if (hasRole(actor, "Receptionist")) {
+            response.sendRedirect(request.getContextPath() + "/payment");
             return;
         }
 
@@ -53,15 +60,41 @@ public class ManageTablesServlet extends HttpServlet {
 
         // Gom bàn theo khu vực để view có thể hiển thị từng nhóm.
         Map<String, List<RestaurantTable>> tableGroups = new LinkedHashMap<>();
-        for (RestaurantTable table : tables) {
-            tableGroups.computeIfAbsent(table.getTableType(), type -> new ArrayList<>()).add(table);
-        }
-        request.setAttribute("tableGroups", tableGroups);
         request.setAttribute("tableCount", tables.size());
         request.setAttribute("tableLoadFailed", tableLoadFailed);
         request.setAttribute("canManage", canManage);
         request.setAttribute("canChangeStatus", canChangeStatus);
         request.setAttribute("canOrder", canManage || hasRole(actor, "Server"));
+        Map<Integer, TableBill> tableBills = new LinkedHashMap<>();
+        if (hasRole(actor, "Receptionist") || canManage) {
+            try (OrderDAO orderDAO = new OrderDAO()) {
+                orderDAO.cancelZeroValueOpenOrders();
+                for (RestaurantTable table : tables) {
+                    if ("OCCUPIED".equals(table.getStatus())) {
+                        TableBill bill = orderDAO.getTableBill(table.getTableId());
+                        if (bill != null) tableBills.put(table.getTableId(), bill);
+                    }
+                }
+            }
+        }
+        request.setAttribute("tableBills", tableBills);
+        String paymentFilter = "UNPAID".equalsIgnoreCase(request.getParameter("paymentFilter"))
+                ? "UNPAID" : "ALL";
+        int unpaidTableCount = tableBills.size();
+        for (RestaurantTable table : tables) {
+            if (!"UNPAID".equals(paymentFilter) || tableBills.containsKey(table.getTableId())) {
+                tableGroups.computeIfAbsent(table.getTableType(), type -> new ArrayList<>()).add(table);
+            }
+        }
+        request.setAttribute("tableGroups", tableGroups);
+        request.setAttribute("paymentFilter", paymentFilter);
+        request.setAttribute("unpaidTableCount", unpaidTableCount);
+        request.setAttribute("paymentQrImageUrl", getServletContext().getInitParameter("paymentQrImageUrl"));
+        request.setAttribute("paymentBankCode", getServletContext().getInitParameter("paymentBankCode"));
+        request.setAttribute("paymentAccountNumber", getServletContext().getInitParameter("paymentAccountNumber"));
+        request.setAttribute("paymentAccountName", getServletContext().getInitParameter("paymentAccountName"));
+        request.setAttribute("sepayWebhookConfigured",
+                System.getenv("SEPAY_WEBHOOK_TOKEN") != null && !System.getenv("SEPAY_WEBHOOK_TOKEN").trim().isEmpty());
 
         // Chỉ Manager được tải dữ liệu cho form sửa; lỗi truy vấn không được báo nhầm là không tồn tại.
         String editId = request.getParameter("edit");
@@ -110,12 +143,46 @@ public class ManageTablesServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
-        if (!"changeStatus".equals(action) && !isManager(actor)) {
+        if ("payTable".equals(action) && !hasRole(actor, "Receptionist") && !isManager(actor)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        if (!"changeStatus".equals(action) && !"payTable".equals(action) && !isManager(actor)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
-        if ("changeStatus".equals(action)) {
+        if ("payTable".equals(action)) {
+            int tableId = parseInt(request.getParameter("tableId"), -1);
+            String method = request.getParameter("paymentMethod");
+            String reference = request.getParameter("paymentReference");
+            BigDecimal cashReceived = decimal(request.getParameter("cashReceived"));
+            BigDecimal cashChange = decimal(request.getParameter("cashChange"));
+            if ("QR".equals(method)) {
+                message = "Thanh toán QR chỉ được xác nhận tự động sau khi webhook báo thành công.";
+            } else if (!"CASH".equals(method)) {
+                message = "Phương thức thanh toán không hợp lệ.";
+            } else if (tableId > 0) {
+                try (OrderDAO orderDAO = new OrderDAO()) {
+                    TableBill receipt = orderDAO.getTableBill(tableId);
+                    if (orderDAO.markTablePaid(tableId, actor.getUserId(), method,
+                            reference == null ? null : reference.trim(), cashReceived, cashChange)) {
+                        if (receipt == null) receipt = new TableBill();
+                        receipt.setTableId(tableId);
+                        receipt.setCashReceived(cashReceived);
+                        receipt.setCashChange(cashChange);
+                        receipt.setPaymentMethod(method);
+                        request.getSession().setAttribute("oneTimeServiceReceipt", receipt);
+                        message = "Đã thanh toán toàn bộ bill của bàn và giải phóng bàn.";
+                        messageType = "success";
+                    } else {
+                        message = "Bàn còn món chưa phục vụ hoặc bill không còn hợp lệ.";
+                    }
+                }
+            } else {
+                message = "Bàn thanh toán không hợp lệ.";
+            }
+        } else if ("changeStatus".equals(action)) {
             int tableId = parseInt(request.getParameter("tableId"), -1);
             String status = request.getParameter("status");
 
@@ -167,7 +234,11 @@ public class ManageTablesServlet extends HttpServlet {
 
         // Dùng POST/Redirect/GET để tránh gửi lại thao tác khi tải lại trang.
         setFlash(request.getSession(), message, messageType);
-        response.sendRedirect(request.getContextPath() + "/manage-tables");
+        if ("payTable".equals(action) && "success".equals(messageType)) {
+            response.sendRedirect(request.getContextPath() + "/service-history");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/manage-tables");
+        }
     }
 
     /**
@@ -240,6 +311,15 @@ public class ManageTablesServlet extends HttpServlet {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return fallback;
+        }
+    }
+
+    private BigDecimal decimal(String value) {
+        try {
+            if (value == null || value.trim().isEmpty()) return null;
+            return new BigDecimal(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 

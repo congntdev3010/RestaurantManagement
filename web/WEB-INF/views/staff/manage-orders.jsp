@@ -19,7 +19,7 @@
 </style></head><body><jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
 <main class="orders-page staff-orders"><header class="page-heading"><div><p>VẬN HÀNH NHÀ HÀNG</p><h1>Quản lý order</h1></div></header>
 <c:if test="${not empty orderMessage}"><p class="notice"><c:out value="${orderMessage}"/></p></c:if>
-<nav class="status-filter"><a href="?status=PENDING" class="${currentStatus eq 'PENDING' ? 'active' : ''}">Chờ duyệt</a><a href="?status=OPEN" class="${currentStatus eq 'OPEN' ? 'active' : ''}">Đang phục vụ</a><a href="?status=CANCELLED" class="${currentStatus eq 'CANCELLED' ? 'active' : ''}">Đã hủy</a><a href="?status=ALL" class="${currentStatus eq 'ALL' ? 'active' : ''}">Tất cả</a></nav>
+<nav class="status-filter"><a href="?status=PENDING" class="${currentStatus eq 'PENDING' ? 'active' : ''}">Chờ duyệt</a><a href="?status=OPEN" class="${currentStatus eq 'OPEN' ? 'active' : ''}">Đang phục vụ</a><c:if test="${sessionScope.user.roleName ne 'Server'}"><a href="?status=PAID" class="${currentStatus eq 'PAID' ? 'active' : ''}">Đã thanh toán</a></c:if><a href="?status=CANCELLED" class="${currentStatus eq 'CANCELLED' ? 'active' : ''}">Đã hủy</a><a href="?status=ALL" class="${currentStatus eq 'ALL' ? 'active' : ''}">Tất cả</a></nav>
 <c:choose><c:when test="${empty orders}"><p>${currentStatus eq 'PENDING' ? 'Không có đơn nào đang chờ duyệt.' : 'Không có đơn hàng.'}</p></c:when><c:otherwise><div class="order-list">
 <c:forEach var="order" items="${orders}"><article class="so-card st-${order.status}">
 <div class="so-table"><c:out value="${empty order.tableName ? '—' : order.tableName}"/></div>

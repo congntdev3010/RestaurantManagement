@@ -19,7 +19,7 @@
     </header>
 
     <c:if test="${empty orderTableName}">
-        <p class="qr-warn">Bạn chưa chọn bàn. Hãy quét mã QR đặt trên bàn để gọi món.</p>
+        <p class="qr-warn">Bạn chưa chọn bàn. Hãy quét QR bàn để gọi món.</p>
     </c:if>
     <c:if test="${not empty cartMessage}"><p class="qr-flash" role="status"><c:out value="${cartMessage}"/></p></c:if>
 

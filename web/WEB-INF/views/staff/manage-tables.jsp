@@ -25,6 +25,16 @@
                     </c:if>
                 </div>
             </header>
+            <c:if test="${not tableLoadFailed and (canChangeStatus or canManage)}">
+                <form class="table-payment-filter" method="get" action="${pageContext.request.contextPath}/manage-tables">
+                    <label for="paymentFilter">Bàn chưa thanh toán</label>
+                    <select id="paymentFilter" name="paymentFilter" onchange="this.form.submit()">
+                        <option value="ALL" ${paymentFilter eq 'ALL' ? 'selected' : ''}>Tất cả bàn</option>
+                        <option value="UNPAID" ${paymentFilter eq 'UNPAID' ? 'selected' : ''}>Chỉ bàn chưa thanh toán</option>
+                    </select>
+                    <strong><c:out value="${unpaidTableCount}" /></strong> bàn
+                </form>
+            </c:if>
 
             <c:if test="${not empty tableMessage}">
                 <p class="table-message ${tableMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
@@ -138,12 +148,17 @@
                                         <p class="table-description"><c:out value="${table.description}" /></p>
                                     </c:if>
                                     <div class="table-actions">
+                                        <c:if test="${not empty tableBills[table.tableId] and (sessionScope.user.roleName eq 'Receptionist' or sessionScope.user.roleName eq 'Manager')}">
+                                            <a href="${pageContext.request.contextPath}/payment?tableId=${table.tableId}">
+                                                <i class="fa-solid fa-cash-register" aria-hidden="true"></i> Thanh toán
+                                            </a>
+                                        </c:if>
                                         <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
                                             <a href="${pageContext.request.contextPath}/manage-orders?action=new&tableId=${table.tableId}">Order</a>
                                         </c:if>
                                         <c:if test="${not empty table.qrToken}">
                                             <a href="#" class="qr-open" data-name="${fn:escapeXml(table.tableName)}" data-token="${fn:escapeXml(table.qrToken)}">
-                                                <i class="fa-solid fa-qrcode" aria-hidden="true"></i> Mã QR
+                                                <i class="fa-solid fa-qrcode" aria-hidden="true"></i> QR bàn
                                             </a>
                                         </c:if>
                                     </div>
@@ -189,7 +204,7 @@
         <c:set var="qrBase" value="${not empty fn:trim(initParam.qrBaseUrl) ? fn:trim(initParam.qrBaseUrl) : qrDefaultBase}" />
         <dialog id="qrDialog" data-base="${fn:escapeXml(qrBase)}" style="border:0;border-radius:12px;padding:20px;text-align:center;max-width:340px;width:90%">
             <h3 id="qrTitle" style="margin:0 0 10px"></h3>
-            <img id="qrImg" alt="Mã QR" width="260" height="260">
+            <img id="qrImg" alt="QR bàn" width="260" height="260">
             <p style="margin:8px 0 0">Quét để gọi món</p>
             <small id="qrUrl" style="display:block;word-break:break-all;color:#777;font-size:.7rem;margin:6px 0 12px"></small>
             <button type="button" id="qrPrint">In</button>

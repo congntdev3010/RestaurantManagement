@@ -11,12 +11,15 @@ import java.util.List;
 import java.util.Map;
 import model.Order;
 import model.OrderItem;
+import model.TableBill;
+import model.TableBillItem;
 
 /**
  * Luồng đơn: PENDING (chờ server duyệt) -> OPEN (đang phục vụ) -> PAID / CANCELLED.
  * Luồng món: PENDING -> COOKING (đã duyệt, hiện trên màn hình bếp) -> SERVED; hoặc REJECTED (hết món).
  */
 public class OrderDAO extends DBContext implements AutoCloseable {
+    private String lastPaymentFailureReason;
 
     public static final int APPROVE_FAILED = -1;
     public static final int APPROVE_ORDER_CANCELLED = 0;
@@ -150,6 +153,14 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 + "LEFT JOIN RestaurantTables t ON t.table_id=o.table_id WHERE 1=1 ");
         if (ownerId != null) sql.append("AND o.user_id = ? ");
         if (statusFilter != null && !statusFilter.isEmpty()) sql.append("AND o.order_status = ? ");
+        // Order hủy trước thời điểm chốt bill của bàn thuộc phiên đã kết thúc,
+        // nên giữ trong DB nhưng loại khỏi danh sách vận hành "Đã hủy".
+        if (ownerId == null && (statusFilter == null || "CANCELLED".equals(statusFilter))) {
+            sql.append("AND NOT (o.order_status = 'CANCELLED' AND EXISTS ("
+                    + "SELECT 1 FROM ServiceHistory sh WHERE sh.table_id = o.table_id "
+                    + "AND o.created_at <= sh.paid_at "
+                    + "AND sh.paid_at >= COALESCE(o.cancelled_at, o.closed_at))) ");
+        }
         // Đơn chờ duyệt luôn lên đầu danh sách, sau đó đến đơn mới nhất.
         // Đơn đang phục vụ: gọi trước hiện trước; các danh sách khác: mới nhất lên đầu.
         if (ownerId == null) {
@@ -297,12 +308,339 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 orderItemId, orderId);
     }
 
-    /** Thanh toán chỉ khi mọi món đã được phục vụ (hoặc bị từ chối). */
-    public boolean markPaid(int orderId) {
-        return execute("UPDATE Orders SET order_status = 'PAID', closed_at = SYSDATETIME() "
-                + "WHERE order_id = ? AND order_status = 'OPEN' "
-                + "AND NOT EXISTS (SELECT 1 FROM OrderItems WHERE order_id = Orders.order_id AND item_status IN ('PENDING', 'COOKING'))",
-                orderId);
+    /** Lễ tân chốt thanh toán khi mọi món đã phục vụ (hoặc bị từ chối), rồi giải phóng bàn. */
+    public boolean markPaid(int orderId, int actorId, String paymentMethod, String paymentReference) {
+        if (connection == null || (!"CASH".equals(paymentMethod) && !"QR".equals(paymentMethod))) return false;
+        try {
+            connection.setAutoCommit(false);
+            Integer tableId = null;
+            try (PreparedStatement lock = connection.prepareStatement(
+                    "SELECT table_id FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE order_id = ? AND order_status = 'OPEN' "
+                    + "AND NOT EXISTS (SELECT 1 FROM OrderItems WHERE order_id = Orders.order_id "
+                    + "AND item_status IN ('PENDING', 'COOKING'))")) {
+                lock.setInt(1, orderId);
+                try (ResultSet rs = lock.executeQuery()) {
+                    if (!rs.next()) {
+                        rollback();
+                        return false;
+                    }
+                    tableId = nullableInt(rs, "table_id");
+                }
+            }
+            try (PreparedStatement paid = connection.prepareStatement(
+                    "UPDATE Orders SET order_status = 'PAID', closed_at = SYSDATETIME(), "
+                    + "paid_at = SYSDATETIME(), paid_by = ?, payment_method = ?, payment_reference = ? "
+                    + "WHERE order_id = ? AND order_status = 'OPEN'")) {
+                paid.setInt(1, actorId);
+                paid.setString(2, paymentMethod);
+                paid.setNString(3, paymentReference);
+                paid.setInt(4, orderId);
+                if (paid.executeUpdate() != 1) {
+                    rollback();
+                    return false;
+                }
+            }
+            if (tableId != null) {
+                try (PreparedStatement table = connection.prepareStatement(
+                        "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
+                        + "WHERE table_id = ? AND table_status = 'OCCUPIED'")) {
+                    table.setInt(1, tableId);
+                    table.executeUpdate();
+                }
+            }
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            resetAutoCommit();
+        }
+    }
+
+    public TableBill getTableBill(int tableId) {
+        if (connection == null) return null;
+        String sql = "SELECT COUNT(*) AS order_count, COALESCE(SUM(o.total_amount), 0) AS total_amount, "
+                + "COALESCE((SELECT COUNT(*) FROM OrderItems oi JOIN Orders ox ON ox.order_id = oi.order_id "
+                + "WHERE ox.table_id = ? AND ox.order_status IN ('PENDING', 'OPEN') "
+                + "AND oi.item_status IN ('PENDING', 'COOKING')), 0) "
+                + "+ CASE WHEN EXISTS (SELECT 1 FROM Orders op WHERE op.table_id = ? AND op.order_status = 'PENDING' "
+                + "AND EXISTS (SELECT 1 FROM OrderItems opi WHERE opi.order_id = op.order_id "
+                + "AND opi.item_status <> 'REJECTED')) "
+                + "THEN 1 ELSE 0 END AS unfinished_count "
+                + "FROM Orders o WHERE o.table_id = ? AND o.order_status = 'OPEN'";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, tableId);
+            ps.setInt(2, tableId);
+            ps.setInt(3, tableId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next() || rs.getInt("order_count") == 0) return null;
+                TableBill bill = new TableBill();
+                bill.setTableId(tableId);
+                bill.setOrderCount(rs.getInt("order_count"));
+                bill.setUnfinishedItemCount(rs.getInt("unfinished_count"));
+                bill.setTotalAmount(rs.getBigDecimal("total_amount"));
+                try (PreparedStatement items = connection.prepareStatement(
+                        "SELECT oi.dish_name, oi.unit, oi.unit_price, oi.quantity, oi.line_total "
+                        + "FROM OrderItems oi JOIN Orders o ON o.order_id = oi.order_id "
+                        + "WHERE o.table_id = ? AND o.order_status = 'OPEN' AND oi.item_status <> 'REJECTED' "
+                        + "ORDER BY oi.order_item_id")) {
+                    items.setInt(1, tableId);
+                    try (ResultSet itemRs = items.executeQuery()) {
+                        while (itemRs.next()) {
+                            TableBillItem item = new TableBillItem();
+                            item.setDishName(itemRs.getNString("dish_name"));
+                            item.setUnit(itemRs.getNString("unit"));
+                            item.setUnitPrice(itemRs.getBigDecimal("unit_price"));
+                            item.setQuantity(itemRs.getInt("quantity"));
+                            item.setLineTotal(itemRs.getBigDecimal("line_total"));
+                            bill.getItems().add(item);
+                        }
+                    }
+                }
+                try (PreparedStatement customer = connection.prepareStatement(
+                        "SELECT TOP 1 o.customer_name, o.customer_phone, r.reservation_date, "
+                        + "r.reservation_time, r.checked_in_at FROM Orders o "
+                        + "LEFT JOIN Reservations r ON r.reservation_id = o.reservation_id "
+                        + "WHERE o.table_id = ? AND o.order_status = 'OPEN' "
+                        + "ORDER BY o.created_at")) {
+                    customer.setInt(1, tableId);
+                    try (ResultSet customerRs = customer.executeQuery()) {
+                        if (customerRs.next()) {
+                            bill.setCustomerName(customerRs.getNString("customer_name"));
+                            bill.setCustomerPhone(customerRs.getString("customer_phone"));
+                            java.sql.Date date = customerRs.getDate("reservation_date");
+                            java.sql.Time time = customerRs.getTime("reservation_time");
+                            if (date != null && time != null) {
+                                bill.setReservationTime(java.time.LocalDateTime.of(date.toLocalDate(), time.toLocalTime()));
+                            }
+                            java.sql.Timestamp checkedIn = customerRs.getTimestamp("checked_in_at");
+                            if (checkedIn != null) bill.setCheckedInAt(checkedIn.toLocalDateTime());
+                        }
+                    }
+                }
+                return bill;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /** Closes legacy OPEN orders whose every item has been rejected and total is zero. */
+    public void cancelZeroValueOpenOrders() {
+        if (connection == null) return;
+        String sql = "UPDATE Orders SET order_status = 'CANCELLED', closed_at = SYSDATETIME(), "
+                + "cancelled_at = SYSDATETIME(), cancellation_reason = ? "
+                + "WHERE order_status IN ('PENDING', 'OPEN') AND total_amount <= 0 "
+                + "AND NOT EXISTS (SELECT 1 FROM OrderItems "
+                + "WHERE order_id = Orders.order_id AND item_status IN ('PENDING', 'COOKING'))";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setNString(1, "Tất cả món đã bị bếp hủy; order không phát sinh tiền.");
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Thanh toán gộp toàn bộ order OPEN của một bàn trong một giao dịch. */
+    public boolean markTablePaid(int tableId, int actorId, String paymentMethod, String paymentReference,
+            BigDecimal cashReceived, BigDecimal cashChange) {
+        lastPaymentFailureReason = null;
+        if (connection == null || (!"CASH".equals(paymentMethod) && !"QR".equals(paymentMethod))) return false;
+        if ("CASH".equals(paymentMethod) && (cashReceived == null || cashChange == null || cashReceived.compareTo(cashChange) < 0)) return false;
+        try {
+            connection.setAutoCommit(false);
+            int orderCount;
+            try (PreparedStatement lock = connection.prepareStatement(
+                    "SELECT COUNT(*) AS order_count FROM Orders WITH (UPDLOCK, HOLDLOCK) "
+                    + "WHERE table_id = ? AND order_status = 'OPEN'")) {
+                lock.setInt(1, tableId);
+                try (ResultSet rs = lock.executeQuery()) {
+                    rs.next();
+                    orderCount = rs.getInt("order_count");
+                }
+
+            }
+            if (orderCount == 0 || hasUnfinishedTableItems(tableId)) {
+                lastPaymentFailureReason = orderCount == 0 ? "Không có order OPEN." : "Bàn còn order hoặc món chưa hoàn tất.";
+                rollback();
+                return false;
+            }
+            TableBill bill = getTableBill(tableId);
+            if (bill == null) {
+                lastPaymentFailureReason = "Không đọc được bill OPEN của bàn.";
+                rollback();
+                return false;
+            }
+            if ("CASH".equals(paymentMethod) && cashReceived.compareTo(bill.getTotalAmount()) < 0) {
+                lastPaymentFailureReason = "Tiền khách đưa chưa đủ.";
+                rollback();
+                return false;
+            }
+            int historyId;
+            try (PreparedStatement history = connection.prepareStatement(
+                    "INSERT INTO ServiceHistory (table_id, customer_name, customer_phone, reservation_time, "
+                    + "checked_in_at, paid_at, payment_method, total_amount, cash_received, cash_change, paid_by) "
+                    + "SELECT ?, MAX(o.customer_name), MAX(o.customer_phone), "
+                    + "MIN(CASE WHEN r.reservation_date IS NOT NULL AND r.reservation_time IS NOT NULL "
+                    + "THEN DATEADD(SECOND, DATEDIFF(SECOND, '00:00:00', r.reservation_time), "
+                    + "CAST(r.reservation_date AS DATETIME2)) END), MAX(r.checked_in_at), SYSDATETIME(), ?, ?, ?, ?, ? "
+                    + "FROM Orders o LEFT JOIN Reservations r ON r.reservation_id = o.reservation_id "
+                    + "WHERE o.table_id = ? AND o.order_status = 'OPEN'",
+                    Statement.RETURN_GENERATED_KEYS)) {
+                history.setInt(1, tableId);
+                history.setString(2, paymentMethod);
+                history.setBigDecimal(3, bill.getTotalAmount());
+                if (cashReceived == null) history.setNull(4, java.sql.Types.DECIMAL); else history.setBigDecimal(4, cashReceived);
+                if (cashChange == null) history.setNull(5, java.sql.Types.DECIMAL); else history.setBigDecimal(5, cashChange);
+                history.setInt(6, actorId);
+                history.setInt(7, tableId);
+                history.executeUpdate();
+                try (ResultSet keys = history.getGeneratedKeys()) {
+                    if (!keys.next()) throw new SQLException("Could not create service history.");
+                    historyId = keys.getInt(1);
+                }
+            }
+            try (PreparedStatement items = connection.prepareStatement(
+                    "INSERT INTO ServiceHistoryItems (history_id, dish_name, unit, unit_price, quantity, line_total) "
+                    + "SELECT ?, oi.dish_name, oi.unit, oi.unit_price, oi.quantity, oi.line_total "
+                    + "FROM OrderItems oi JOIN Orders o ON o.order_id = oi.order_id "
+                    + "WHERE o.table_id = ? AND o.order_status = 'OPEN' AND oi.item_status <> 'REJECTED'")) {
+                items.setInt(1, historyId);
+                items.setInt(2, tableId);
+                items.executeUpdate();
+            }
+            try (PreparedStatement paid = connection.prepareStatement(
+                    "UPDATE Orders SET order_status = 'PAID', closed_at = SYSDATETIME(), paid_at = SYSDATETIME(), "
+                    + "paid_by = ?, payment_method = ?, payment_reference = ?, cash_received = ?, cash_change = ? "
+                    + "WHERE table_id = ? AND order_status = 'OPEN'")) {
+                paid.setInt(1, actorId);
+                paid.setString(2, paymentMethod);
+                paid.setNString(3, paymentReference);
+                if (cashReceived == null) paid.setNull(4, java.sql.Types.DECIMAL); else paid.setBigDecimal(4, cashReceived);
+                if (cashChange == null) paid.setNull(5, java.sql.Types.DECIMAL); else paid.setBigDecimal(5, cashChange);
+                paid.setInt(6, tableId);
+                if (paid.executeUpdate() != orderCount) {
+                    lastPaymentFailureReason = "Order đã thay đổi trong lúc thanh toán.";
+                    rollback();
+                    return false;
+                }
+            }
+            try (PreparedStatement table = connection.prepareStatement(
+                    "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
+                    + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED', 'OCCUPIED')")) {
+                table.setInt(1, tableId);
+                if (table.executeUpdate() != 1) {
+                    lastPaymentFailureReason = "Không cập nhật được trạng thái bàn.";
+                    rollback();
+                    return false;
+                }
+            }
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            resetAutoCommit();
+        }
+    }
+
+    public boolean markQrTablePaid(int tableId, int actorId, String reference, BigDecimal transferAmount) {
+        TableBill bill = getTableBill(tableId);
+        if (bill == null) {
+            lastPaymentFailureReason = "Không có bill OPEN cho table_id=" + tableId + ".";
+            return false;
+        }
+        if (transferAmount == null || bill.getTotalAmount().compareTo(transferAmount) != 0) {
+            lastPaymentFailureReason = "Số tiền không khớp. Bill=" + bill.getTotalAmount() + ", nhận=" + transferAmount + ".";
+            return false;
+        }
+        return markTablePaid(tableId, actorId, "QR", reference, null, null);
+    }
+
+    public TableBill getQrReceipt(int tableId, String reference) throws SQLException {
+        String sql = "SELECT TOP 1 h.history_id, h.table_id, h.customer_name, h.customer_phone, "
+                + "h.reservation_time, h.checked_in_at, h.payment_method, h.total_amount, "
+                + "h.cash_received, h.cash_change "
+                + "FROM ServiceHistory h WHERE h.table_id = ? AND h.payment_method = 'QR' "
+                + "ORDER BY h.history_id DESC";
+        TableBill bill = new TableBill();
+        int historyId;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, tableId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                historyId = rs.getInt("history_id");
+                bill.setTableId(rs.getInt("table_id"));
+                bill.setCustomerName(rs.getNString("customer_name"));
+                bill.setCustomerPhone(rs.getNString("customer_phone"));
+                java.sql.Timestamp reservation = rs.getTimestamp("reservation_time");
+                java.sql.Timestamp checkedIn = rs.getTimestamp("checked_in_at");
+                if (reservation != null) {
+                    bill.setReservationTime(reservation.toLocalDateTime());
+                }
+                if (checkedIn != null) {
+                    bill.setCheckedInAt(checkedIn.toLocalDateTime());
+                }
+                bill.setPaymentMethod(rs.getString("payment_method"));
+                bill.setTotalAmount(rs.getBigDecimal("total_amount"));
+                bill.setCashReceived(rs.getBigDecimal("cash_received"));
+                bill.setCashChange(rs.getBigDecimal("cash_change"));
+            }
+        }
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT dish_name, unit, unit_price, quantity, line_total FROM ServiceHistoryItems "
+                + "WHERE history_id = ? ORDER BY history_item_id")) {
+            ps.setInt(1, historyId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    TableBillItem item = new TableBillItem();
+                    item.setDishName(rs.getNString("dish_name"));
+                    item.setUnit(rs.getNString("unit"));
+                    item.setUnitPrice(rs.getBigDecimal("unit_price"));
+                    item.setQuantity(rs.getInt("quantity"));
+                    item.setLineTotal(rs.getBigDecimal("line_total"));
+                    bill.getItems().add(item);
+                }
+            }
+        }
+        return bill;
+    }
+
+    public boolean isQrPaymentCompleted(int tableId, String reference) throws SQLException {
+        String sql = "SELECT CASE WHEN EXISTS (SELECT 1 FROM Orders "
+                + "WHERE table_id = ? AND order_status = 'PAID' AND payment_method = 'QR' "
+                + "AND payment_reference = ?) THEN 1 ELSE 0 END";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, tableId);
+            ps.setNString(2, reference);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) == 1;
+            }
+        }
+    }
+
+    public String getLastPaymentFailureReason() {
+        return lastPaymentFailureReason;
+    }
+
+    private boolean hasUnfinishedTableItems(int tableId) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT 1 FROM Orders o LEFT JOIN OrderItems oi ON oi.order_id = o.order_id "
+                + "WHERE o.table_id = ? AND ((o.order_status = 'PENDING' "
+                + "AND oi.item_status IN ('PENDING', 'COOKING')) "
+                + "OR (o.order_status = 'OPEN' AND oi.item_status IN ('PENDING', 'COOKING')))")) {
+            ps.setInt(1, tableId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
     }
 
     /** Bàn này còn đơn đang chờ duyệt không (còn thì chưa được order thêm). */
@@ -422,6 +760,17 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 total.setInt(2, orderId);
                 total.executeUpdate();
             }
+            try (PreparedStatement cancelEmpty = connection.prepareStatement(
+                    "UPDATE Orders SET order_status = 'CANCELLED', closed_at = SYSDATETIME(), "
+                    + "cancelled_at = SYSDATETIME(), cancellation_reason = ? "
+                    + "WHERE order_id = ? AND order_status = 'OPEN' "
+                    + "AND total_amount <= 0 "
+                    + "AND NOT EXISTS (SELECT 1 FROM OrderItems "
+                    + "WHERE order_id = Orders.order_id AND item_status IN ('PENDING', 'COOKING'))")) {
+                cancelEmpty.setNString(1, "Tất cả món đã bị bếp hủy; order không phát sinh tiền.");
+                cancelEmpty.setInt(2, orderId);
+                cancelEmpty.executeUpdate();
+            }
             connection.commit();
             return true;
         } catch (SQLException e) {
@@ -501,7 +850,10 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         o.setNote(rs.getNString("note")); o.setCreatedAt(rs.getTimestamp("created_at")); o.setClosedAt(rs.getTimestamp("closed_at"));
         o.setApprovedBy(nullableInt(rs,"approved_by")); o.setApprovedAt(rs.getTimestamp("approved_at"));
         o.setCancelledBy(nullableInt(rs,"cancelled_by")); o.setCancelledAt(rs.getTimestamp("cancelled_at"));
-        o.setCancellationReason(rs.getNString("cancellation_reason")); return o;
+        o.setCancellationReason(rs.getNString("cancellation_reason"));
+        o.setPaymentMethod(rs.getString("payment_method")); o.setPaidBy(nullableInt(rs, "paid_by"));
+        o.setPaidAt(rs.getTimestamp("paid_at")); o.setPaymentReference(rs.getNString("payment_reference"));
+        return o;
     }
     private OrderItem readItem(ResultSet rs) throws SQLException {
         OrderItem i = new OrderItem(); i.setOrderItemId(rs.getInt("order_item_id")); i.setOrderId(rs.getInt("order_id"));
