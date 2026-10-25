@@ -117,7 +117,7 @@
             <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Tin tức</span>
         </a>
         <% } %>
-        <% if (canViewTables && !isReceptionist) { %>
+        <% if (canViewTables) { %>
         <a class="sidebar-link <%= currentURI.contains("manage-tables") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-tables" title="Sơ đồ bàn" aria-label="Sơ đồ bàn">
             <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span>Sơ đồ bàn</span>

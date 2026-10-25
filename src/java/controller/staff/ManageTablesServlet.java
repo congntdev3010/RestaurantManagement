@@ -37,7 +37,8 @@ public class ManageTablesServlet extends HttpServlet {
         if (actor == null) {
             return;
         }
-        if (hasRole(actor, "Receptionist")) {
+        // Lễ tân xem được sơ đồ bàn; chỉ chuyển sang màn thanh toán khi gọi rõ ?view=payment.
+        if (hasRole(actor, "Receptionist") && "payment".equals(request.getParameter("view"))) {
             response.sendRedirect(request.getContextPath() + "/payment");
             return;
         }
@@ -65,6 +66,8 @@ public class ManageTablesServlet extends HttpServlet {
         request.setAttribute("canManage", canManage);
         request.setAttribute("canChangeStatus", canChangeStatus);
         request.setAttribute("canOrder", canManage || hasRole(actor, "Server"));
+        // Bàn đang phục vụ mà không có order: lễ tân/server/quản lý được bật lại bàn trống.
+        request.setAttribute("releasableTables", dao.getReleasableTableIds());
         Map<Integer, TableBill> tableBills = new LinkedHashMap<>();
         if (hasRole(actor, "Receptionist") || canManage) {
             try (OrderDAO orderDAO = new OrderDAO()) {
@@ -147,7 +150,8 @@ public class ManageTablesServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
-        if (!"changeStatus".equals(action) && !"payTable".equals(action) && !isManager(actor)) {
+        if (!"changeStatus".equals(action) && !"payTable".equals(action)
+                && !"releaseTable".equals(action) && !isManager(actor)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
@@ -181,6 +185,14 @@ public class ManageTablesServlet extends HttpServlet {
                 }
             } else {
                 message = "Bàn thanh toán không hợp lệ.";
+            }
+        } else if ("releaseTable".equals(action)) {
+            int tableId = parseInt(request.getParameter("tableId"), -1);
+            if (tableId > 0 && dao.releaseIfNoOrder(tableId)) {
+                message = "Đã chuyển bàn về trạng thái còn trống.";
+                messageType = "success";
+            } else {
+                message = "Không thể bật lại bàn trống: bàn không ở trạng thái đang phục vụ hoặc vẫn còn order.";
             }
         } else if ("changeStatus".equals(action)) {
             int tableId = parseInt(request.getParameter("tableId"), -1);
