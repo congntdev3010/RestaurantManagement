@@ -29,10 +29,10 @@
                 <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
 
                 <label>Họ tên
-                    <input type="text" name="customerName" maxlength="100" required value="<c:out value='${formName}'/>">
+                    <input type="text" name="customerName" maxlength="30" required value="<c:out value='${formName}'/>">
                 </label>
                 <label>Số điện thoại
-                    <input type="tel" name="customerPhone" maxlength="20" required placeholder="0901234567"
+                    <input type="tel" name="customerPhone" maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại gồm 10 chữ số, bắt đầu bằng 0" inputmode="numeric" required placeholder="0901234567"
                            value="<c:out value='${formPhone}'/>">
                 </label>
 
@@ -69,7 +69,7 @@
                 </label>
 
                 <label class="full">Ghi chú
-                    <textarea name="note" rows="3" maxlength="500"
+                    <textarea name="note" rows="3" maxlength="100"
                               placeholder="Ví dụ: tiệc sinh nhật, cần ghế trẻ em..."><c:out value="${formNote}" /></textarea>
                     <span class="rsv-hint">Cần đặt trước ít nhất 1 giờ và tối đa 1 tuần (7 ngày).</span>
                 </label>

@@ -171,8 +171,10 @@ public class ReservationDAO extends DBContext {
                 .append(SELECT_BASE.substring("SELECT ".length())).append("WHERE 1 = 1 ");
         if (status != null) sql.append("AND r.reservation_status = ? ");
         if (date != null) sql.append("AND r.reservation_date = ? ");
-        boolean upcoming = "PENDING".equals(status) || "APPROVED".equals(status);
-        sql.append(upcoming ? "ORDER BY r.reservation_date, r.reservation_time"
+        boolean upcoming = "APPROVED".equals(status);
+        boolean pendingFirstCome = "PENDING".equals(status); // ai đặt trước đứng trước
+        sql.append(pendingFirstCome ? "ORDER BY r.created_at, r.reservation_id"
+                : upcoming ? "ORDER BY r.reservation_date, r.reservation_time"
                 : "ORDER BY r.reservation_date DESC, r.reservation_time DESC");
         try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
             int i = 1;

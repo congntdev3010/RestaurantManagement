@@ -25,7 +25,7 @@
                     </c:if>
                 </div>
             </header>
-            <c:if test="${not tableLoadFailed and (canChangeStatus or canManage)}">
+            <c:if test="${not tableLoadFailed and (canManage or sessionScope.user.roleName eq 'Receptionist')}">
                 <form class="table-payment-filter" method="get" action="${pageContext.request.contextPath}/manage-tables">
                     <label for="paymentFilter">Bàn chưa thanh toán</label>
                     <select id="paymentFilter" name="paymentFilter" onchange="this.form.submit()">
@@ -155,6 +155,14 @@
                                         </c:if>
                                         <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
                                             <a href="${pageContext.request.contextPath}/manage-orders?action=new&tableId=${table.tableId}">Order</a>
+                                        </c:if>
+                                        <c:if test="${table.status eq 'OCCUPIED' and releasableTables.contains(table.tableId)}">
+                                            <form action="${pageContext.request.contextPath}/manage-tables" method="post"
+                                                  onsubmit="return confirm('Bàn chưa có order. Chuyển bàn này về còn trống?');">
+                                                <input type="hidden" name="action" value="releaseTable">
+                                                <input type="hidden" name="tableId" value="${table.tableId}">
+                                                <button type="submit"><i class="fa-solid fa-broom" aria-hidden="true"></i> Bàn trống</button>
+                                            </form>
                                         </c:if>
                                         <c:if test="${not empty table.qrToken}">
                                             <a href="#" class="qr-open" data-name="${fn:escapeXml(table.tableName)}" data-token="${fn:escapeXml(table.qrToken)}">

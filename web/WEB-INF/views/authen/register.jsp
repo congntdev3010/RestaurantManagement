@@ -58,12 +58,20 @@
 
                     <div class="form-group">
                         <label>Mật khẩu</label>
-                        <input type="password" name="password" class="form-input" minlength="8" maxlength="30" required />
+                        <div style="position:relative;">
+                            <input type="password" name="password" id="regPassword" class="form-input" style="padding-right:64px;box-sizing:border-box;" minlength="8" maxlength="30" required />
+                            <button type="button" onclick="togglePw('regPassword', this)" aria-label="Hiện mật khẩu"
+                                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;color:#666;font-size:13px;">Hiện</button>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label>Nhập lại mật khẩu</label>
-                        <input type="password" name="confirmPassword" class="form-input" minlength="8" maxlength="30" required />
+                        <div style="position:relative;">
+                            <input type="password" name="confirmPassword" id="regConfirmPassword" class="form-input" style="padding-right:64px;box-sizing:border-box;" minlength="8" maxlength="30" required />
+                            <button type="button" onclick="togglePw('regConfirmPassword', this)" aria-label="Hiện mật khẩu"
+                                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;color:#666;font-size:13px;">Hiện</button>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-submit">Tạo tài khoản</button>
@@ -76,5 +84,14 @@
         </div>
     </div>
 
+<script>
+    function togglePw(id, btn) {
+        var input = document.getElementById(id);
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "Ẩn" : "Hiện";
+        btn.setAttribute("aria-label", show ? "Ẩn mật khẩu" : "Hiện mật khẩu");
+    }
+</script>
 </body>
 </html>

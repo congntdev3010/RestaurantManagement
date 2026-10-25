@@ -107,6 +107,35 @@ public class RestaurantTableDAO extends DBContext {
         });
     }
 
+    /** Điều kiện SQL: bàn không còn order PENDING/OPEN nào. */
+    private static final String NO_ACTIVE_ORDER = "NOT EXISTS (SELECT 1 FROM Orders o "
+            + "WHERE o.table_id = RestaurantTables.table_id AND o.order_status IN ('PENDING', 'OPEN'))";
+
+    /** Nhả bàn đang phục vụ nhưng không có order (khách đến rồi về). Bàn còn order thì trả về false. */
+    public boolean releaseIfNoOrder(int tableId) {
+        String sql = "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
+                + "WHERE table_id = ? AND table_status = 'OCCUPIED' AND " + NO_ACTIVE_ORDER;
+        return executeUpdate(sql, statement -> statement.setInt(1, tableId));
+    }
+
+    /** Tập id các bàn OCCUPIED không có order — dùng để hiện nút "Bàn trống". */
+    public java.util.Set<Integer> getReleasableTableIds() {
+        java.util.Set<Integer> ids = new java.util.HashSet<>();
+        if (connection == null) {
+            return ids;
+        }
+        String sql = "SELECT table_id FROM RestaurantTables WHERE table_status = 'OCCUPIED' AND " + NO_ACTIVE_ORDER;
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet rs = statement.executeQuery()) {
+            while (rs.next()) {
+                ids.add(rs.getInt("table_id"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ids;
+    }
+
     /** Mở bàn cho khách vãng lai: chỉ chuyển được khi bàn đang AVAILABLE/RESERVED, bàn đang phục vụ trả về false. */
     public boolean occupyIfFree(int tableId) {
         String sql = "UPDATE RestaurantTables SET table_status = 'OCCUPIED' "

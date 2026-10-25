@@ -53,7 +53,12 @@
                             <!-- Nút mở Modal Quên Mật Khẩu -->
                             <a href="javascript:void(0)" onclick="openForgotModal()" class="forgot-link">Quên mật khẩu?</a>
                         </div>
-                        <input type="password" name="password" class="form-input" required />
+                        <div style="position:relative;">
+                            <input type="password" name="password" id="loginPassword" class="form-input" style="padding-right:64px;box-sizing:border-box;" required />
+                            <button type="button" id="togglePassword" onclick="togglePasswordVisibility()"
+                                    aria-label="Hiện mật khẩu" aria-pressed="false"
+                                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;color:#666;font-size:13px;">Hiện</button>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-submit">Đăng nhập</button>
@@ -102,6 +107,16 @@
     <script>
         function openForgotModal() {
             document.getElementById("forgotModal").classList.add("active");
+        }
+
+        function togglePasswordVisibility() {
+            var input = document.getElementById("loginPassword");
+            var btn = document.getElementById("togglePassword");
+            var show = input.type === "password";
+            input.type = show ? "text" : "password";
+            btn.textContent = show ? "Ẩn" : "Hiện";
+            btn.setAttribute("aria-label", show ? "Ẩn mật khẩu" : "Hiện mật khẩu");
+            btn.setAttribute("aria-pressed", show ? "true" : "false");
         }
 
         function closeForgotModal() {

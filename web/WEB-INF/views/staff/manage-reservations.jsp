@@ -79,5 +79,9 @@
                 </c:otherwise>
             </c:choose>
         </main>
-    </body>
+    <script>
+    // Tự tải lại mỗi 10 giây để thấy đơn đặt bàn mới (bỏ qua khi tab đang ẩn).
+    setInterval(function () { if (!document.hidden) location.reload(); }, 10000);
+</script>
+</body>
 </html>
