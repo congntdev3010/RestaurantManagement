@@ -9,11 +9,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import model.TableBill;
 import model.User;
 
 @WebServlet(name = "PaymentStatusServlet", urlPatterns = {"/payment-status"})
 public class PaymentStatusServlet extends HttpServlet {
+    private static final Pattern COMPACT_REFERENCE = Pattern.compile(
+            "^RMTABLE(\\d{1,3})(\\d{13})$", Pattern.CASE_INSENSITIVE);
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -37,6 +42,7 @@ public class PaymentStatusServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
+        reference = normalizeReference(reference.trim());
 
         boolean paid;
         TableBill receipt = null;
@@ -58,5 +64,13 @@ public class PaymentStatusServlet extends HttpServlet {
 
     private boolean hasRole(User user, String role) {
         return user.getRoleName() != null && role.equalsIgnoreCase(user.getRoleName());
+    }
+
+    private String normalizeReference(String reference) {
+        Matcher compact = COMPACT_REFERENCE.matcher(reference);
+        if (compact.matches()) {
+            return "RM-TABLE-" + compact.group(1) + "-" + compact.group(2);
+        }
+        return reference;
     }
 }

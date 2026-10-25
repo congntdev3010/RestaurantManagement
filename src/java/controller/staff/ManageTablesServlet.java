@@ -3,6 +3,8 @@ package controller.staff;
 import dao.RestaurantTableDAO;
 import dao.OrderDAO;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.SQLException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -93,6 +95,7 @@ public class ManageTablesServlet extends HttpServlet {
         request.setAttribute("paymentBankCode", getServletContext().getInitParameter("paymentBankCode"));
         request.setAttribute("paymentAccountNumber", getServletContext().getInitParameter("paymentAccountNumber"));
         request.setAttribute("paymentAccountName", getServletContext().getInitParameter("paymentAccountName"));
+        request.setAttribute("qrBaseUrl", resolveQrBaseUrl(request));
         request.setAttribute("sepayWebhookConfigured",
                 System.getenv("SEPAY_WEBHOOK_TOKEN") != null && !System.getenv("SEPAY_WEBHOOK_TOKEN").trim().isEmpty());
 
@@ -119,6 +122,37 @@ public class ManageTablesServlet extends HttpServlet {
         session.removeAttribute("tableMessage");
         session.removeAttribute("tableMessageType");
         request.getRequestDispatcher("/WEB-INF/views/staff/manage-tables.jsp").forward(request, response);
+    }
+
+    /**
+     * QR phải trỏ đến địa chỉ mà điện thoại khách truy cập được, không phải địa chỉ
+     * nhân viên dùng để mở trang quản trị. QR_BASE_URL cho phép giữ URL công khai
+     * ổn định khi nhân viên truy cập Tomcat bằng localhost.
+     */
+    private String resolveQrBaseUrl(HttpServletRequest request) throws ServletException {
+        String configured = System.getenv("QR_BASE_URL");
+        if (configured == null || configured.trim().isEmpty()) {
+            configured = getServletContext().getInitParameter("qrBaseUrl");
+        }
+        if (configured != null && !configured.trim().isEmpty()) {
+            String baseUrl = configured.trim().replaceAll("/+$", "");
+            try {
+                URI uri = new URI(baseUrl);
+                if (!("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
+                        || uri.getHost() == null || uri.getQuery() != null || uri.getFragment() != null) {
+                    throw new URISyntaxException(baseUrl, "QR_BASE_URL must be an HTTP(S) URL without query or fragment");
+                }
+                return baseUrl;
+            } catch (URISyntaxException e) {
+                throw new ServletException("QR_BASE_URL/qrBaseUrl không hợp lệ: " + baseUrl, e);
+            }
+        }
+
+        String scheme = request.getScheme();
+        String host = request.getServerName();
+        int port = request.getServerPort();
+        String portPart = (port == 80 || port == 443) ? "" : ":" + port;
+        return scheme + "://" + host + portPart + request.getContextPath();
     }
 
     /**

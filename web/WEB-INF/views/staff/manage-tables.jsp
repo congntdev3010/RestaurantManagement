@@ -201,7 +201,7 @@
             </section>
         </main>
     <c:set var="qrDefaultBase" value="${pageContext.request.scheme}://${pageContext.request.serverName}${(pageContext.request.serverPort == 80 or pageContext.request.serverPort == 443) ? '' : ':'.concat(pageContext.request.serverPort)}${pageContext.request.contextPath}" />
-        <c:set var="qrBase" value="${not empty fn:trim(initParam.qrBaseUrl) ? fn:trim(initParam.qrBaseUrl) : qrDefaultBase}" />
+            <c:set var="qrBase" value="${not empty qrBaseUrl ? qrBaseUrl : qrDefaultBase}" />
         <dialog id="qrDialog" data-base="${fn:escapeXml(qrBase)}" style="border:0;border-radius:12px;padding:20px;text-align:center;max-width:340px;width:90%">
             <h3 id="qrTitle" style="margin:0 0 10px"></h3>
             <img id="qrImg" alt="QR bàn" width="260" height="260">

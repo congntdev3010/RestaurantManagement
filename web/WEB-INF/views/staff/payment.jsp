@@ -116,7 +116,7 @@
                     if (qrFields.dataset.configured !== 'true' || !qrFields.dataset.account || !qrFields.dataset.name) {
                         method.value = 'CASH'; alert('QR SePay chưa được cấu hình đầy đủ.'); refresh(); return;
                     }
-                    var reference = 'RM-TABLE-${bill.tableId}-' + Date.now();
+                    var reference = 'RMTABLE${bill.tableId}' + Date.now();
                     document.getElementById('paymentReference').value = reference;
                     document.getElementById('paymentQrImage').src = 'https://img.vietqr.io/image/' + encodeURIComponent(qrFields.dataset.bank) + '-' + encodeURIComponent(qrFields.dataset.account) + '-compact2.png?amount=' + Math.round(total) + '&addInfo=' + encodeURIComponent(reference) + '&accountName=' + encodeURIComponent(qrFields.dataset.name);
                     poll();

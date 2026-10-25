@@ -19,7 +19,7 @@ import jakarta.servlet.http.HttpSession;
 @WebServlet(name = "MenuServlet", urlPatterns = {"/menu", "/order"})
 public class MenuServlet extends HttpServlet {
 
-    private static final int PAGE_SIZE = 8; // Hiển thị 8 món / trang
+    private static final int PAGE_SIZE = 20; // Hiển thị 8 món / trang
     /** Tên + SĐT khách nhập khi vào bàn (lưu trong phiên). */
     public static final String GUEST_NAME = "orderGuestName";
     public static final String GUEST_PHONE = "orderGuestPhone";

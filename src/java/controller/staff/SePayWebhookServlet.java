@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 @WebServlet(name = "SePayWebhookServlet", urlPatterns = {"/webhooks/sepay"})
 public class SePayWebhookServlet extends HttpServlet {
     private static final Pattern TABLE = Pattern.compile("(RM-TABLE-(\\d+)(?:-\\d+)?)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern COMPACT_TABLE = Pattern.compile("(RMTABLE(\\d{1,3})(\\d{13}))", Pattern.CASE_INSENSITIVE);
     private static final Pattern AMOUNT = Pattern.compile(
             "\"(?:transferAmount|amount)\"\\s*:\\s*\"?([0-9]+(?:[.,][0-9]+)?)\"?",
             Pattern.CASE_INSENSITIVE);
@@ -39,10 +40,13 @@ public class SePayWebhookServlet extends HttpServlet {
         }
         String body = new String(request.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         Matcher table = TABLE.matcher(body);
+        Matcher compactTable = COMPACT_TABLE.matcher(body);
         Matcher amount = AMOUNT.matcher(body);
-        if (!table.find()) {
+        boolean standardReference = table.find();
+        boolean compactReference = !standardReference && compactTable.find();
+        if (!standardReference && !compactReference) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST,
-                    "Payload thiếu content chứa mã RM-TABLE-<tableId>. Body=" + body);
+                "Payload thiếu content chứa mã RM-TABLE-<tableId> hoặc RMTABLE<id><timestamp>. Body=" + body);
             return;
         }
         if (!amount.find()) {
@@ -53,13 +57,19 @@ public class SePayWebhookServlet extends HttpServlet {
         int tableId;
         int actorId;
         try {
-            tableId = Integer.parseInt(table.group(2));
+            tableId = Integer.parseInt(standardReference ? table.group(2) : compactTable.group(2));
             actorId = Integer.parseInt(actor);
         } catch (NumberFormatException e) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Mã bàn hoặc actor không hợp lệ.");
             return;
         }
-        String reference = table.group(1).toUpperCase(Locale.ROOT);
+        String reference;
+        if (standardReference) {
+            reference = table.group(1).toUpperCase(Locale.ROOT);
+        } else {
+            reference = ("RM-TABLE-" + compactTable.group(2) + "-" + compactTable.group(3))
+                    .toUpperCase(Locale.ROOT);
+        }
         boolean paid;
         String failureReason = null;
         try (OrderDAO dao = new OrderDAO()) {

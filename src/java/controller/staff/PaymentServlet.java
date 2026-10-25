@@ -59,9 +59,7 @@ public class PaymentServlet extends HttpServlet {
             request.setAttribute("paymentBankCode", getServletContext().getInitParameter("paymentBankCode"));
             request.setAttribute("paymentAccountNumber", getServletContext().getInitParameter("paymentAccountNumber"));
             request.setAttribute("paymentAccountName", getServletContext().getInitParameter("paymentAccountName"));
-            request.setAttribute("sepayWebhookConfigured",
-                    System.getenv("SEPAY_WEBHOOK_TOKEN") != null
-                    && !System.getenv("SEPAY_WEBHOOK_TOKEN").trim().isEmpty());
+                request.setAttribute("sepayWebhookConfigured", isSePayConfigured());
             request.getRequestDispatcher("/WEB-INF/views/staff/payment.jsp").forward(request, response);
         } catch (SQLException e) {
             throw new ServletException("Không thể tải bill thanh toán.", e);
@@ -97,5 +95,12 @@ public class PaymentServlet extends HttpServlet {
 
     private boolean hasRole(User user, String role) {
         return user.getRoleName() != null && role.equalsIgnoreCase(user.getRoleName());
+    }
+
+    private boolean isSePayConfigured() {
+        String token = System.getenv("SEPAY_WEBHOOK_TOKEN");
+        String actor = System.getenv("SEPAY_ACTOR_USER_ID");
+        return token != null && !token.trim().isEmpty()
+                && actor != null && !actor.trim().isEmpty();
     }
 }

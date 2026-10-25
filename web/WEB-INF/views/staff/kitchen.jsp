@@ -1,6 +1,14 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="3"><title>Màn hình bếp</title><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/orders.css">
 <style>
+body.kitchen-page,
+body.kitchen-page input,
+body.kitchen-page button {
+font-family: Arial, "Segoe UI", sans-serif;
+}
+body.kitchen-page .orders-page h1 {
+font-family: Arial, "Segoe UI", sans-serif;
+}
 .k-table{width:100%;border-collapse:collapse;background:#fff}
 .k-table td{padding:9px 16px;border-bottom:1px solid #eee;font-size:1.05rem}
 .k-sep td{padding:0;border:0;height:6px;background:#7a1f1f}
@@ -16,7 +24,7 @@
 .k-actions input{width:70px;padding:5px;border:1px solid #d8cfc3;border-radius:6px}
 .k-actions button{padding:5px 9px;border:1px solid #7a1f1f;border-radius:6px;background:#7a1f1f;color:#fff;cursor:pointer}
 .k-actions .k-cancel{background:#fff;color:#7a1f1f}
-</style></head><body><jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
+</style></head><body class="kitchen-page"><jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
 <main class="orders-page"><h1>Món cần nấu</h1><p><c:choose><c:when test="${canEdit}">Server có thể hủy món hoặc giảm số lượng khi bếp báo không đủ.</c:when><c:otherwise>Chỉ xem, tự làm mới mỗi 3 giây.</c:otherwise></c:choose></p>
 <c:if test="${not empty kitchenMessage}"><p class="notice"><c:out value="${kitchenMessage}"/></p></c:if>
 <c:choose><c:when test="${empty items}"><p>Hiện chưa có món nào cần nấu.</p></c:when><c:otherwise>
