@@ -41,9 +41,9 @@ public class CustomerOrdersServlet extends HttpServlet {
                         && order.getUserId() == user.getUserId() && "PENDING".equals(order.getStatus()));
                 request.getRequestDispatcher("/WEB-INF/views/customer/order-detail.jsp").forward(request, response);
             } else {
-                if (user == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
-                request.setAttribute("orders", dao.getOrders(user.getUserId(), request.getParameter("status")));
-                request.getRequestDispatcher("/WEB-INF/views/customer/my-orders.jsp").forward(request, response);
+                // Đã bỏ màn danh sách "Đơn hàng của tôi"; chỉ còn xem chi tiết đơn vừa gửi (?id=...).
+                response.sendRedirect(request.getContextPath() + "/menu");
+                return;
             }
         }
     }

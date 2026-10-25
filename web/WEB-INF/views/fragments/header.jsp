@@ -60,7 +60,7 @@
                 <div class="dropdown-menu">
                     <a href="${pageContext.request.contextPath}/profile"><i class="fa-regular fa-id-card"></i> Thông tin cá nhân</a>
                     <% if ("Customer".equalsIgnoreCase(roleName)) { %>
-                    <a href="${pageContext.request.contextPath}/my-orders"><i class="fa-solid fa-receipt"></i> Đơn hàng của tôi</a>
+                    <a href="${pageContext.request.contextPath}/my-points"><i class="fa-solid fa-star"></i> Điểm tích lũy</a>
                     <% } %>
                     <% if (!"Server".equalsIgnoreCase(roleName)) { %>
                     <a href="${pageContext.request.contextPath}/my-bookings"><i class="fa-solid fa-utensils"></i> Lịch sử đặt bàn</a>
@@ -105,7 +105,7 @@
             <i class="fa-solid fa-house" aria-hidden="true"></i><span>Trang chủ</span>
         </a>
         <% } %>
-        <% if (!isReceptionist) { %>
+        <% if (!isReceptionist && !isManager) { %>
         <a class="sidebar-link <%= currentURI.contains("menu") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/menu" title="Thực đơn" aria-label="Thực đơn">
             <i class="fa-solid fa-book-open" aria-hidden="true"></i><span>Thực đơn</span>
@@ -124,7 +124,7 @@
         </a>
         <% } %>
         <% } %>
-        <% if (isManager || isReceptionist) { %>
+        <% if (isReceptionist) { %>
         <a class="sidebar-link <%= currentURI.contains("checkin") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/checkin" title="Check-in khách" aria-label="Check-in khách">
             <i class="fa-solid fa-door-open" aria-hidden="true"></i><span>Check-in khách</span>
@@ -156,6 +156,10 @@
         <a class="sidebar-link <%= currentURI.contains("manage-news") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-news" title="Quản lý tin tức" aria-label="Quản lý tin tức">
             <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Quản lý tin tức</span>
+        </a>
+        <a class="sidebar-link <%= currentURI.contains("loyalty-settings") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/loyalty-settings" title="Quy đổi điểm" aria-label="Quy đổi điểm">
+            <i class="fa-solid fa-star" aria-hidden="true"></i><span>Quy đổi điểm</span>
         </a>
         <a class="sidebar-link <%= currentURI.contains("manage-dishes") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-dishes" title="Quản lý thực đơn" aria-label="Quản lý thực đơn">

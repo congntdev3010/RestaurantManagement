@@ -46,7 +46,7 @@
                         <p class="order-meta"><c:out value="${bill.orderCount}"/> order · <c:out value="${bill.items.size()}"/> món</p>
                         <div class="payment-table-total">
                             <span>Tổng bill</span>
-                            <strong><c:out value="${bill.totalAmount}"/> đ</strong>
+                            <strong><c:out value="${bill.payableAmount}"/> đ</strong>
                         </div>
                         <c:choose>
                             <c:when test="${bill.readyForPayment and bill.totalAmount gt 0}">

@@ -25,7 +25,7 @@
                     </c:if>
                 </div>
             </header>
-            <c:if test="${not tableLoadFailed and (canChangeStatus or canManage)}">
+            <c:if test="${not tableLoadFailed and (canManage or sessionScope.user.roleName eq 'Receptionist')}">
                 <form class="table-payment-filter" method="get" action="${pageContext.request.contextPath}/manage-tables">
                     <label for="paymentFilter">Bàn chưa thanh toán</label>
                     <select id="paymentFilter" name="paymentFilter" onchange="this.form.submit()">

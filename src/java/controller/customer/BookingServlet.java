@@ -112,8 +112,8 @@ public class BookingServlet extends HttpServlet {
 
     private String validate(String name, String phone, String tableType, String dateText, String timeText,
             String note, int guests, List<String> types, Map<String, LocalTime[]> shifts) {
-        if (name == null || name.length() < 2 || name.length() > 100) {
-            return "Họ tên phải từ 2 đến 100 ký tự.";
+        if (name == null || name.length() < 2 || name.length() > 30) {
+            return "Họ tên phải từ 2 đến 30 ký tự.";
         }
         if (phone == null) {
             return "Số điện thoại không hợp lệ (ví dụ 0901234567).";
@@ -124,8 +124,8 @@ public class BookingServlet extends HttpServlet {
         if (tableType != null && !tableType.isEmpty() && !types.contains(tableType)) {
             return "Loại bàn không hợp lệ.";
         }
-        if (note != null && note.length() > 500) {
-            return "Ghi chú tối đa 500 ký tự.";
+        if (note != null && note.length() > 100) {
+            return "Ghi chú tối đa 100 ký tự.";
         }
         LocalDate date;
         LocalTime time;
@@ -176,9 +176,8 @@ public class BookingServlet extends HttpServlet {
     /** Chuẩn hoá số điện thoại VN; trả về null nếu sai định dạng. */
     public static String normalizePhone(String raw) {
         if (raw == null) return null;
-        String p = raw.replaceAll("[\\s.\\-]", "");
-        if (p.startsWith("+84")) p = "0" + p.substring(3);
-        return p.matches("0\\d{9,10}") ? p : null;
+        String p = raw.trim();
+        return p.matches("0\\d{9}") ? p : null;
     }
 
     private User userOf(HttpSession session) {

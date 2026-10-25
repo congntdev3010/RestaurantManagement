@@ -375,7 +375,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
             ps.setInt(2, tableId);
             ps.setInt(3, tableId);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next() || rs.getInt("order_count") == 0) return null;
+                if (!rs.next() || rs.getInt("order_count") == 0) { clearStaleLoyaltyLink(tableId); return null; }
                 TableBill bill = new TableBill();
                 bill.setTableId(tableId);
                 bill.setOrderCount(rs.getInt("order_count"));
@@ -420,6 +420,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                         }
                     }
                 }
+                applyLoyalty(bill);
                 return bill;
             }
         } catch (SQLException e) {
@@ -474,7 +475,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 rollback();
                 return false;
             }
-            if ("CASH".equals(paymentMethod) && cashReceived.compareTo(bill.getTotalAmount()) < 0) {
+            if ("CASH".equals(paymentMethod) && cashReceived.compareTo(bill.getPayableAmount()) < 0) {
                 lastPaymentFailureReason = "Tiền khách đưa chưa đủ.";
                 rollback();
                 return false;
@@ -482,11 +483,12 @@ public class OrderDAO extends DBContext implements AutoCloseable {
             int historyId;
             try (PreparedStatement history = connection.prepareStatement(
                     "INSERT INTO ServiceHistory (table_id, customer_name, customer_phone, reservation_time, "
-                    + "checked_in_at, paid_at, payment_method, total_amount, cash_received, cash_change, paid_by) "
+                    + "checked_in_at, paid_at, payment_method, total_amount, cash_received, cash_change, paid_by, "
+                    + "loyalty_customer_id, loyalty_points_used, loyalty_discount, loyalty_points_earned) "
                     + "SELECT ?, MAX(o.customer_name), MAX(o.customer_phone), "
                     + "MIN(CASE WHEN r.reservation_date IS NOT NULL AND r.reservation_time IS NOT NULL "
                     + "THEN DATEADD(SECOND, DATEDIFF(SECOND, '00:00:00', r.reservation_time), "
-                    + "CAST(r.reservation_date AS DATETIME2)) END), MAX(r.checked_in_at), SYSDATETIME(), ?, ?, ?, ?, ? "
+                    + "CAST(r.reservation_date AS DATETIME2)) END), MAX(r.checked_in_at), SYSDATETIME(), ?, ?, ?, ?, ?, ?, ?, ?, ? "
                     + "FROM Orders o LEFT JOIN Reservations r ON r.reservation_id = o.reservation_id "
                     + "WHERE o.table_id = ? AND o.order_status = 'OPEN'",
                     Statement.RETURN_GENERATED_KEYS)) {
@@ -496,7 +498,11 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 if (cashReceived == null) history.setNull(4, java.sql.Types.DECIMAL); else history.setBigDecimal(4, cashReceived);
                 if (cashChange == null) history.setNull(5, java.sql.Types.DECIMAL); else history.setBigDecimal(5, cashChange);
                 history.setInt(6, actorId);
-                history.setInt(7, tableId);
+                if (bill.getLoyaltyCustomerId() > 0) history.setInt(7, bill.getLoyaltyCustomerId()); else history.setNull(7, java.sql.Types.INTEGER);
+                history.setInt(8, loyaltyUsed(bill));
+                history.setBigDecimal(9, bill.getDiscountAmount());
+                history.setInt(10, bill.getPointsToEarn());
+                history.setInt(11, tableId);
                 history.executeUpdate();
                 try (ResultSet keys = history.getGeneratedKeys()) {
                     if (!keys.next()) throw new SQLException("Could not create service history.");
@@ -530,7 +536,12 @@ public class OrderDAO extends DBContext implements AutoCloseable {
             }
             try (PreparedStatement table = connection.prepareStatement(
                     "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
-                    + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED', 'OCCUPIED')")) {
+                    + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED', 'OCCUPIED')")
+                    ) {
+                if (!applyLoyaltyOnPayment(bill, historyId, actorId)) {
+                    rollback();
+                    return false;
+                }
                 table.setInt(1, tableId);
                 if (table.executeUpdate() != 1) {
                     lastPaymentFailureReason = "Không cập nhật được trạng thái bàn.";
@@ -549,14 +560,137 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         }
     }
 
+    private int loyaltyUsed(TableBill bill) { return bill.getPointsToUse(); }
+
+    private void clearStaleLoyaltyLink(int tableId) {
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM TableBillLoyalty WHERE table_id = ?")) {
+            ps.setInt(1, tableId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Đọc khách được gắn vào bill + quy tắc quy đổi, rồi tính điểm dùng, tiền giảm, số phải trả, điểm được cộng. */
+    private void applyLoyalty(TableBill bill) {
+        bill.setPayableAmount(bill.getTotalAmount());
+        String sql = "SELECT l.customer_id, u.full_name, u.loyalty_points, l.points_to_use, "
+                + "s.earn_spend_amount, s.earn_points, s.redeem_value_per_point "
+                + "FROM TableBillLoyalty l JOIN Users u ON u.user_id = l.customer_id "
+                + "CROSS JOIN LoyaltySettings s WHERE l.table_id = ? AND s.settings_id = 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, bill.getTableId());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return;
+                int balance = rs.getInt("loyalty_points");
+                BigDecimal redeem = rs.getBigDecimal("redeem_value_per_point");
+                BigDecimal spend = rs.getBigDecimal("earn_spend_amount");
+                int earnPoints = rs.getInt("earn_points");
+                int maxByTotal = bill.getTotalAmount().divideToIntegralValue(redeem).intValue();
+                int use = Math.max(0, Math.min(rs.getInt("points_to_use"), Math.min(balance, maxByTotal)));
+                BigDecimal discount = redeem.multiply(BigDecimal.valueOf(use));
+                BigDecimal payable = bill.getTotalAmount().subtract(discount);
+                bill.setLoyaltyCustomerId(rs.getInt("customer_id"));
+                bill.setLoyaltyCustomerName(rs.getNString("full_name"));
+                bill.setLoyaltyBalance(balance);
+                bill.setPointsToUse(use);
+                bill.setDiscountAmount(discount);
+                bill.setPayableAmount(payable);
+                bill.setPointsToEarn(payable.signum() > 0
+                        ? payable.divideToIntegralValue(spend).intValue() * earnPoints : 0);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /** Trong giao dịch thanh toán: trừ điểm đã dùng, cộng điểm mới, ghi lịch sử, gỡ liên kết khách. */
+    private boolean applyLoyaltyOnPayment(TableBill bill, int historyId, int actorId) throws SQLException {
+        int customerId = bill.getLoyaltyCustomerId();
+        if (customerId > 0) {
+            int used = bill.getPointsToUse();
+            int earned = bill.getPointsToEarn();
+            BigDecimal spend = null;
+            int earnPoints = 0;
+            BigDecimal redeem = null;
+            try (PreparedStatement ps = connection.prepareStatement(
+                    "SELECT earn_spend_amount, earn_points, redeem_value_per_point FROM LoyaltySettings WHERE settings_id = 1");
+                    ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) { spend = rs.getBigDecimal(1); earnPoints = rs.getInt(2); redeem = rs.getBigDecimal(3); }
+            }
+            if (used > 0) {
+                Integer balance = changePoints(customerId, -used, used);
+                if (balance == null) {
+                    lastPaymentFailureReason = "Khách không đủ điểm tích lũy để sử dụng.";
+                    return false;
+                }
+                insertLoyaltyTxn(customerId, historyId, "REDEEM", -used, balance, bill.getTotalAmount(),
+                        bill.getDiscountAmount(), spend, earnPoints, redeem,
+                        "Dùng điểm giảm giá hóa đơn bàn " + bill.getTableId(), actorId);
+            }
+            if (earned > 0) {
+                Integer balance = changePoints(customerId, earned, 0);
+                if (balance == null) {
+                    lastPaymentFailureReason = "Không cộng được điểm tích lũy.";
+                    return false;
+                }
+                insertLoyaltyTxn(customerId, historyId, "EARN", earned, balance, bill.getTotalAmount(),
+                        bill.getPayableAmount(), spend, earnPoints, redeem,
+                        "Tích điểm từ hóa đơn bàn " + bill.getTableId(), actorId);
+            }
+        }
+        try (PreparedStatement del = connection.prepareStatement("DELETE FROM TableBillLoyalty WHERE table_id = ?")) {
+            del.setInt(1, bill.getTableId());
+            del.executeUpdate();
+        }
+        return true;
+    }
+
+    /** Cộng/trừ điểm, trả về số dư mới; null nếu không đủ điểm (minRequired > 0). */
+    private Integer changePoints(int userId, int delta, int minRequired) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE Users SET loyalty_points = loyalty_points + ? OUTPUT inserted.loyalty_points "
+                + "WHERE user_id = ? AND loyalty_points >= ?")) {
+            ps.setInt(1, delta);
+            ps.setInt(2, userId);
+            ps.setInt(3, minRequired);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : null;
+            }
+        }
+    }
+
+    private void insertLoyaltyTxn(int userId, int historyId, String type, int points, int balanceAfter,
+            BigDecimal billAmount, BigDecimal moneyValue, BigDecimal spend, int earnPoints, BigDecimal redeem,
+            String note, int actorId) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO LoyaltyTransactions (user_id, history_id, txn_type, points, balance_after, bill_amount, "
+                + "money_value, earn_spend_amount, earn_points, redeem_value_per_point, note, created_by) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            ps.setInt(1, userId);
+            ps.setInt(2, historyId);
+            ps.setString(3, type);
+            ps.setInt(4, points);
+            ps.setInt(5, balanceAfter);
+            ps.setBigDecimal(6, billAmount);
+            ps.setBigDecimal(7, moneyValue);
+            ps.setBigDecimal(8, spend);
+            ps.setInt(9, earnPoints);
+            ps.setBigDecimal(10, redeem);
+            ps.setNString(11, note);
+            ps.setInt(12, actorId);
+            ps.executeUpdate();
+        }
+    }
+
     public boolean markQrTablePaid(int tableId, int actorId, String reference, BigDecimal transferAmount) {
         TableBill bill = getTableBill(tableId);
         if (bill == null) {
             lastPaymentFailureReason = "Không có bill OPEN cho table_id=" + tableId + ".";
             return false;
         }
-        if (transferAmount == null || bill.getTotalAmount().compareTo(transferAmount) != 0) {
-            lastPaymentFailureReason = "Số tiền không khớp. Bill=" + bill.getTotalAmount() + ", nhận=" + transferAmount + ".";
+        if (transferAmount == null || bill.getPayableAmount().compareTo(transferAmount) != 0) {
+            lastPaymentFailureReason = "Số tiền không khớp. Bill=" + bill.getPayableAmount() + ", nhận=" + transferAmount + ".";
             return false;
         }
         return markTablePaid(tableId, actorId, "QR", reference, null, null);
@@ -565,7 +699,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
     public TableBill getQrReceipt(int tableId, String reference) throws SQLException {
         String sql = "SELECT TOP 1 h.history_id, h.table_id, h.customer_name, h.customer_phone, "
                 + "h.reservation_time, h.checked_in_at, h.payment_method, h.total_amount, "
-                + "h.cash_received, h.cash_change "
+                + "h.cash_received, h.cash_change, h.loyalty_points_used, h.loyalty_discount, h.loyalty_points_earned "
                 + "FROM ServiceHistory h WHERE h.table_id = ? AND h.payment_method = 'QR' "
                 + "ORDER BY h.history_id DESC";
         TableBill bill = new TableBill();
@@ -591,6 +725,10 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 bill.setPaymentMethod(rs.getString("payment_method"));
                 bill.setTotalAmount(rs.getBigDecimal("total_amount"));
                 bill.setCashReceived(rs.getBigDecimal("cash_received"));
+                bill.setPointsToUse(rs.getInt("loyalty_points_used"));
+                bill.setDiscountAmount(rs.getBigDecimal("loyalty_discount"));
+                bill.setPointsToEarn(rs.getInt("loyalty_points_earned"));
+                bill.setPayableAmount(bill.getTotalAmount().subtract(bill.getDiscountAmount()));
                 bill.setCashChange(rs.getBigDecimal("cash_change"));
             }
         }

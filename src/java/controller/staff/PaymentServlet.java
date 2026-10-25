@@ -1,5 +1,6 @@
 package controller.staff;
 
+import dao.LoyaltyDAO;
 import dao.OrderDAO;
 import dao.RestaurantTableDAO;
 import jakarta.servlet.ServletException;
@@ -55,6 +56,18 @@ public class PaymentServlet extends HttpServlet {
                 return;
             }
             request.setAttribute("bill", bill);
+            try (LoyaltyDAO loyaltyDao = new LoyaltyDAO()) {
+                model.LoyaltySettings loyaltySettings = loyaltyDao.getSettings();
+                request.setAttribute("loyaltySettings", loyaltySettings);
+                // Số điểm tối đa dùng được: không quá số dư và không làm tiền giảm vượt tổng bill.
+                int byTotal = bill.getTotalAmount().divideToIntegralValue(loyaltySettings.getRedeemValuePerPoint()).intValue();
+                request.setAttribute("maxLoyaltyPoints", Math.min(bill.getLoyaltyBalance(), byTotal));
+            }
+            HttpSession flash = request.getSession();
+            request.setAttribute("paymentMessage", flash.getAttribute("paymentMessage"));
+            request.setAttribute("paymentMessageType", flash.getAttribute("paymentMessageType"));
+            flash.removeAttribute("paymentMessage");
+            flash.removeAttribute("paymentMessageType");
             request.setAttribute("paymentQrImageUrl", getServletContext().getInitParameter("paymentQrImageUrl"));
             request.setAttribute("paymentBankCode", getServletContext().getInitParameter("paymentBankCode"));
             request.setAttribute("paymentAccountNumber", getServletContext().getInitParameter("paymentAccountNumber"));
@@ -65,6 +78,77 @@ public class PaymentServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/staff/payment.jsp").forward(request, response);
         } catch (SQLException e) {
             throw new ServletException("Không thể tải bill thanh toán.", e);
+        }
+    }
+
+    /** Lễ tân gắn tài khoản customer / chọn số điểm dùng cho bill của bàn, trước khi thanh toán. */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        User actor = currentUser(request);
+        if (actor == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        if (!hasRole(actor, "Receptionist") && !hasRole(actor, "Manager")) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        int tableId = parseInt(request.getParameter("tableId"));
+        String action = request.getParameter("action");
+        String message;
+        String type = "error";
+        try (OrderDAO orderDao = new OrderDAO(); LoyaltyDAO loyalty = new LoyaltyDAO()) {
+            TableBill bill = tableId > 0 ? orderDao.getTableBill(tableId) : null;
+            model.LoyaltySettings settings = loyalty.getSettings();
+            if (bill == null) {
+                message = "Bàn không còn bill để thanh toán.";
+            } else if ("linkLoyalty".equals(action)) {
+                LoyaltyDAO.Customer customer = loyalty.findCustomer(request.getParameter("customerKey"));
+                if (customer == null) {
+                    message = "Không tìm thấy tài khoản customer (nhập tên đăng nhập, email hoặc số điện thoại).";
+                } else if (loyalty.setBillLink(tableId, customer.getUserId(), 0, actor.getUserId())) {
+                    message = "Đã gắn tài khoản " + customer.getFullName() + " (" + customer.getPoints() + " điểm) vào bill.";
+                    type = "success";
+                } else {
+                    message = "Không thể gắn tài khoản vào bill.";
+                }
+            } else if ("setLoyaltyPoints".equals(action)) {
+                int points = parseInt(request.getParameter("points"));
+                if (!bill.isHasLoyaltyCustomer()) {
+                    message = "Chưa gắn tài khoản customer cho bill.";
+                } else if (points < 0) {
+                    message = "Số điểm không hợp lệ.";
+                } else if (points > loyalty.getBalance(bill.getLoyaltyCustomerId())) {
+                    message = "Khách không đủ điểm (hiện có " + loyalty.getBalance(bill.getLoyaltyCustomerId()) + " điểm).";
+                } else if (settings.getRedeemValuePerPoint().multiply(java.math.BigDecimal.valueOf(points))
+                        .compareTo(bill.getTotalAmount()) > 0) {
+                    message = "Số tiền giảm không được vượt quá tổng hóa đơn.";
+                } else if (loyalty.setBillLink(tableId, bill.getLoyaltyCustomerId(), points, actor.getUserId())) {
+                    message = points == 0 ? "Đã bỏ dùng điểm." : "Đã áp dụng " + points + " điểm cho bill.";
+                    type = "success";
+                } else {
+                    message = "Không thể lưu số điểm sử dụng.";
+                }
+            } else if ("clearLoyalty".equals(action)) {
+                loyalty.clearBillLink(tableId);
+                message = "Đã bỏ gắn tài khoản customer khỏi bill.";
+                type = "success";
+            } else {
+                message = "Thao tác không hợp lệ.";
+            }
+        }
+        request.getSession().setAttribute("paymentMessage", message);
+        request.getSession().setAttribute("paymentMessageType", type);
+        response.sendRedirect(request.getContextPath() + (tableId > 0 ? "/payment?tableId=" + tableId : "/payment"));
+    }
+
+    private int parseInt(String value) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (Exception e) {
+            return -1;
         }
     }
 

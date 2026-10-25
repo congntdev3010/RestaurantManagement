@@ -45,7 +45,7 @@ public class ManageTablesServlet extends HttpServlet {
 
         boolean canManage = isManager(actor);
         // Server không được đổi trạng thái bàn; bàn tự chuyển đang phục vụ khi server order hộ khách.
-        boolean canChangeStatus = canManage || hasRole(actor, "Receptionist");
+        boolean canChangeStatus = false; // Lễ tân giống server: không đổi trạng thái bằng ô chọn
         RestaurantTableDAO dao = new RestaurantTableDAO();
         List<RestaurantTable> tables;
         boolean tableLoadFailed = false;
@@ -142,7 +142,7 @@ public class ManageTablesServlet extends HttpServlet {
         String messageType = "error";
 
         // Nhân viên chỉ được đổi trạng thái; các thao tác quản lý khác cần quyền Manager.
-        if ("changeStatus".equals(action) && hasRole(actor, "Server")) {
+        if ("changeStatus".equals(action) && !isManager(actor)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
