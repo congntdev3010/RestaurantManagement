@@ -85,6 +85,7 @@ public class MenuServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/home");
             return;
         }
+        CartServlet.refreshTableName(session);
         request.setAttribute("orderTableName", session.getAttribute(CartServlet.TABLE_NAME));
 
         // Quét QR vào bàn: phải điền tên + SĐT một lần trước khi sang màn gọi món.

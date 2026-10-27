@@ -67,7 +67,8 @@ public class ManageTablesServlet extends HttpServlet {
         request.setAttribute("tableLoadFailed", tableLoadFailed);
         request.setAttribute("canManage", canManage);
         request.setAttribute("canChangeStatus", canChangeStatus);
-        request.setAttribute("canOrder", canManage || hasRole(actor, "Server"));
+        // Chỉ Server được gọi món từ sơ đồ bàn; Manager quản lý thông tin bàn, không order.
+        request.setAttribute("canOrder", hasRole(actor, "Server"));
         // Bàn đang phục vụ mà không có order: lễ tân/server/quản lý được bật lại bàn trống.
         request.setAttribute("releasableTables", dao.getReleasableTableIds());
         Map<Integer, TableBill> tableBills = new LinkedHashMap<>();
@@ -266,14 +267,6 @@ public class ManageTablesServlet extends HttpServlet {
                     message = "Không thể lưu bàn. Mã bàn có thể bị trùng hoặc trạng thái chuyển đổi không hợp lệ.";
                 }
             }
-        } else if ("delete".equals(action)) {
-            int tableId = parseInt(request.getParameter("tableId"), -1);
-            if (tableId > 0 && dao.deleteTable(tableId)) {
-                message = "Đã xóa bàn.";
-                messageType = "success";
-            } else {
-                message = "Không thể xóa bàn; chỉ xóa được bàn đang trống.";
-            }
         } else {
             message = "Thao tác không hợp lệ.";
         }
@@ -345,7 +338,8 @@ public class ManageTablesServlet extends HttpServlet {
         if (table.getDescription() != null && table.getDescription().length() > 255) {
             return "Ghi chú tối đa 255 ký tự.";
         }
-        if (!TABLE_STATUSES.contains(table.getStatus())) {
+        // Form sửa không gửi trạng thái nữa; trạng thái chỉ được kiểm khi có gửi lên (tạo mới).
+        if (table.getStatus() != null && !TABLE_STATUSES.contains(table.getStatus())) {
             return "Trạng thái bàn không hợp lệ.";
         }
         return null;

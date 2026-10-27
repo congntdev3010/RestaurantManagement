@@ -24,6 +24,25 @@ public class CartServlet extends HttpServlet {
     public static final String TABLE_ID = "orderTableId";
     public static final String TABLE_NAME = "orderTableName";
 
+    /**
+     * Tên bàn trong phiên được đọc lại từ CSDL mỗi lần vào màn gọi món/giỏ hàng,
+     * để khi quản lý đổi tên bàn thì khách thấy tên mới (không giữ bản cũ trong phiên).
+     */
+    public static void refreshTableName(HttpSession session) {
+        Object tableId = session.getAttribute(TABLE_ID);
+        if (!(tableId instanceof Integer)) {
+            return;
+        }
+        try (dao.RestaurantTableDAO tables = new dao.RestaurantTableDAO()) {
+            model.RestaurantTable current = tables.getTableById((Integer) tableId);
+            if (current != null) {
+                session.setAttribute(TABLE_NAME, current.getTableName());
+            }
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession();
@@ -48,6 +67,7 @@ public class CartServlet extends HttpServlet {
         request.setAttribute("cartTotal", total);
         request.setAttribute("message", session.getAttribute("cartMessage"));
         session.removeAttribute("cartMessage");
+        refreshTableName(session);
         request.setAttribute("orderTableName", session.getAttribute(TABLE_NAME));
         // Bước xem lại: tóm tắt đơn rồi hỏi khách đã chắc chắn gửi chưa. Giỏ trống hoặc chưa có bàn thì quay về giỏ.
         if ("1".equals(request.getParameter("review")) && !dishes.isEmpty() && session.getAttribute(TABLE_ID) != null) {

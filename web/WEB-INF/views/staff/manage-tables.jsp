@@ -22,10 +22,11 @@
                 <div class="tables-heading-actions">
                     <c:if test="${not tableLoadFailed}">
                         <p class="table-count"><strong><c:out value="${tableCount}" /></strong> bàn</p>
+
                     </c:if>
                 </div>
             </header>
-            <c:if test="${not tableLoadFailed and (canManage or sessionScope.user.roleName eq 'Receptionist')}">
+            <c:if test="${not tableLoadFailed and sessionScope.user.roleName eq 'Receptionist'}">
                 <form class="table-payment-filter" method="get" action="${pageContext.request.contextPath}/manage-tables">
                     <label for="paymentFilter">Bàn chưa thanh toán</label>
                     <select id="paymentFilter" name="paymentFilter" onchange="this.form.submit()">
@@ -85,16 +86,6 @@
                                     <input type="number" name="capacity" min="1" max="30" required
                                            value="${not empty editTable ? editTable.capacity : 2}">
                                 </label>
-                                <c:if test="${not empty editTable}">
-                                    <label>
-                                        Trạng thái
-                                        <select name="status" required>
-                                            <option value="AVAILABLE" ${editTable.status eq 'AVAILABLE' ? 'selected' : ''}>Còn trống</option>
-                                            <option value="RESERVED" ${editTable.status eq 'RESERVED' ? 'selected' : ''}>Đã đặt</option>
-                                            <option value="OCCUPIED" ${editTable.status eq 'OCCUPIED' ? 'selected' : ''}>Đang phục vụ</option>
-                                        </select>
-                                    </label>
-                                </c:if>
                                 <label class="description-field">
                                     Ghi chú
                                     <input type="text" name="description" maxlength="255" placeholder="Vị trí hoặc đặc điểm của bàn"
@@ -175,12 +166,6 @@
                                         <c:when test="${canManage}">
                                             <div class="table-actions">
                                                 <a href="${pageContext.request.contextPath}/manage-tables?edit=${table.tableId}">Sửa</a>
-                                                <form action="${pageContext.request.contextPath}/manage-tables" method="post"
-                                                      onsubmit="return confirm('Bạn chắc chắn muốn xóa bàn này?');">
-                                                    <input type="hidden" name="action" value="delete">
-                                                    <input type="hidden" name="tableId" value="${table.tableId}">
-                                                    <button type="submit">Xóa</button>
-                                                </form>
                                             </div>
                                         </c:when>
                                         <c:when test="${canChangeStatus}">

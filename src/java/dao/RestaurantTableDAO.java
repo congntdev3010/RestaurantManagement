@@ -84,15 +84,19 @@ public class RestaurantTableDAO extends DBContext {
         return executeUpdate(sql, statement -> bindTable(statement, table));
     }
 
-    /** Cập nhật thông tin bàn và chỉ chấp nhận chuyển trạng thái hợp lệ. */
+    /**
+     * Cập nhật thông tin bàn (tên, loại, sức chứa, ghi chú).
+     * KHÔNG đổi trạng thái: trạng thái bàn do nghiệp vụ order/thanh toán quản lý.
+     */
     public boolean updateTable(RestaurantTable table) {
-        String sql = "UPDATE RestaurantTables SET table_name = ?, table_type = ?, capacity = ?, "
-                + "table_status = ?, description = ? WHERE table_id = ? AND " + STATUS_TRANSITION_CONDITION;
+        String sql = "UPDATE RestaurantTables SET table_name = ?, table_type = ?, capacity = ?, description = ? "
+                + "WHERE table_id = ?";
         return executeUpdate(sql, statement -> {
-            bindTable(statement, table);
-            statement.setInt(6, table.getTableId());
-            // Điều kiện SQL có bốn tham số trạng thái để bảo vệ cả cập nhật ngoài servlet.
-            bindTransitionStatus(statement, table.getStatus(), 7);
+            statement.setNString(1, table.getTableName());
+            statement.setNString(2, table.getTableType());
+            statement.setInt(3, table.getCapacity());
+            statement.setNString(4, table.getDescription());
+            statement.setInt(5, table.getTableId());
         });
     }
 
@@ -181,13 +185,6 @@ public class RestaurantTableDAO extends DBContext {
         }
     }
 
-    /** Chỉ xóa bàn đang trống. */
-    public boolean deleteTable(int tableId) {
-        String sql = "DELETE FROM RestaurantTables "
-                + "WHERE table_id = ? AND table_status = 'AVAILABLE'";
-        return executeUpdate(sql, statement -> statement.setInt(1, tableId));
-    }
-
     /**
      * Gắn trạng thái vào bốn placeholder của điều kiện chuyển trạng thái SQL.
      */
@@ -220,7 +217,7 @@ public class RestaurantTableDAO extends DBContext {
         void bind(PreparedStatement statement) throws SQLException;
     }
 
-    /** Gắn năm trường dùng chung theo thứ tự placeholder của lệnh INSERT/UPDATE. */
+    /** Gắn năm trường dùng chung theo thứ tự placeholder của lệnh INSERT. */
     private void bindTable(PreparedStatement statement, RestaurantTable table) throws SQLException {
         statement.setNString(1, table.getTableName());
         statement.setNString(2, table.getTableType());
