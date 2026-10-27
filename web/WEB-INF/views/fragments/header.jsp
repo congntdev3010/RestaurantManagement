@@ -157,6 +157,10 @@
         </a>
         <% } %>
         <% if (isManager) { %>
+        <a class="sidebar-link <%= currentURI.contains("manage-reviews") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manage-reviews" title="Duyệt đánh giá" aria-label="Duyệt đánh giá">
+            <i class="fa-solid fa-star" aria-hidden="true"></i><span>Duyệt đánh giá</span>
+        </a>
         <a class="sidebar-link <%= currentURI.contains("service-history") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/service-history" title="Lịch sử thanh toán" aria-label="Lịch sử thanh toán">
             <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Lịch sử thanh toán</span>

@@ -206,3 +206,10 @@ Khong dat `qrBaseUrl` la `http://localhost:8080/...` khi QR duoc quet bang dien 
 ## 9. Kiem tra truoc khi thu tien
 
 Man hinh thanh toan chi bat QR khi du ca hai bien moi truong va thong tin tai khoan. Khi khach chuyen khoan, giu man hinh QR mo de webhook cap nhat trang thai; khong xac nhan thu cong khi chua thay trang thai da thanh toan.
+
+## 10. Danh gia
+
+Chay `database/add_reviews(17).sql` sau khi tao bang `Users`. Khach hang dang
+nhap bang tai khoan co vai tro `Customer` co the gui danh gia, khong phu thuoc
+vao don hang, thanh toan hay trang thai phuc vu. Danh gia moi luon o trang thai
+`PENDING` va chi hien cong khai sau khi Manager duyet. Tu choi se xoa danh gia.
