@@ -1,38 +1,114 @@
 package controller.staff;
 
+import dao.ServiceHistoryDAO;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
+import model.PaidBill;
 import model.TableBill;
 import model.User;
 
 /**
- * Trang bill dùng một lần sau thanh toán. Không có truy vấn xem lại cho lễ tân.
+ * Lịch sử thanh toán dùng chung cho Lễ tân và Manager.
+ * - Ngay sau khi thanh toán (tiền mặt/QR) chuyển thẳng tới hóa đơn vừa trả.
+ * - Danh sách lọc theo ngày; xem và in lại hóa đơn bất kỳ lúc nào.
  */
 @WebServlet(name = "ServiceHistoryServlet", urlPatterns = {"/service-history"})
 public class ServiceHistoryServlet extends HttpServlet {
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        response.setHeader("Cache-Control", "no-store");
         HttpSession session = request.getSession(false);
-        Object actor = session == null ? null : session.getAttribute("user");
-        if (!(actor instanceof User)
-                || (!"Receptionist".equalsIgnoreCase(((User) actor).getRoleName())
-                && !"Manager".equalsIgnoreCase(((User) actor).getRoleName()))) {
+        Object sessionUser = session == null ? null : session.getAttribute("user");
+        if (!(sessionUser instanceof User)) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        String role = ((User) sessionUser).getRoleName();
+        if (!"Receptionist".equalsIgnoreCase(role) && !"Manager".equalsIgnoreCase(role)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
-        Object receipt = session.getAttribute("oneTimeServiceReceipt");
+
+        // Vừa thanh toán xong: mở luôn hóa đơn của bàn đó (đã lưu trong lịch sử, xem lại được sau này).
+        Object justPaid = session.getAttribute("oneTimeServiceReceipt");
         session.removeAttribute("oneTimeServiceReceipt");
-        if (!(receipt instanceof TableBill)) {
-            response.sendRedirect(request.getContextPath() + "/manage-tables");
-            return;
+        String idParam = request.getParameter("id");
+        if (idParam == null && justPaid instanceof TableBill) {
+            try (ServiceHistoryDAO dao = new ServiceHistoryDAO()) {
+                Integer latest = dao.findLatestHistoryId(((TableBill) justPaid).getTableId());
+                if (latest != null) {
+                    response.sendRedirect(request.getContextPath() + "/service-history?id=" + latest);
+                    return;
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        request.setAttribute("receipt", receipt);
+
+        LocalDate from = parseDate(request.getParameter("from"));
+        LocalDate to = parseDate(request.getParameter("to"));
+        if (from != null && to != null && from.isAfter(to)) {
+            LocalDate swap = from;
+            from = to;
+            to = swap;
+        }
+
+        try (ServiceHistoryDAO dao = new ServiceHistoryDAO()) {
+            List<PaidBill> bills = dao.search(from, to);
+            BigDecimal revenue = BigDecimal.ZERO;
+            for (PaidBill b : bills) {
+                revenue = revenue.add(b.getPayableAmount());
+            }
+            request.setAttribute("bills", bills);
+            request.setAttribute("revenue", revenue);
+
+            if (idParam != null) {
+                int id = parseInt(idParam);
+                PaidBill selected = id > 0 ? dao.getById(id) : null;
+                if (selected != null) {
+                    request.setAttribute("selected", selected);
+                } else {
+                    request.setAttribute("detailMessage", "Không tìm thấy hóa đơn #" + idParam + ".");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            request.setAttribute("loadFailed", true);
+        }
+
+        request.setAttribute("from", from == null ? "" : from.toString());
+        request.setAttribute("to", to == null ? "" : to.toString());
         request.getRequestDispatcher("/WEB-INF/views/staff/service-history.jsp").forward(request, response);
+    }
+
+    private LocalDate parseDate(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value.trim());
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private int parseInt(String value) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 }

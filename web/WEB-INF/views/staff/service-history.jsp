@@ -1,20 +1,44 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thanh toán thành công</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/service-history.css?v=1.0">
+    <title>Lịch sử thanh toán - Việt À la carte</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/service-history.css?v=1.1">
     <style>
-        /* In hóa đơn: chỉ giữ thông tin bill, bỏ thanh điều hướng, nút và phần chúc mừng. */
-        @media print { /* header.css gắn padding-left 248px cho body có sidebar; selector dưới đây thắng để bỏ lệch. */ body.history-page.has-staff-sidebar { padding: 0 !important; margin: 0 !important; }
-            .site-header, .staff-sidebar, .receipt-actions, .success-mark, .eyebrow,
-            .receipt-card h1, .receipt-total { display: none !important; }
-            body, body.has-staff-sidebar { padding: 0 !important; margin: 0 !important; background: #fff !important; }
-            .receipt-shell { padding: 0 !important; margin: 0 auto !important; max-width: 100% !important; }
+        /* Danh sách lịch sử */
+        .sh-filter { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 22px 0 14px; }
+        .sh-filter label { display: flex; flex-direction: column; font-size: .8rem; color: #6b5d5d; gap: 4px; }
+        .sh-filter input[type=date] { padding: 8px 10px; border: 1px solid #e5d3c8; border-radius: 8px; }
+        .sh-filter button, .sh-filter a { padding: 9px 16px; border-radius: 8px; border: 1px solid #7c2028; background: #7c2028; color: #fff; text-decoration: none; cursor: pointer; font: inherit; }
+        .sh-filter a { background: transparent; color: #7c2028; }
+        .sh-summary { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+        .sh-summary div { background: #fbf3ee; border: 1px solid #efdfd5; border-radius: 12px; padding: 12px 16px; }
+        .sh-summary span { display: block; font-size: .75rem; color: #8a6f66; text-transform: uppercase; letter-spacing: .05em; }
+        .sh-summary strong { font-size: 1.1rem; color: #5a1b22; }
+        .sh-table-wrap { overflow-x: auto; border: 1px solid #efe4dc; border-radius: 14px; background: #fff; }
+        .sh-table { width: 100%; border-collapse: collapse; }
+        .sh-table th { text-align: left; padding: 11px 14px; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #8a7a73; background: #faf5f1; border-bottom: 1px solid #efe4dc; white-space: nowrap; }
+        .sh-table td { padding: 11px 14px; border-bottom: 1px solid #f3ebe5; white-space: nowrap; }
+        .sh-table tr:last-child td { border-bottom: 0; }
+        .sh-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .sh-table tr.is-selected { background: #fff4e6; }
+        .sh-empty { text-align: center; padding: 30px; color: #8a7a73; background: #fffaf6; border: 1px dashed #e5d3c8; border-radius: 14px; }
+        .sh-message { padding: 12px 16px; border-radius: 10px; background: #fdeaea; color: #a8242b; }
+        .sh-back { display: inline-block; margin-bottom: 12px; color: #7c2028; }
+        .receipt-card .receipt-line span { text-align: left; }
+
+        @media print {
+            /* header.css gắn padding-left 248px cho body có sidebar; selector dưới đây thắng để bỏ lệch. */
+            body.history-page.has-staff-sidebar { padding: 0 !important; margin: 0 !important; }
+            .site-header, .staff-sidebar, .no-print { display: none !important; }
+            .receipt-shell { padding: 0 !important; margin: 0 auto !important; max-width: 100% !important; width: 100% !important; }
             .receipt-card { box-shadow: none !important; border: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
+            .receipt-card .success-mark, .receipt-card .eyebrow, .receipt-card h1, .receipt-card .receipt-total { display: none !important; }
             .receipt-subtitle { font-size: 1.1rem; text-align: center; margin: 0 0 14px; }
             .receipt-card, .receipt-lines, .receipt-info { page-break-inside: avoid; }
         }
@@ -23,46 +47,123 @@
 <body class="history-page">
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
     <main class="receipt-shell">
-        <section class="receipt-card">
-            <div class="success-mark">✓</div>
-            <p class="eyebrow">GIAO DỊCH HOÀN TẤT</p>
-            <h1>Thanh toán thành công</h1>
-            <p class="receipt-subtitle">Bill của bàn <strong><c:out value="${not empty receipt.tableName ? receipt.tableName : receipt.tableId}"/></strong> đã được đóng.</p>
-            <div class="receipt-total">
-                <span>Khách đã trả</span>
-                <strong><c:out value="${receipt.payableAmount}"/> đ</strong>
-            </div>
-            <div class="receipt-info">
-                <div><span>Bàn</span><strong><c:out value="${not empty receipt.tableName ? receipt.tableName : receipt.tableId}"/></strong></div>
-                <div><span>Phương thức</span><strong><c:out value="${receipt.paymentMethod eq 'CASH' ? 'Tiền mặt' : 'Chuyển khoản QR'}"/></strong></div>
-                <c:if test="${not empty receipt.customerName}"><div><span>Khách hàng</span><strong><c:out value="${receipt.customerName}"/></strong></div></c:if>
-                <c:if test="${receipt.paymentMethod eq 'CASH' and not empty receipt.cashReceived}"><div><span>Số tiền đã đưa</span><strong><c:out value="${receipt.cashReceived}"/> đ</strong></div></c:if>
-                <c:if test="${not empty receipt.cashReceived}"><div><span>Tiền thừa</span><strong><c:out value="${receipt.cashChange}"/> đ</strong></div></c:if>
-            </div>
-            <div class="receipt-lines">
-                <div class="lines-heading"><h2>Các món đã phục vụ</h2><span><c:out value="${receipt.items.size()}"/> món</span></div>
-                <c:forEach var="item" items="${receipt.items}">
-                    <div class="receipt-line"><span><strong><c:out value="${item.dishName}"/></strong><small><c:out value="${item.quantity}"/> × <c:out value="${item.unitPrice}"/> đ</small></span><strong><c:out value="${item.lineTotal}"/> đ</strong></div>
-                </c:forEach>
-                <div class="receipt-total-bottom">
-                    <span>Tổng bill (trước giảm)</span>
-                    <strong><c:out value="${receipt.totalAmount}"/> đ</strong>
-                </div>
-                <c:if test="${receipt.discountAmount gt 0}">
-                <div class="receipt-total-bottom">
-                    <span>Giảm giá bằng điểm (<c:out value="${receipt.pointsToUse}"/> điểm)</span>
-                    <strong>- <c:out value="${receipt.discountAmount}"/> đ</strong>
-                </div>
-                </c:if>
-                <div class="receipt-total-bottom">
+
+        <c:if test="${not empty detailMessage}">
+            <p class="sh-message" role="status"><c:out value="${detailMessage}"/></p>
+        </c:if>
+
+        <%-- ===== Hóa đơn chi tiết (xem lại / in) ===== --%>
+        <c:if test="${not empty selected}">
+            <a class="sh-back no-print" href="${pageContext.request.contextPath}/service-history?from=${from}&to=${to}">&larr; Danh sách thanh toán</a>
+            <section class="receipt-card">
+                <div class="success-mark">✓</div>
+                <p class="eyebrow">HÓA ĐƠN</p>
+                <h1>Hóa đơn #<c:out value="${selected.historyId}"/></h1>
+                <p class="receipt-subtitle">Bill của bàn <strong><c:out value="${selected.tableName}"/></strong> · <c:out value="${selected.paidAtText}"/></p>
+                <div class="receipt-total">
                     <span>Khách đã trả</span>
-                    <strong><c:out value="${receipt.payableAmount}"/> đ</strong>
+                    <strong><fmt:formatNumber value="${selected.payableAmount}" pattern="#,##0"/> đ</strong>
                 </div>
-            </div>
-            <div class="receipt-actions">
-                <button type="button" onclick="window.print()">In hóa đơn</button>
-                <a href="${pageContext.request.contextPath}/payment">Thanh toán bàn khác</a>
-            </div>
+                <div class="receipt-info">
+                    <div><span>Bàn</span><strong><c:out value="${selected.tableName}"/></strong></div>
+                    <div><span>Phương thức</span><strong><c:out value="${selected.paymentMethod eq 'CASH' ? 'Tiền mặt' : 'Chuyển khoản QR'}"/></strong></div>
+                    <c:if test="${not empty selected.customerName}"><div><span>Khách hàng</span><strong><c:out value="${selected.customerName}"/></strong></div></c:if>
+                    <div><span>Thu ngân</span><strong><c:out value="${selected.paidByName}"/></strong></div>
+                    <c:if test="${selected.paymentMethod eq 'CASH' and not empty selected.cashReceived}"><div><span>Số tiền đã đưa</span><strong><fmt:formatNumber value="${selected.cashReceived}" pattern="#,##0"/> đ</strong></div></c:if>
+                    <c:if test="${not empty selected.cashChange}"><div><span>Tiền thừa</span><strong><fmt:formatNumber value="${selected.cashChange}" pattern="#,##0"/> đ</strong></div></c:if>
+                </div>
+                <div class="receipt-lines">
+                    <div class="lines-heading"><h2>Các món đã phục vụ</h2><span><c:out value="${fn:length(selected.items)}"/> món</span></div>
+                    <c:forEach var="item" items="${selected.items}">
+                        <div class="receipt-line"><span><strong><c:out value="${item.dishName}"/></strong><small><c:out value="${item.quantity}"/> × <fmt:formatNumber value="${item.unitPrice}" pattern="#,##0"/> đ</small></span><strong><fmt:formatNumber value="${item.lineTotal}" pattern="#,##0"/> đ</strong></div>
+                    </c:forEach>
+                    <div class="receipt-total-bottom">
+                        <span>Tổng bill (trước giảm)</span>
+                        <strong><fmt:formatNumber value="${selected.totalAmount}" pattern="#,##0"/> đ</strong>
+                    </div>
+                    <c:if test="${selected.discountAmount gt 0}">
+                        <div class="receipt-total-bottom">
+                            <span>Giảm giá bằng điểm (<c:out value="${selected.pointsUsed}"/> điểm)</span>
+                            <strong>- <fmt:formatNumber value="${selected.discountAmount}" pattern="#,##0"/> đ</strong>
+                        </div>
+                    </c:if>
+                    <div class="receipt-total-bottom">
+                        <span>Khách đã trả</span>
+                        <strong><fmt:formatNumber value="${selected.payableAmount}" pattern="#,##0"/> đ</strong>
+                    </div>
+                </div>
+                <div class="receipt-actions no-print">
+                    <button type="button" onclick="window.print()">In hóa đơn</button>
+                </div>
+            </section>
+        </c:if>
+
+        <%-- ===== Danh sách lịch sử ===== --%>
+        <section class="no-print" aria-label="Danh sách thanh toán">
+            <c:choose>
+                <c:when test="${loadFailed}">
+                    <p class="sh-message" role="alert">Không tải được lịch sử thanh toán.</p>
+                </c:when>
+                <c:otherwise>
+                    <form class="sh-filter" method="get" action="${pageContext.request.contextPath}/service-history">
+                        <label>Từ ngày
+                            <input type="date" name="from" value="${from}">
+                        </label>
+                        <label>Đến ngày
+                            <input type="date" name="to" value="${to}">
+                        </label>
+                        <button type="submit">Lọc</button>
+                        <a href="${pageContext.request.contextPath}/service-history">Xóa lọc</a>
+                    </form>
+
+                    <div class="sh-summary">
+                        <div><span>Số đơn</span><strong><c:out value="${fn:length(bills)}"/></strong></div>
+                        <div><span>Doanh thu (khách đã trả)</span><strong><fmt:formatNumber value="${revenue}" pattern="#,##0"/> đ</strong></div>
+                    </div>
+
+                    <c:choose>
+                        <c:when test="${empty bills}">
+                            <div class="sh-empty">Chưa có đơn thanh toán nào trong khoảng thời gian này.</div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="sh-table-wrap">
+                                <table class="sh-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Mã</th>
+                                            <th>Thời gian</th>
+                                            <th>Bàn</th>
+                                            <th>Khách</th>
+                                            <th>Thanh toán</th>
+                                            <th class="num">Tổng bill</th>
+                                            <th class="num">Giảm điểm</th>
+                                            <th class="num">Khách trả</th>
+                                            <th>Thu ngân</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach var="b" items="${bills}">
+                                            <tr class="${selected.historyId eq b.historyId ? 'is-selected' : ''}">
+                                                <td>#<c:out value="${b.historyId}"/></td>
+                                                <td><c:out value="${b.paidAtText}"/></td>
+                                                <td><c:out value="${b.tableName}"/></td>
+                                                <td><c:out value="${b.customerName}"/></td>
+                                                <td><c:out value="${b.paymentMethod eq 'CASH' ? 'Tiền mặt' : 'Chuyển khoản QR'}"/></td>
+                                                <td class="num"><fmt:formatNumber value="${b.totalAmount}" pattern="#,##0"/> đ</td>
+                                                <td class="num"><c:if test="${b.discountAmount gt 0}">-<fmt:formatNumber value="${b.discountAmount}" pattern="#,##0"/> đ</c:if></td>
+                                                <td class="num"><fmt:formatNumber value="${b.payableAmount}" pattern="#,##0"/> đ</td>
+                                                <td><c:out value="${b.paidByName}"/></td>
+                                                <td><a href="${pageContext.request.contextPath}/service-history?id=${b.historyId}&from=${from}&to=${to}">Xem / In</a></td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </c:otherwise>
+            </c:choose>
         </section>
     </main>
 </body>
