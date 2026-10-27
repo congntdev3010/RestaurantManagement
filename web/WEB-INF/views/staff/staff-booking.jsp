@@ -89,12 +89,12 @@
                                 <h3><c:out value="${g.key}" /></h3>
                                 <div class="rsv-seats">
                                     <c:forEach var="slot" items="${g.value}">
-                                        <label class="rsv-seat ${slot.booked ? 'disabled' : ''}">
+                                        <label class="rsv-seat ${(slot.booked or slot.serving) ? 'disabled' : ''}">
                                             <input type="checkbox" name="tableId" value="${slot.table.tableId}"
-                                                   data-cap="${slot.table.capacity}" ${slot.booked ? 'disabled' : ''}>
+                                                   data-cap="${slot.table.capacity}" ${(slot.booked or slot.serving) ? 'disabled' : ''}>
                                             <span>
                                                 <c:out value="${slot.table.tableName}" />
-                                                <small>${slot.table.capacity} chỗ · ${slot.booked ? 'đã có người đặt' : 'còn trống'}</small>
+                                                <small>${slot.table.capacity} chỗ · <c:choose><c:when test="${slot.serving}">đang phục vụ</c:when><c:when test="${slot.booked}">đã có người đặt</c:when><c:otherwise>còn trống</c:otherwise></c:choose></small>
                                             </span>
                                         </label>
                                     </c:forEach>

@@ -136,7 +136,8 @@
                                             <small>
                                                 ${slot.table.capacity} chỗ ·
                                                 <c:choose>
-                                                    <c:when test="${slot.booked}">đã có người đặt</c:when>
+                                                    <c:when test="${slot.serving}">đang phục vụ</c:when>
+                                                <c:when test="${slot.booked}">đã có người đặt</c:when>
                                                     <c:when test="${not slot.fits}">còn trống (cần gộp bàn)</c:when>
                                                     <c:otherwise>còn trống</c:otherwise>
                                                 </c:choose>

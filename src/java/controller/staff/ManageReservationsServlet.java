@@ -96,12 +96,13 @@ public class ManageReservationsServlet extends HttpServlet {
         List<ShiftAvailability> summaries = new ArrayList<>();
         for (Map.Entry<String, LocalTime[]> entry : shifts.entrySet()) {
             Set<Integer> booked = dao.getBookedTableIds(r.getReservationDate(), entry.getKey());
+            Set<Integer> servingNow = dao.getServingTableIds(r.getReservationDate(), entry.getKey());
             int total = 0;
             int free = 0;
             for (RestaurantTable t : tables) {
                 if (wanted == null || wanted.equals(t.getTableType())) {
                     total++;
-                    if (!booked.contains(t.getTableId())) free++;
+                    if (!booked.contains(t.getTableId()) && !servingNow.contains(t.getTableId())) free++;
                 }
             }
             summaries.add(new ShiftAvailability(entry.getKey(), shiftName(entry.getKey()), free, total));
@@ -109,12 +110,13 @@ public class ManageReservationsServlet extends HttpServlet {
 
         // Sơ đồ bàn của ca đang xem, gom theo loại; đếm bàn trống mỗi loại để gợi ý đổi loại bàn.
         Set<Integer> booked = dao.getBookedTableIds(r.getReservationDate(), shift);
+        Set<Integer> serving = dao.getServingTableIds(r.getReservationDate(), shift);
         Map<String, List<TableAvailability>> groups = new LinkedHashMap<>();
         Map<String, Integer> freeByType = new LinkedHashMap<>();
         for (RestaurantTable t : tables) {
             boolean isBooked = booked.contains(t.getTableId());
             boolean fits = t.getCapacity() >= r.getGuestCount();
-            TableAvailability slot = new TableAvailability(t, isBooked, fits);
+            TableAvailability slot = new TableAvailability(t, isBooked, fits, serving.contains(t.getTableId()));
             groups.computeIfAbsent(t.getTableType(), k -> new ArrayList<>()).add(slot);
             freeByType.merge(t.getTableType(), slot.isSelectable() ? 1 : 0, Integer::sum);
         }

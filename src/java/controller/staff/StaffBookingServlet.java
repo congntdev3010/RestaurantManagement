@@ -164,12 +164,13 @@ public class StaffBookingServlet extends HttpServlet {
                 return;
             }
             Set<Integer> booked = dao.getBookedTableIds(date, shift);
+            Set<Integer> serving = dao.getServingTableIds(date, shift);
             Map<String, List<TableAvailability>> groups = new LinkedHashMap<>();
             try (RestaurantTableDAO tableDao = new RestaurantTableDAO()) {
                 for (RestaurantTable t : tableDao.getAllTables()) {
                     if (type != null && !type.isEmpty() && !type.equals(t.getTableType())) continue;
                     groups.computeIfAbsent(t.getTableType(), k -> new ArrayList<>())
-                            .add(new TableAvailability(t, booked.contains(t.getTableId()), true));
+                            .add(new TableAvailability(t, booked.contains(t.getTableId()), true, serving.contains(t.getTableId())));
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
