@@ -33,7 +33,7 @@
                 <c:when test="${tab eq 'booked'}">
                     <form class="rsv-filter" method="get" action="${base}">
                         <input type="hidden" name="tab" value="booked">
-                        <input class="rsv-input" type="search" name="q" maxlength="100" style="min-width:280px"
+                        <input class="rsv-input" type="search" name="q" maxlength="100" style="flex:1 1 380px;min-width:280px"
                                placeholder="Tìm theo tên người đặt hoặc số điện thoại" value="<c:out value='${keyword}'/>" autofocus>
                         <button type="submit" class="rsv-btn small">Tìm</button>
                         <c:if test="${not empty keyword}"><a class="rsv-btn secondary small" href="${base}?tab=booked">Xem đơn hôm nay</a></c:if>

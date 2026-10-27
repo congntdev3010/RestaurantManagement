@@ -110,7 +110,11 @@ public class BookingServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/booking");
     }
 
-    private String validate(String name, String phone, String tableType, String dateText, String timeText,
+    /**
+     * Luật nhập liệu dùng chung cho đặt bàn của khách và của lễ tân (StaffBookingServlet),
+     * để hai màn luôn kiểm tra giống nhau. Trả về null nếu hợp lệ, ngược lại là thông báo lỗi.
+     */
+    public static String validate(String name, String phone, String tableType, String dateText, String timeText,
             String note, int guests, List<String> types, Map<String, LocalTime[]> shifts) {
         if (name == null || name.length() < 2 || name.length() > 30) {
             return "Họ tên phải từ 2 đến 30 ký tự.";
@@ -154,7 +158,7 @@ public class BookingServlet extends HttpServlet {
         return null;
     }
 
-    private String describeShifts(Map<String, LocalTime[]> shifts) {
+    private static String describeShifts(Map<String, LocalTime[]> shifts) {
         StringBuilder sb = new StringBuilder();
         for (LocalTime[] range : shifts.values()) {
             if (sb.length() > 0) sb.append(", ");
