@@ -378,6 +378,13 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 if (!rs.next() || rs.getInt("order_count") == 0) { clearStaleLoyaltyLink(tableId); return null; }
                 TableBill bill = new TableBill();
                 bill.setTableId(tableId);
+                try (PreparedStatement tn = connection.prepareStatement(
+                        "SELECT table_name FROM RestaurantTables WHERE table_id = ?")) {
+                    tn.setInt(1, tableId);
+                    try (ResultSet tnRs = tn.executeQuery()) {
+                        if (tnRs.next()) bill.setTableName(tnRs.getNString("table_name"));
+                    }
+                }
                 bill.setOrderCount(rs.getInt("order_count"));
                 bill.setUnfinishedItemCount(rs.getInt("unfinished_count"));
                 bill.setTotalAmount(rs.getBigDecimal("total_amount"));
@@ -712,6 +719,13 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 }
                 historyId = rs.getInt("history_id");
                 bill.setTableId(rs.getInt("table_id"));
+                try (PreparedStatement tn = connection.prepareStatement(
+                        "SELECT table_name FROM RestaurantTables WHERE table_id = ?")) {
+                    tn.setInt(1, rs.getInt("table_id"));
+                    try (ResultSet tnRs = tn.executeQuery()) {
+                        if (tnRs.next()) bill.setTableName(tnRs.getNString("table_name"));
+                    }
+                }
                 bill.setCustomerName(rs.getNString("customer_name"));
                 bill.setCustomerPhone(rs.getNString("customer_phone"));
                 java.sql.Timestamp reservation = rs.getTimestamp("reservation_time");

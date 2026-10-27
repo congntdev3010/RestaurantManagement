@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/service-history.css?v=1.0">
     <style>
         /* In hóa đơn: chỉ giữ thông tin bill, bỏ thanh điều hướng, nút và phần chúc mừng. */
-        @media print {
+        @media print { /* header.css gắn padding-left 248px cho body có sidebar; selector dưới đây thắng để bỏ lệch. */ body.history-page.has-staff-sidebar { padding: 0 !important; margin: 0 !important; }
             .site-header, .staff-sidebar, .receipt-actions, .success-mark, .eyebrow,
             .receipt-card h1, .receipt-total { display: none !important; }
             body, body.has-staff-sidebar { padding: 0 !important; margin: 0 !important; background: #fff !important; }
@@ -27,13 +27,13 @@
             <div class="success-mark">✓</div>
             <p class="eyebrow">GIAO DỊCH HOÀN TẤT</p>
             <h1>Thanh toán thành công</h1>
-            <p class="receipt-subtitle">Bill của bàn <strong><c:out value="${receipt.tableId}"/></strong> đã được đóng.</p>
+            <p class="receipt-subtitle">Bill của bàn <strong><c:out value="${not empty receipt.tableName ? receipt.tableName : receipt.tableId}"/></strong> đã được đóng.</p>
             <div class="receipt-total">
                 <span>Khách đã trả</span>
                 <strong><c:out value="${receipt.payableAmount}"/> đ</strong>
             </div>
             <div class="receipt-info">
-                <div><span>Bàn</span><strong><c:out value="${receipt.tableId}"/></strong></div>
+                <div><span>Bàn</span><strong><c:out value="${not empty receipt.tableName ? receipt.tableName : receipt.tableId}"/></strong></div>
                 <div><span>Phương thức</span><strong><c:out value="${receipt.paymentMethod eq 'CASH' ? 'Tiền mặt' : 'Chuyển khoản QR'}"/></strong></div>
                 <c:if test="${not empty receipt.customerName}"><div><span>Khách hàng</span><strong><c:out value="${receipt.customerName}"/></strong></div></c:if>
                 <c:if test="${receipt.paymentMethod eq 'CASH' and not empty receipt.cashReceived}"><div><span>Số tiền đã đưa</span><strong><c:out value="${receipt.cashReceived}"/> đ</strong></div></c:if>

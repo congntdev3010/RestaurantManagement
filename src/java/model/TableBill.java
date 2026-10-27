@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TableBill {
-    private int tableId;
+    private int tableId; private String tableName;
     private int orderCount;
     private int unfinishedItemCount;
     private BigDecimal totalAmount = BigDecimal.ZERO;
@@ -27,7 +27,7 @@ public class TableBill {
     private int pointsToEarn;
     private List<TableBillItem> items = new ArrayList<>();
 
-    public int getTableId() { return tableId; }
+    public int getTableId() { return tableId; } public String getTableName() { return tableName; } public void setTableName(String tableName) { this.tableName = tableName; }
     public void setTableId(int tableId) { this.tableId = tableId; }
     public int getOrderCount() { return orderCount; }
     public void setOrderCount(int orderCount) { this.orderCount = orderCount; }

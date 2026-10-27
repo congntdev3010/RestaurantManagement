@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thanh toán - Bàn <c:out value="${bill.tableId}"/></title>
+    <title>Thanh toán - Bàn <c:out value="${not empty bill.tableName ? bill.tableName : bill.tableId}"/></title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/payment.css?v=1.0">
     <style>
         .bill-sum { margin-top: 18px; padding: 6px 4px 0; border-top: 1px solid #e6d9cf; }
@@ -69,7 +69,7 @@
             <header class="payment-header">
                 <div>
                     <p class="eyebrow">HOÀN TẤT PHỤC VỤ</p>
-                    <h1>Thanh toán bàn <c:out value="${bill.tableId}"/></h1>
+                    <h1>Thanh toán bàn <c:out value="${not empty bill.tableName ? bill.tableName : bill.tableId}"/></h1>
                     <p class="payment-subtitle"><c:out value="${bill.orderCount}"/> order trong phiên phục vụ</p>
                 </div>
             </header>

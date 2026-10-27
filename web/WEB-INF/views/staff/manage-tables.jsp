@@ -210,11 +210,12 @@
         </main>
     <c:set var="qrDefaultBase" value="${pageContext.request.scheme}://${pageContext.request.serverName}${(pageContext.request.serverPort == 80 or pageContext.request.serverPort == 443) ? '' : ':'.concat(pageContext.request.serverPort)}${pageContext.request.contextPath}" />
             <c:set var="qrBase" value="${not empty qrBaseUrl ? qrBaseUrl : qrDefaultBase}" />
-        <dialog id="qrDialog" data-base="${fn:escapeXml(qrBase)}" style="border:0;border-radius:12px;padding:20px;text-align:center;max-width:340px;width:90%">
+        <dialog id="qrDialog" data-base="${fn:escapeXml(qrBase)}" data-local="${fn:escapeXml(qrDefaultBase)}" style="border:0;border-radius:12px;padding:20px;text-align:center;max-width:340px;width:90%">
             <h3 id="qrTitle" style="margin:0 0 10px"></h3>
             <img id="qrImg" alt="QR bàn" width="260" height="260">
             <p style="margin:8px 0 0">Quét để gọi món</p>
-            <small id="qrUrl" style="display:block;word-break:break-all;color:#777;font-size:.7rem;margin:6px 0 12px"></small>
+            <small id="qrUrl" style="display:block;word-break:break-all;color:#777;font-size:.7rem;margin:6px 0 0"></small>
+            <small id="qrLocalUrl" style="display:block;word-break:break-all;color:#777;font-size:.7rem;margin:2px 0 12px"></small>
             <button type="button" id="qrPrint">In</button>
             <button type="button" id="qrClose">Đóng</button>
         </dialog>
@@ -223,11 +224,13 @@
             (function () {
                 var dlg = document.getElementById('qrDialog');
                 var base = dlg.getAttribute('data-base').replace(/\/+$/, '');
+                var localBase = dlg.getAttribute('data-local').replace(/\/+$/, '');
                 var title = document.getElementById('qrTitle');
                 var img = document.getElementById('qrImg');
                 var preloaded = [];
                 document.querySelectorAll('.qr-open').forEach(function (a) {
                     var url = base + '/order?table=' + encodeURIComponent(a.dataset.token);
+                    var localUrl = localBase + '/order?table=' + encodeURIComponent(a.dataset.token);
                     var qr = qrcode(0, 'M'); qr.addData(url); qr.make();
                     var qrSrc = qr.createDataURL(8, 2); // sinh QR ngay trên trình duyệt, không cần mạng
                     // Tải sẵn ảnh QR ngay khi mở trang để popup hiện tức thì.
@@ -238,6 +241,7 @@
                         e.preventDefault();
                         title.textContent = a.dataset.name;
                         document.getElementById('qrUrl').textContent = url;
+                        document.getElementById('qrLocalUrl').textContent = localUrl;
                         img.src = qrSrc;
                         dlg.showModal();
                     });

@@ -41,7 +41,10 @@
                     </div>
                     <div>
                         <dt>Số điện thoại</dt>
-                        <dd><c:out value="${profileUser.phone}" /></dd>
+                        <dd><c:out value="${profileUser.phone}" /></dd></div>
+                    <div>
+                        <dt>Điểm tích lũy</dt>
+                        <dd><strong><c:out value="${points}" /></strong> điểm · <a href="${pageContext.request.contextPath}/my-points">Xem lịch sử</a></dd>
                     </div>
                 </dl>
             </section>
