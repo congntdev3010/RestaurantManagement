@@ -77,23 +77,20 @@ public class StaffBookingServlet extends HttpServlet {
             }
         }
 
-        String error = null;
+        String tableType = trim(request.getParameter("tableType"));
+        String dateText = trim(request.getParameter("reservationDate"));
+        String timeText = trim(request.getParameter("reservationTime"));
+        List<String> types;
+        Map<String, LocalTime[]> shifts;
+        try (ReservationDAO dao = new ReservationDAO()) {
+            types = dao.getTableTypes();
+            shifts = dao.getShifts();
+        }
+        // Cùng luật với đặt bàn của khách (BookingServlet.validate), để hai màn kiểm tra giống nhau.
+        String error = BookingServlet.validate(name, phone, tableType, dateText, timeText, note, guests, types, shifts);
+        if (error == null && (tableIds.isEmpty() || tableIds.size() > 10)) error = "Vui lòng chọn từ 1 đến 10 bàn.";
         LocalDate date = parseDate(request.getParameter("reservationDate"));
         LocalTime time = parseTime(request.getParameter("reservationTime"));
-        if (name == null || name.length() < 2 || name.length() > 100) error = "Họ tên phải từ 2 đến 100 ký tự.";
-        else if (phone == null) error = "Số điện thoại không hợp lệ (ví dụ 0901234567).";
-        else if (guests < 1 || guests > 60) error = "Số người phải từ 1 đến 60.";
-        else if (note != null && note.length() > 500) error = "Ghi chú tối đa 500 ký tự.";
-        else if (date == null || time == null) error = "Vui lòng chọn ngày và giờ đến.";
-        else if (tableIds.isEmpty() || tableIds.size() > 10) error = "Vui lòng chọn từ 1 đến 10 bàn.";
-        else {
-            LocalDate today = LocalDate.now();
-            if (date.isBefore(today) || date.isAfter(today.plusDays(MAX_DAYS_AHEAD))) {
-                error = "Chỉ đặt từ hôm nay đến " + MAX_DAYS_AHEAD + " ngày tới.";
-            } else if (LocalDateTime.of(date, time).isBefore(LocalDateTime.now())) {
-                error = "Giờ đến đã qua.";
-            }
-        }
 
         if (error == null) {
             try (ReservationDAO dao = new ReservationDAO()) {
@@ -140,8 +137,23 @@ public class StaffBookingServlet extends HttpServlet {
         request.setAttribute("fNote", request.getParameter("note"));
         String type = trim(request.getParameter("tableType"));
         request.setAttribute("fType", type == null ? "" : type);
+        List<String> types;
+        Map<String, LocalTime[]> shifts;
         try (ReservationDAO typeDao = new ReservationDAO()) {
-            request.setAttribute("tableTypes", typeDao.getTableTypes());
+            shifts = typeDao.getShifts();
+            types = typeDao.getTableTypes();
+            request.setAttribute("tableTypes", types);
+        }
+        // Bấm "Xem bàn trống" thì kiểm tra đủ mọi trường ngay, cùng luật với lúc đặt (BookingServlet.validate).
+        if (request.getParameter("xemBan") != null) {
+            String err = BookingServlet.validate(trim(request.getParameter("customerName")),
+                    BookingServlet.normalizePhone(request.getParameter("customerPhone")),
+                    type, trim(request.getParameter("reservationDate")), trim(request.getParameter("reservationTime")),
+                    trim(request.getParameter("note")), guests, types, shifts);
+            if (err != null) {
+                request.setAttribute("slotError", err);
+                return;
+            }
         }
         if (date == null || time == null || guests < 1) return;
 
@@ -152,12 +164,13 @@ public class StaffBookingServlet extends HttpServlet {
                 return;
             }
             Set<Integer> booked = dao.getBookedTableIds(date, shift);
+            Set<Integer> serving = dao.getServingTableIds(date, shift);
             Map<String, List<TableAvailability>> groups = new LinkedHashMap<>();
             try (RestaurantTableDAO tableDao = new RestaurantTableDAO()) {
                 for (RestaurantTable t : tableDao.getAllTables()) {
                     if (type != null && !type.isEmpty() && !type.equals(t.getTableType())) continue;
                     groups.computeIfAbsent(t.getTableType(), k -> new ArrayList<>())
-                            .add(new TableAvailability(t, booked.contains(t.getTableId()), true));
+                            .add(new TableAvailability(t, booked.contains(t.getTableId()), true, serving.contains(t.getTableId())));
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
