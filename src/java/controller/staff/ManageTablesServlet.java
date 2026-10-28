@@ -274,6 +274,7 @@ public class ManageTablesServlet extends HttpServlet {
         // Dùng POST/Redirect/GET để tránh gửi lại thao tác khi tải lại trang.
         setFlash(request.getSession(), message, messageType);
         if ("payTable".equals(action) && "success".equals(messageType)) {
+            // Mở ngay hóa đơn vừa trả trong lịch sử (lễ tân xem được hóa đơn trong ngày).
             response.sendRedirect(request.getContextPath() + "/service-history");
         } else {
             response.sendRedirect(request.getContextPath() + "/manage-tables");

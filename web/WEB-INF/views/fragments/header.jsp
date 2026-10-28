@@ -61,6 +61,7 @@
                     <a href="${pageContext.request.contextPath}/profile"><i class="fa-regular fa-id-card"></i> Thông tin cá nhân</a>
                     <% if ("Customer".equalsIgnoreCase(roleName)) { %>
                     <a href="${pageContext.request.contextPath}/my-points"><i class="fa-solid fa-star"></i> Điểm tích lũy</a>
+                    <a href="${pageContext.request.contextPath}/my-payments"><i class="fa-solid fa-receipt"></i> Lịch sử thanh toán</a>
                     <% } %>
                     <% if (!"Server".equalsIgnoreCase(roleName)) { %>
                     <a href="${pageContext.request.contextPath}/my-bookings"><i class="fa-solid fa-utensils"></i> Lịch sử đặt bàn</a>

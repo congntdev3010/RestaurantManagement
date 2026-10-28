@@ -18,7 +18,7 @@ import model.TableBill;
 import model.User;
 
 /**
- * Lịch sử thanh toán dùng chung cho Lễ tân và Manager.
+ * Lịch sử thanh toán — chỉ Manager. Tổng số đơn và doanh thu cũng chỉ Manager được xem.
  * - Ngay sau khi thanh toán (tiền mặt/QR) chuyển thẳng tới hóa đơn vừa trả.
  * - Danh sách lọc theo ngày; xem và in lại hóa đơn bất kỳ lúc nào.
  */
@@ -36,10 +36,13 @@ public class ServiceHistoryServlet extends HttpServlet {
             return;
         }
         String role = ((User) sessionUser).getRoleName();
-        if (!"Receptionist".equalsIgnoreCase(role) && !"Manager".equalsIgnoreCase(role)) {
+        // Manager xem và lọc tất cả, thấy tổng. Lễ tân chỉ xem và in hóa đơn trong ngày: không lọc ngày, không thấy tổng.
+        boolean manager = "Manager".equalsIgnoreCase(role);
+        if (!manager && !"Receptionist".equalsIgnoreCase(role)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
+        LocalDate today = LocalDate.now();
 
         // Vừa thanh toán xong: mở luôn hóa đơn của bàn đó (đã lưu trong lịch sử, xem lại được sau này).
         Object justPaid = session.getAttribute("oneTimeServiceReceipt");
@@ -57,8 +60,8 @@ public class ServiceHistoryServlet extends HttpServlet {
             }
         }
 
-        LocalDate from = parseDate(request.getParameter("from"));
-        LocalDate to = parseDate(request.getParameter("to"));
+        LocalDate from = manager ? parseDate(request.getParameter("from")) : today;
+        LocalDate to = manager ? parseDate(request.getParameter("to")) : today;
         if (from != null && to != null && from.isAfter(to)) {
             LocalDate swap = from;
             from = to;
@@ -67,16 +70,24 @@ public class ServiceHistoryServlet extends HttpServlet {
 
         try (ServiceHistoryDAO dao = new ServiceHistoryDAO()) {
             List<PaidBill> bills = dao.search(from, to);
-            BigDecimal revenue = BigDecimal.ZERO;
-            for (PaidBill b : bills) {
-                revenue = revenue.add(b.getPayableAmount());
-            }
             request.setAttribute("bills", bills);
-            request.setAttribute("revenue", revenue);
+            request.setAttribute("isManager", manager);
+            if (manager) {
+                BigDecimal revenue = BigDecimal.ZERO;
+                for (PaidBill b : bills) {
+                    revenue = revenue.add(b.getPayableAmount());
+                }
+                request.setAttribute("revenue", revenue);
+            }
 
             if (idParam != null) {
                 int id = parseInt(idParam);
                 PaidBill selected = id > 0 ? dao.getById(id) : null;
+                // Lễ tân chỉ mở được hóa đơn của hôm nay.
+                if (!manager && selected != null && (selected.getPaidAt() == null
+                        || !selected.getPaidAt().toLocalDate().equals(today))) {
+                    selected = null;
+                }
                 if (selected != null) {
                     request.setAttribute("selected", selected);
                 } else {

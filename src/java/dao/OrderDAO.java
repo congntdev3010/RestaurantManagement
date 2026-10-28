@@ -407,7 +407,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                     }
                 }
                 try (PreparedStatement customer = connection.prepareStatement(
-                        "SELECT TOP 1 o.customer_name, o.customer_phone, r.reservation_date, "
+                        "SELECT TOP 1 o.customer_name, o.customer_phone, o.customer_email, r.reservation_date, "
                         + "r.reservation_time, r.checked_in_at FROM Orders o "
                         + "LEFT JOIN Reservations r ON r.reservation_id = o.reservation_id "
                         + "WHERE o.table_id = ? AND o.order_status = 'OPEN' "
@@ -417,6 +417,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                         if (customerRs.next()) {
                             bill.setCustomerName(customerRs.getNString("customer_name"));
                             bill.setCustomerPhone(customerRs.getString("customer_phone"));
+                            bill.setCustomerEmail(customerRs.getString("customer_email"));
                             java.sql.Date date = customerRs.getDate("reservation_date");
                             java.sql.Time time = customerRs.getTime("reservation_time");
                             if (date != null && time != null) {
@@ -489,10 +490,10 @@ public class OrderDAO extends DBContext implements AutoCloseable {
             }
             int historyId;
             try (PreparedStatement history = connection.prepareStatement(
-                    "INSERT INTO ServiceHistory (table_id, customer_name, customer_phone, reservation_time, "
+                    "INSERT INTO ServiceHistory (table_id, customer_name, customer_phone, customer_email, reservation_time, "
                     + "checked_in_at, paid_at, payment_method, total_amount, cash_received, cash_change, paid_by, "
                     + "loyalty_customer_id, loyalty_points_used, loyalty_discount, loyalty_points_earned) "
-                    + "SELECT ?, MAX(o.customer_name), MAX(o.customer_phone), "
+                    + "SELECT ?, MAX(o.customer_name), MAX(o.customer_phone), MAX(o.customer_email), "
                     + "MIN(CASE WHEN r.reservation_date IS NOT NULL AND r.reservation_time IS NOT NULL "
                     + "THEN DATEADD(SECOND, DATEDIFF(SECOND, '00:00:00', r.reservation_time), "
                     + "CAST(r.reservation_date AS DATETIME2)) END), MAX(r.checked_in_at), SYSDATETIME(), ?, ?, ?, ?, ?, ?, ?, ?, ? "
@@ -581,7 +582,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
     /** Đọc khách được gắn vào bill + quy tắc quy đổi, rồi tính điểm dùng, tiền giảm, số phải trả, điểm được cộng. */
     private void applyLoyalty(TableBill bill) {
         bill.setPayableAmount(bill.getTotalAmount());
-        String sql = "SELECT l.customer_id, u.full_name, u.loyalty_points, l.points_to_use, "
+        String sql = "SELECT l.customer_id, u.full_name, u.phone, u.email, u.loyalty_points, l.points_to_use, "
                 + "s.earn_spend_amount, s.earn_points, s.redeem_value_per_point "
                 + "FROM TableBillLoyalty l JOIN Users u ON u.user_id = l.customer_id "
                 + "CROSS JOIN LoyaltySettings s WHERE l.table_id = ? AND s.settings_id = 1";
@@ -599,6 +600,12 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 BigDecimal payable = bill.getTotalAmount().subtract(discount);
                 bill.setLoyaltyCustomerId(rs.getInt("customer_id"));
                 bill.setLoyaltyCustomerName(rs.getNString("full_name"));
+                bill.setLoyaltyCustomerPhone(rs.getNString("phone"));
+                bill.setLoyaltyCustomerEmail(rs.getNString("email"));
+                // Khách thành viên: họ tên + SĐT lấy từ tài khoản được gắn, ghi thẳng vào bill thay cho thông tin của đơn gốc.
+                bill.setCustomerName(bill.getLoyaltyCustomerName());
+                bill.setCustomerPhone(bill.getLoyaltyCustomerPhone());
+                bill.setCustomerEmail(bill.getLoyaltyCustomerEmail());
                 bill.setLoyaltyBalance(balance);
                 bill.setPointsToUse(use);
                 bill.setDiscountAmount(discount);
@@ -615,6 +622,15 @@ public class OrderDAO extends DBContext implements AutoCloseable {
     private boolean applyLoyaltyOnPayment(TableBill bill, int historyId, int actorId) throws SQLException {
         int customerId = bill.getLoyaltyCustomerId();
         if (customerId > 0) {
+            // Ghi tên + SĐT của khách thành viên vào chính hóa đơn đã lưu (không phụ thuộc đơn gốc).
+            try (PreparedStatement snap = connection.prepareStatement(
+                    "UPDATE ServiceHistory SET customer_name = ?, customer_phone = ?, customer_email = ? WHERE history_id = ?")) {
+                snap.setNString(1, bill.getLoyaltyCustomerName());
+                snap.setNString(2, bill.getLoyaltyCustomerPhone());
+                snap.setNString(3, bill.getLoyaltyCustomerEmail());
+                snap.setInt(4, historyId);
+                snap.executeUpdate();
+            }
             int used = bill.getPointsToUse();
             int earned = bill.getPointsToEarn();
             BigDecimal spend = null;
@@ -704,7 +720,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
     }
 
     public TableBill getQrReceipt(int tableId, String reference) throws SQLException {
-        String sql = "SELECT TOP 1 h.history_id, h.table_id, h.customer_name, h.customer_phone, "
+        String sql = "SELECT TOP 1 h.history_id, h.table_id, h.customer_name, h.customer_phone, h.customer_email, "
                 + "h.reservation_time, h.checked_in_at, h.payment_method, h.total_amount, "
                 + "h.cash_received, h.cash_change, h.loyalty_points_used, h.loyalty_discount, h.loyalty_points_earned "
                 + "FROM ServiceHistory h WHERE h.table_id = ? AND h.payment_method = 'QR' "
@@ -728,6 +744,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 }
                 bill.setCustomerName(rs.getNString("customer_name"));
                 bill.setCustomerPhone(rs.getNString("customer_phone"));
+                bill.setCustomerEmail(rs.getNString("customer_email"));
                 java.sql.Timestamp reservation = rs.getTimestamp("reservation_time");
                 java.sql.Timestamp checkedIn = rs.getTimestamp("checked_in_at");
                 if (reservation != null) {

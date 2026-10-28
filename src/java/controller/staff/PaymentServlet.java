@@ -105,9 +105,9 @@ public class PaymentServlet extends HttpServlet {
             } else if ("linkLoyalty".equals(action)) {
                 LoyaltyDAO.Customer customer = loyalty.findCustomer(request.getParameter("customerKey"));
                 if (customer == null) {
-                    message = "Không tìm thấy tài khoản customer (nhập tên đăng nhập, email hoặc số điện thoại).";
+                    message = "Không tìm thấy tài khoản customer (nhập số điện thoại hoặc Gmail).";
                 } else if (loyalty.setBillLink(tableId, customer.getUserId(), 0, actor.getUserId())) {
-                    message = "Đã gắn tài khoản " + customer.getFullName() + " (" + customer.getPoints() + " điểm) vào bill.";
+                    message = "Đã gắn tài khoản " + customer.getFullName() + " (" + customer.getPoints() + " điểm) vào bill; họ tên, số điện thoại và Gmail khách đã được tự điền.";
                     type = "success";
                 } else {
                     message = "Không thể gắn tài khoản vào bill.";

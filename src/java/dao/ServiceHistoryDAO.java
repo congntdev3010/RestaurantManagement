@@ -13,14 +13,14 @@ import java.util.List;
 import model.PaidBill;
 import model.TableBillItem;
 
-/** Đọc lịch sử các đơn đã thanh toán (ServiceHistory) cho Lễ tân và Manager. */
+/** Đọc lịch sử các đơn đã thanh toán (ServiceHistory) cho Lễ tân, Manager và khách thành viên (đơn của chính mình). */
 public class ServiceHistoryDAO extends DBContext {
 
     private static final String SELECT_BILL
-            = "SELECT h.history_id, t.table_name, h.customer_name, h.customer_phone, h.paid_at, "
+            = "SELECT h.history_id, t.table_name, h.customer_name, h.customer_phone, h.customer_email, h.paid_at, "
             + "h.payment_method, h.total_amount, COALESCE(h.loyalty_discount, 0) AS loyalty_discount, "
             + "COALESCE(h.loyalty_points_used, 0) AS points_used, COALESCE(h.loyalty_points_earned, 0) AS points_earned, "
-            + "h.cash_received, h.cash_change, u.full_name AS paid_by_name "
+            + "h.cash_received, h.cash_change, h.loyalty_customer_id, u.full_name AS paid_by_name "
             + "FROM ServiceHistory h "
             + "LEFT JOIN RestaurantTables t ON t.table_id = h.table_id "
             + "LEFT JOIN Users u ON u.user_id = h.paid_by ";
@@ -85,6 +85,29 @@ public class ServiceHistoryDAO extends DBContext {
         return bill;
     }
 
+    /** Các đơn đã thanh toán gắn với tài khoản khách thành viên này, mới nhất trước (tối đa 200). Không tính tổng, không lấy món. */
+    public List<PaidBill> findForCustomer(int customerId) throws SQLException {
+        List<PaidBill> list = new ArrayList<>();
+        requireConnection();
+        try (PreparedStatement ps = connection.prepareStatement(
+                SELECT_BILL + "WHERE h.loyalty_customer_id = ? ORDER BY h.paid_at DESC, h.history_id DESC "
+                + "OFFSET 0 ROWS FETCH NEXT 200 ROWS ONLY")) {
+            ps.setInt(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(readBill(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    /** Một đơn của chính khách này kèm món; null nếu không tồn tại hoặc là đơn của khách khác. */
+    public PaidBill getForCustomer(int historyId, int customerId) throws SQLException {
+        PaidBill bill = getById(historyId);
+        return bill != null && bill.getLoyaltyCustomerId() == customerId ? bill : null;
+    }
+
     /** Id đơn thanh toán mới nhất của một bàn (dùng ngay sau khi thanh toán); null nếu chưa có. */
     public Integer findLatestHistoryId(int tableId) throws SQLException {
         requireConnection();
@@ -109,6 +132,7 @@ public class ServiceHistoryDAO extends DBContext {
         bill.setTableName(rs.getNString("table_name"));
         bill.setCustomerName(rs.getNString("customer_name"));
         bill.setCustomerPhone(rs.getNString("customer_phone"));
+        bill.setCustomerEmail(rs.getNString("customer_email"));
         Timestamp paid = rs.getTimestamp("paid_at");
         if (paid != null) {
             bill.setPaidAt(paid.toLocalDateTime());
@@ -122,6 +146,7 @@ public class ServiceHistoryDAO extends DBContext {
         bill.setCashReceived(rs.getBigDecimal("cash_received"));
         bill.setCashChange(rs.getBigDecimal("cash_change"));
         bill.setPaidByName(rs.getNString("paid_by_name"));
+        bill.setLoyaltyCustomerId(rs.getInt("loyalty_customer_id"));
         return bill;
     }
 }

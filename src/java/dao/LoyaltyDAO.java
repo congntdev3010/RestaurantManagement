@@ -93,12 +93,11 @@ public class LoyaltyDAO extends DBContext {
         String sql = "SELECT TOP 1 u.user_id, u.full_name, u.email, u.phone, u.loyalty_points "
                 + "FROM Users u JOIN Roles r ON r.role_id = u.role_id "
                 + "WHERE r.role_name = 'Customer' AND u.is_active = 1 AND u.is_deleted = 0 "
-                + "AND (u.username = ? OR u.email = ? OR u.phone = ?)";
+                + "AND (u.email = ? OR u.phone = ?)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             String k = keyword.trim();
             ps.setNString(1, k);
             ps.setNString(2, k);
-            ps.setNString(3, k);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new Customer(rs.getInt(1), rs.getNString(2), rs.getNString(3), rs.getNString(4), rs.getInt(5));

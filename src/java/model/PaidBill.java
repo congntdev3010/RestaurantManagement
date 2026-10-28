@@ -14,6 +14,9 @@ public class PaidBill {
     private String tableName;
     private String customerName;
     private String customerPhone;
+    private String customerEmail;
+    /** Khách thành viên (đã gắn tài khoản khi tích điểm); 0 = khách vãng lai. */
+    private int loyaltyCustomerId;
     private LocalDateTime paidAt;
     private String paymentMethod;
     private BigDecimal totalAmount = BigDecimal.ZERO;
@@ -33,6 +36,28 @@ public class PaidBill {
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     public String getCustomerPhone() { return customerPhone; }
     public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
+    public String getCustomerEmail() { return customerEmail; }
+    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    /** SĐT đã che cho lễ tân: giữ 3 số đầu và 3 số cuối. */
+    public String getMaskedPhone() {
+        if (customerPhone == null) return null;
+        if (customerPhone.length() < 7) return "***";
+        return customerPhone.substring(0, 3) + "****" + customerPhone.substring(customerPhone.length() - 3);
+    }
+    /** Gmail đã che cho lễ tân: giữ 2 ký tự đầu của tên, giữ nguyên tên miền. */
+    public String getMaskedEmail() {
+        if (customerEmail == null) return null;
+        int at = customerEmail.indexOf('@');
+        if (at <= 0) return "***";
+        String local = customerEmail.substring(0, at);
+        String keep = local.length() <= 2 ? local.substring(0, 1) : local.substring(0, 2);
+        return keep + "***" + customerEmail.substring(at);
+    }
+    public int getLoyaltyCustomerId() { return loyaltyCustomerId; }
+    public void setLoyaltyCustomerId(int loyaltyCustomerId) { this.loyaltyCustomerId = loyaltyCustomerId; }
+    public boolean isMember() { return loyaltyCustomerId > 0; }
+    /** Nhãn loại khách hiển thị trên màn lịch sử và hóa đơn. */
+    public String getMemberTypeLabel() { return isMember() ? "Thành viên" : "Vãng lai"; }
     public LocalDateTime getPaidAt() { return paidAt; }
     public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
     public String getPaidAtText() { return paidAt == null ? "" : paidAt.format(FORMAT); }

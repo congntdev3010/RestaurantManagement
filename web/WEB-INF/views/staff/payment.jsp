@@ -55,6 +55,8 @@
         .loyalty-summary .minus strong { color: #a8242b; }
         .loyalty-summary .plus strong { color: #1e7a3c; }
 
+        .member-tag { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600; vertical-align: middle; background: #eef0f6; color: #46506b; }
+        .member-tag.is-member { background: #f6e7d8; color: #7b1f28; }
         .payable-box { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 22px; padding: 16px 18px;
                        border-radius: 16px; background: linear-gradient(135deg, #4a1620, #7b1f28); color: #fff; }
         .payable-box span { font-size: .85rem; letter-spacing: .05em; text-transform: uppercase; opacity: .85; }
@@ -76,9 +78,10 @@
             <div class="payment-grid">
                 <section class="bill-panel">
                     <h2>Chi tiết bill</h2>
-                    <c:if test="${not empty bill.customerName}">
-                        <p class="customer"><strong><c:out value="${bill.customerName}"/></strong> · <c:out value="${bill.customerPhone}"/></p>
-                    </c:if>
+                    <p class="customer">
+                        <c:if test="${not empty bill.customerName}"><strong><c:out value="${bill.customerName}"/></strong><c:if test="${not empty bill.customerPhone}"> · <c:out value="${bill.customerPhone}"/></c:if><c:if test="${not empty bill.customerEmail}"> · <c:out value="${bill.customerEmail}"/></c:if></c:if>
+                        <span class="member-tag ${bill.hasLoyaltyCustomer ? 'is-member' : ''}"><c:out value="${bill.hasLoyaltyCustomer ? 'Thành viên' : 'Vãng lai'}"/></span>
+                    </p>
                     <c:if test="${not empty bill.checkedInAt}"><p class="muted">Mở bàn: <c:out value="${bill.checkedInAt}"/></p></c:if>
                     <table>
                         <thead><tr><th>Món</th><th>SL</th><th>Thành tiền</th></tr></thead>
@@ -119,7 +122,7 @@
                                     <input type="hidden" name="action" value="linkLoyalty">
                                     <input type="hidden" name="tableId" value="${bill.tableId}">
                                     <label for="customerKey">Tài khoản khách hàng
-                                        <span class="loyalty-hint">(tên đăng nhập, email hoặc số điện thoại)</span></label>
+                                        <span class="loyalty-hint">(số điện thoại hoặc Gmail)</span></label>
                                     <div class="loyalty-row">
                                         <input id="customerKey" name="customerKey" maxlength="100" placeholder="Ví dụ: 0901234567" required>
                                         <button class="btn-sm btn-primary-sm" type="submit">Gắn tài khoản</button>
@@ -131,7 +134,7 @@
                                 <div class="loyalty-customer">
                                     <div>
                                         <div class="name"><c:out value="${bill.loyaltyCustomerName}"/></div>
-                                        <div class="sub">Tài khoản đã gắn vào bill</div>
+                                        <div class="sub">Thành viên<c:if test="${not empty bill.loyaltyCustomerPhone}"> · <c:out value="${bill.loyaltyCustomerPhone}"/></c:if><c:if test="${not empty bill.loyaltyCustomerEmail}"> · <c:out value="${bill.loyaltyCustomerEmail}"/></c:if></div>
                                     </div>
                                     <div class="loyalty-balance">
                                         <strong><fmt:formatNumber value="${bill.loyaltyBalance}" pattern="#,##0"/></strong>

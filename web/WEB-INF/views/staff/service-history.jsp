@@ -31,6 +31,9 @@
         .sh-message { padding: 12px 16px; border-radius: 10px; background: #fdeaea; color: #a8242b; }
         .sh-back { display: inline-block; margin-bottom: 12px; color: #7c2028; }
         .receipt-card .receipt-line span { text-align: left; }
+        .sh-page-head { margin: 8px 0 22px; }
+        .sh-page-head h1 { margin: 0; }
+        .sh-intro { color: #71666a; font-size: 14px; margin: 8px 0 0; }
 
         @media print {
             /* header.css gắn padding-left 248px cho body có sidebar; selector dưới đây thắng để bỏ lệch. */
@@ -47,6 +50,11 @@
 <body class="history-page">
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
     <main class="receipt-shell">
+        <header class="sh-page-head no-print">
+            <p class="eyebrow">QUẦY THANH TOÁN</p>
+            <h1>Lịch sử thanh toán</h1>
+            <p class="sh-intro"><c:choose><c:when test="${isManager}">Tra cứu và in lại hóa đơn các bàn đã thanh toán.</c:when><c:otherwise>Hóa đơn các bàn đã thanh toán hôm nay. Bấm Xem / In để in lại.</c:otherwise></c:choose></p>
+        </header>
 
         <c:if test="${not empty detailMessage}">
             <p class="sh-message" role="status"><c:out value="${detailMessage}"/></p>
@@ -67,7 +75,7 @@
                 <div class="receipt-info">
                     <div><span>Bàn</span><strong><c:out value="${selected.tableName}"/></strong></div>
                     <div><span>Phương thức</span><strong><c:out value="${selected.paymentMethod eq 'CASH' ? 'Tiền mặt' : 'Chuyển khoản QR'}"/></strong></div>
-                    <c:if test="${not empty selected.customerName}"><div><span>Khách hàng</span><strong><c:out value="${selected.customerName}"/></strong></div></c:if>
+                    <c:if test="${not empty selected.customerName}"><div><span>Khách hàng</span><strong><c:out value="${selected.customerName}"/></strong></div></c:if><div><span>Loại khách</span><strong><c:out value="${selected.memberTypeLabel}"/></strong></div><c:if test="${not empty selected.customerPhone}"><div><span>Số điện thoại</span><strong><c:out value="${isManager ? selected.customerPhone : selected.maskedPhone}"/></strong></div></c:if><c:if test="${not empty selected.customerEmail}"><div><span>Gmail</span><strong><c:out value="${isManager ? selected.customerEmail : selected.maskedEmail}"/></strong></div></c:if>
                     <div><span>Thu ngân</span><strong><c:out value="${selected.paidByName}"/></strong></div>
                     <c:if test="${selected.paymentMethod eq 'CASH' and not empty selected.cashReceived}"><div><span>Số tiền đã đưa</span><strong><fmt:formatNumber value="${selected.cashReceived}" pattern="#,##0"/> đ</strong></div></c:if>
                     <c:if test="${not empty selected.cashChange}"><div><span>Tiền thừa</span><strong><fmt:formatNumber value="${selected.cashChange}" pattern="#,##0"/> đ</strong></div></c:if>
@@ -105,6 +113,7 @@
                     <p class="sh-message" role="alert">Không tải được lịch sử thanh toán.</p>
                 </c:when>
                 <c:otherwise>
+                    <c:if test="${isManager}">
                     <form class="sh-filter" method="get" action="${pageContext.request.contextPath}/service-history">
                         <label>Từ ngày
                             <input type="date" name="from" value="${from}">
@@ -115,11 +124,14 @@
                         <button type="submit">Lọc</button>
                         <a href="${pageContext.request.contextPath}/service-history">Xóa lọc</a>
                     </form>
+                    </c:if>
 
+                    <c:if test="${isManager}">
                     <div class="sh-summary">
                         <div><span>Số đơn</span><strong><c:out value="${fn:length(bills)}"/></strong></div>
                         <div><span>Doanh thu (khách đã trả)</span><strong><fmt:formatNumber value="${revenue}" pattern="#,##0"/> đ</strong></div>
                     </div>
+                    </c:if>
 
                     <c:choose>
                         <c:when test="${empty bills}">
@@ -132,13 +144,8 @@
                                         <tr>
                                             <th>Mã</th>
                                             <th>Thời gian</th>
-                                            <th>Bàn</th>
                                             <th>Khách</th>
-                                            <th>Thanh toán</th>
-                                            <th class="num">Tổng bill</th>
-                                            <th class="num">Giảm điểm</th>
                                             <th class="num">Khách trả</th>
-                                            <th>Thu ngân</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -147,13 +154,8 @@
                                             <tr class="${selected.historyId eq b.historyId ? 'is-selected' : ''}">
                                                 <td>#<c:out value="${b.historyId}"/></td>
                                                 <td><c:out value="${b.paidAtText}"/></td>
-                                                <td><c:out value="${b.tableName}"/></td>
                                                 <td><c:out value="${b.customerName}"/></td>
-                                                <td><c:out value="${b.paymentMethod eq 'CASH' ? 'Tiền mặt' : 'Chuyển khoản QR'}"/></td>
-                                                <td class="num"><fmt:formatNumber value="${b.totalAmount}" pattern="#,##0"/> đ</td>
-                                                <td class="num"><c:if test="${b.discountAmount gt 0}">-<fmt:formatNumber value="${b.discountAmount}" pattern="#,##0"/> đ</c:if></td>
                                                 <td class="num"><fmt:formatNumber value="${b.payableAmount}" pattern="#,##0"/> đ</td>
-                                                <td><c:out value="${b.paidByName}"/></td>
                                                 <td><a href="${pageContext.request.contextPath}/service-history?id=${b.historyId}&from=${from}&to=${to}">Xem / In</a></td>
                                             </tr>
                                         </c:forEach>
