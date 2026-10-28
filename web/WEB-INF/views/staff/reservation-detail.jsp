@@ -136,7 +136,8 @@
                                             <small>
                                                 ${slot.table.capacity} chỗ ·
                                                 <c:choose>
-                                                    <c:when test="${slot.booked}">đã có người đặt</c:when>
+                                                    <c:when test="${slot.serving}">đang phục vụ</c:when>
+                                                <c:when test="${slot.booked}">đã có người đặt</c:when>
                                                     <c:when test="${not slot.fits}">còn trống (cần gộp bàn)</c:when>
                                                     <c:otherwise>còn trống</c:otherwise>
                                                 </c:choose>
@@ -184,7 +185,7 @@
                         <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
                         <input type="hidden" name="action" value="reject">
                         <input type="hidden" name="reservationId" value="${r.reservationId}">
-                        <input class="rsv-input" type="text" name="reason" maxlength="255" placeholder="Lý do từ chối (hết bàn, khách yêu cầu...)">
+                        <input class="rsv-input" type="text" name="reason" maxlength="255" style="flex:1 1 360px;min-width:260px" placeholder="Lý do từ chối (hết bàn, khách yêu cầu...)">
                         <button type="submit" class="rsv-btn danger small">Từ chối đơn</button>
                     </form>
                 </c:if>

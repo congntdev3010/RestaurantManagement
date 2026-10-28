@@ -33,7 +33,7 @@
                 <c:when test="${tab eq 'booked'}">
                     <form class="rsv-filter" method="get" action="${base}">
                         <input type="hidden" name="tab" value="booked">
-                        <input class="rsv-input" type="search" name="q" maxlength="100" style="min-width:280px"
+                        <input class="rsv-input" type="search" name="q" maxlength="100" style="flex:1 1 380px;min-width:280px"
                                placeholder="Tìm theo tên người đặt hoặc số điện thoại" value="<c:out value='${keyword}'/>" autofocus>
                         <button type="submit" class="rsv-btn small">Tìm</button>
                         <c:if test="${not empty keyword}"><a class="rsv-btn secondary small" href="${base}?tab=booked">Xem đơn hôm nay</a></c:if>
@@ -126,8 +126,8 @@
                                                 <small class="rsv-tag">Đặt: <c:out value="${a.customerName}" /> lúc <c:out value="${a.timeText}" /></small>
                                             </c:forEach>
                                             <c:if test="${t.status eq 'AVAILABLE'}">
-                                                <label class="rsv-hint" style="display:block;margin-top:6px">
-                                                    <input type="checkbox" form="mergeForm" name="tableId" value="${t.tableId}"> gộp bàn
+                                                <label class="rsv-hint" style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+                                                    <input type="checkbox" form="mergeForm" name="tableId" value="${t.tableId}" style="opacity:1;position:static;pointer-events:auto;width:16px;height:16px;margin:0;accent-color:#421217;cursor:pointer"> gộp bàn
                                                 </label>
                                                 <form action="${base}" method="post" style="margin-top:8px"
                                                       onsubmit="return confirm(this.dataset.msg);" data-msg="<c:out value='${confirmText}'/>">

@@ -33,10 +33,10 @@
                 <input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}">
 
                 <label>Họ tên
-                    <input type="text" name="customerName" maxlength="100" required value="<c:out value='${fName}'/>">
+                    <input type="text" name="customerName" maxlength="30" required value="<c:out value='${fName}'/>">
                 </label>
                 <label>Số điện thoại
-                    <input type="tel" name="customerPhone" maxlength="20" required placeholder="0901234567"
+                    <input type="tel" name="customerPhone" maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại gồm 10 chữ số, bắt đầu bằng 0" inputmode="numeric" required placeholder="0901234567"
                            value="<c:out value='${fPhone}'/>">
                 </label>
 
@@ -49,7 +49,7 @@
                     </select>
                 </label>
                 <label>Số người
-                    <input type="number" name="guestCount" min="1" max="60" required value="<c:out value='${empty fGuests ? 2 : fGuests}'/>">
+                    <input type="number" name="guestCount" min="1" max="30" required value="<c:out value='${empty fGuests ? 2 : fGuests}'/>">
                 </label>
 
                 <label>Ngày đến
@@ -72,12 +72,12 @@
                 </label>
 
                 <label class="full">Ghi chú
-                    <textarea name="note" rows="3" maxlength="500"
+                    <textarea name="note" rows="3" maxlength="100"
                               placeholder="Ví dụ: tiệc sinh nhật, cần ghế trẻ em..."><c:out value="${fNote}" /></textarea>
                 </label>
 
                 <div class="full">
-                    <button type="submit" formmethod="get" formaction="${base}" formnovalidate class="rsv-btn secondary"
+                    <button type="submit" name="xemBan" value="1" formmethod="get" formaction="${base}" formnovalidate class="rsv-btn secondary"
                             onclick="this.form.csrfToken.disabled = true;">Xem bàn trống</button>
                 </div>
 
@@ -89,12 +89,12 @@
                                 <h3><c:out value="${g.key}" /></h3>
                                 <div class="rsv-seats">
                                     <c:forEach var="slot" items="${g.value}">
-                                        <label class="rsv-seat ${slot.booked ? 'disabled' : ''}">
+                                        <label class="rsv-seat ${(slot.booked or slot.serving) ? 'disabled' : ''}">
                                             <input type="checkbox" name="tableId" value="${slot.table.tableId}"
-                                                   data-cap="${slot.table.capacity}" ${slot.booked ? 'disabled' : ''}>
+                                                   data-cap="${slot.table.capacity}" ${(slot.booked or slot.serving) ? 'disabled' : ''}>
                                             <span>
                                                 <c:out value="${slot.table.tableName}" />
-                                                <small>${slot.table.capacity} chỗ · ${slot.booked ? 'đã có người đặt' : 'còn trống'}</small>
+                                                <small>${slot.table.capacity} chỗ · <c:choose><c:when test="${slot.serving}">đang phục vụ</c:when><c:when test="${slot.booked}">đã có người đặt</c:when><c:otherwise>còn trống</c:otherwise></c:choose></small>
                                             </span>
                                         </label>
                                     </c:forEach>

@@ -203,15 +203,74 @@ public class ReservationDAO extends DBContext {
         return counts;
     }
 
-    /** Id các bàn đã bị giữ trong ngày + ca (đơn APPROVED/COMPLETED). */
+    /** Id các bàn đã bị giữ trong ngày + ca (chỉ đơn APPROVED — khách chưa đến; đơn đã check-in không giữ bàn nữa). */
     public Set<Integer> getBookedTableIds(LocalDate date, String shift) {
         Set<Integer> ids = new HashSet<>();
         if (connection == null || shift == null) return ids;
         String sql = "SELECT table_id FROM Reservations WHERE reservation_date = ? AND meal_shift = ? "
-                + "AND reservation_status IN ('APPROVED', 'COMPLETED') AND table_id IS NOT NULL "
+                + "AND reservation_status = 'APPROVED' AND table_id IS NOT NULL "
                 // Gồm cả các bàn ghép thêm của đơn (ReservationTables), không chỉ bàn chính.
                 + "UNION SELECT x.table_id FROM ReservationTables x JOIN Reservations r ON r.reservation_id = x.reservation_id "
-                + "WHERE r.reservation_date = ? AND r.meal_shift = ? AND r.reservation_status IN ('APPROVED', 'COMPLETED')";
+                + "WHERE r.reservation_date = ? AND r.meal_shift = ? AND r.reservation_status = 'APPROVED'";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setDate(1, Date.valueOf(date));
+            ps.setString(2, shift);
+            ps.setDate(3, Date.valueOf(date));
+            ps.setString(4, shift);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) ids.add(rs.getInt(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ids;
+    }
+
+    /** Bàn đã có khách đến trong ngày + ca (đơn đã check-in): hiển thị "đang phục vụ". */
+    public Set<Integer> getServingTableIds(LocalDate date, String shift) {
+        if (connection == null || shift == null) return new HashSet<>();
+        Set<Integer> occupied = occupiedTableIds();
+        // Đơn đã check-in chỉ còn "đang phục vụ" khi bàn VẪN OCCUPIED: trả bàn về AVAILABLE là hết.
+        Set<Integer> ids = checkedInTableIds(date, shift);
+        ids.retainAll(occupied);
+        // Bàn đang OCCUPIED do mở tay (khách vãng lai) chỉ tính cho đơn hôm nay ở ĐÚNG ca đang diễn ra.
+        if (date.equals(LocalDate.now()) && shift.equals(currentShift())) {
+            ids.addAll(occupied);
+        }
+        return ids;
+    }
+
+    /** Ca đang diễn ra theo giờ máy chủ; null nếu ngoài giờ phục vụ. */
+    private String currentShift() {
+        LocalTime now = LocalTime.now();
+        for (Map.Entry<String, LocalTime[]> e : getShifts().entrySet()) {
+            if (!now.isBefore(e.getValue()[0]) && !now.isAfter(e.getValue()[1])) return e.getKey();
+        }
+        return null;
+    }
+
+    /** Bàn đang có trạng thái OCCUPIED trong bảng bàn. */
+    private Set<Integer> occupiedTableIds() {
+        Set<Integer> ids = new HashSet<>();
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT table_id FROM RestaurantTables WHERE table_status = 'OCCUPIED'");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) ids.add(rs.getInt(1));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ids;
+    }
+
+    /** Bàn có khách đã check-in trong ngày + ca. */
+    private Set<Integer> checkedInTableIds(LocalDate date, String shift) {
+        Set<Integer> ids = new HashSet<>();
+        if (connection == null || shift == null) return ids;
+        String sql = "SELECT table_id FROM Reservations WHERE reservation_date = ? AND meal_shift = ? "
+                + "AND reservation_status IN ('APPROVED', 'COMPLETED') AND checked_in_at IS NOT NULL AND table_id IS NOT NULL "
+                + "UNION SELECT x.table_id FROM ReservationTables x JOIN Reservations r ON r.reservation_id = x.reservation_id "
+                + "WHERE r.reservation_date = ? AND r.meal_shift = ? "
+                + "AND r.reservation_status IN ('APPROVED', 'COMPLETED') AND r.checked_in_at IS NOT NULL";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(date));
             ps.setString(2, shift);
@@ -275,7 +334,7 @@ public class ReservationDAO extends DBContext {
                 // Bàn không được nằm trong đơn khác (bàn chính hoặc bàn ghép) cùng ngày + ca.
                 try (PreparedStatement ps = connection.prepareStatement(
                         "SELECT 1 FROM Reservations r WITH (UPDLOCK, HOLDLOCK) WHERE r.reservation_id <> ? "
-                        + "AND r.reservation_date = ? AND r.meal_shift = ? AND r.reservation_status IN ('APPROVED', 'COMPLETED') "
+                        + "AND r.reservation_date = ? AND r.meal_shift = ? AND r.reservation_status = 'APPROVED' "
                         + "AND (r.table_id = ? OR EXISTS (SELECT 1 FROM ReservationTables x "
                         + "WHERE x.reservation_id = r.reservation_id AND x.table_id = ?))")) {
                     ps.setInt(1, id);
