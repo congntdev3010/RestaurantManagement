@@ -52,6 +52,23 @@ public class ReviewDAO extends DBContext implements AutoCloseable {
         }
     }
 
+    /** Returns customer review counts (total, pending, approved) and average rating x100. */
+    public int[] getManagerReviewSummary() throws SQLException {
+        requireConnection();
+        String sql = "SELECT COUNT(*) total_count, "
+                + "SUM(CASE WHEN r.status='PENDING' THEN 1 ELSE 0 END) pending_count, "
+                + "SUM(CASE WHEN r.status='APPROVED' THEN 1 ELSE 0 END) approved_count, "
+                + "COALESCE(AVG(CAST(r.rating AS DECIMAL(4,2))), 0) average_rating "
+                + "FROM Reviews r JOIN Users u ON u.user_id=r.user_id "
+                + "WHERE u.role_id=(SELECT role_id FROM Roles WHERE role_name='Customer')";
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            rs.next();
+            return new int[]{rs.getInt("total_count"), rs.getInt("pending_count"),
+                rs.getInt("approved_count"), (int) Math.round(rs.getDouble("average_rating") * 100)};
+        }
+    }
+
     public boolean approve(int reviewId, int managerId) throws SQLException {
         requireConnection();
         try (PreparedStatement ps = connection.prepareStatement(

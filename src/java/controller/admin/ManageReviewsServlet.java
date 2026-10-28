@@ -28,6 +28,11 @@ public class ManageReviewsServlet extends HttpServlet {
         session.removeAttribute("manageReviewMessageType");
         try (ReviewDAO dao = new ReviewDAO()) {
             request.setAttribute("pendingReviews", dao.getPendingReviews());
+            int[] summary = dao.getManagerReviewSummary();
+            request.setAttribute("totalReviewCount", summary[0]);
+            request.setAttribute("pendingReviewCount", summary[1]);
+            request.setAttribute("approvedReviewCount", summary[2]);
+            request.setAttribute("averageReviewRating", summary[3] / 100.0);
         } catch (SQLException ex) {
             getServletContext().log("Could not load pending reviews", ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể tải đánh giá chờ duyệt.");
