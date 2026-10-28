@@ -34,9 +34,9 @@
 .oc-page .form-grid{max-width:none}
 .oc-panel{max-height:calc(100vh - 32px);overflow:auto}
 </style></head><body><jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
-<main class="orders-page oc-page"><h1>Order - <c:out value="${table.tableName}"/></h1><c:if test="${not empty orderMessage}"><p class="notice"><c:out value="${orderMessage}"/></p></c:if>
+<main class="orders-page oc-page"><a class="button secondary" href="${pageContext.request.contextPath}/manage-tables" style="display:inline-block;margin-bottom:12px">&larr; Quay lại sơ đồ bàn</a><h1>Order - <c:out value="${table.tableName}"/></h1><c:if test="${not empty orderMessage}"><p class="notice"><c:out value="${orderMessage}"/></p></c:if>
 <c:choose><c:when test="${not empty pendingOrder}"><p>Bàn đang có order #<c:out value="${pendingOrder.orderId}"/> chờ duyệt. Món mới chọn chỉ được lưu tạm, chưa đưa vào danh sách duyệt.</p></c:when><c:otherwise><p>Order sẽ ở trạng thái chờ duyệt; bạn xác nhận với bếp rồi duyệt từng món ở bước sau.</p></c:otherwise></c:choose>
-<form id="orderForm" action="${pageContext.request.contextPath}/manage-orders" method="post" class="order-form"><input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}"><input type="hidden" name="action" value="create"><input type="hidden" name="tableId" value="${table.tableId}">
+<form id="orderForm" action="${pageContext.request.contextPath}/table-order" method="post" class="order-form"><input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}"><input type="hidden" name="tableId" value="${table.tableId}">
 <div class="form-grid"><label>Tên khách (tùy chọn)<input name="customerName" maxlength="100"></label><label>Số điện thoại (tùy chọn)<input name="customerPhone" maxlength="20"></label><label>Ghi chú<input name="note" maxlength="500"></label></div>
 <div class="oc-layout">
 <div><h2>Chọn món</h2>

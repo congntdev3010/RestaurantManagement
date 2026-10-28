@@ -43,8 +43,8 @@
                         <dt>Số điện thoại</dt>
                         <dd><c:out value="${profileUser.phone}" /></dd></div>
                     <div>
-                        <dt>Điểm tích lũy</dt>
-                        <dd><strong><c:out value="${points}" /></strong> điểm · <a href="${pageContext.request.contextPath}/my-points">Xem lịch sử</a></dd>
+                        <c:if test="${sessionScope.user.roleName eq 'Customer'}"><dt>Điểm tích lũy</dt>
+                        <dd><strong><c:out value="${points}" /></strong> điểm · <a href="${pageContext.request.contextPath}/my-points">Xem lịch sử</a></dd></c:if>
                     </div>
                 </dl>
             </section>

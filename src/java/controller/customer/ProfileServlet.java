@@ -37,7 +37,7 @@ public class ProfileServlet extends HttpServlet {
         session.removeAttribute("profileMessageType");
         session.removeAttribute("profileOpenSection");
         // Điểm tích lũy hiện có của khách (cùng nguồn với trang Điểm tích lũy).
-        try (dao.LoyaltyDAO loyalty = new dao.LoyaltyDAO()) {
+        if ("Customer".equalsIgnoreCase(((User) session.getAttribute("user")).getRoleName())) try (dao.LoyaltyDAO loyalty = new dao.LoyaltyDAO()) {
             request.setAttribute("points", loyalty.getBalance(((User) session.getAttribute("user")).getUserId()));
         }
         request.getRequestDispatcher("/WEB-INF/views/customer/profile.jsp").forward(request, response);

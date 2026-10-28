@@ -145,7 +145,7 @@
                                             </a>
                                         </c:if>
                                         <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
-                                            <a href="${pageContext.request.contextPath}/manage-orders?action=new&tableId=${table.tableId}">Order</a>
+                                            <a href="${pageContext.request.contextPath}/table-order?tableId=${table.tableId}">Order</a>
                                         </c:if>
                                         <c:if test="${table.status eq 'OCCUPIED' and releasableTables.contains(table.tableId)}">
                                             <form action="${pageContext.request.contextPath}/manage-tables" method="post"
