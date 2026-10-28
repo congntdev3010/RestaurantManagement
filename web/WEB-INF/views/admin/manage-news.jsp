@@ -11,25 +11,8 @@
 <body>
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 <main class="manage-page">
-    <header class="manage-heading"><div><p class="manage-eyebrow">QUẢN TRỊ HỆ THỐNG</p><h1>Quản lý tin tức</h1></div><p><c:out value="${fn:length(newsList)}"/> tin trên trang</p></header>
+    <header class="manage-heading"><div><p class="manage-eyebrow">QUẢN TRỊ HỆ THỐNG</p><h1>Quản lý tin tức</h1></div><div class="manage-heading-actions"><p><c:out value="${fn:length(newsList)}"/> tin trên trang</p><a class="button-primary" href="${pageContext.request.contextPath}/manage-news/new">+ Tạo tin mới</a></div></header>
     <c:if test="${not empty manageMessage}"><p class="manage-message ${manageMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status"><c:out value="${manageMessage}"/></p></c:if>
-
-    <section class="news-form-section" id="news-form">
-        <c:set var="formIsUpdate" value="${not empty editingNews or formAction eq 'update'}"/>
-        <div class="section-heading"><h2>${formIsUpdate ? 'Sửa tin tức' : 'Thêm tin tức'}</h2><c:if test="${not empty editingNews}"><a href="${pageContext.request.contextPath}/manage-news">Thoát chỉnh sửa</a></c:if></div>
-        <c:if test="${not empty formError}"><p class="manage-message is-error" role="alert"><c:out value="${formError}"/></p></c:if>
-        <c:set var="formItem" value="${not empty formNews ? formNews : editingNews}"/>
-        <form class="news-form" action="${pageContext.request.contextPath}/manage-news" method="post">
-            <input type="hidden" name="action" value="${formIsUpdate ? 'update' : 'create'}">
-            <c:if test="${formIsUpdate}"><input type="hidden" name="newsId" value="${not empty formItem ? formItem.newsId : editingNews.newsId}"></c:if>
-            <label>Tiêu đề <span>*</span><input name="title" maxlength="200" required value="<c:out value='${formItem.title}'/>" placeholder="Tiêu đề tin"></label>
-            <label>Tóm tắt <span>*</span><textarea name="summary" maxlength="500" rows="3" required placeholder="Tóm tắt ngắn"><c:out value="${formItem.summary}"/></textarea></label>
-            <label>Nội dung <span>*</span><textarea name="content" rows="9" required placeholder="Nội dung tin tức"><c:out value="${formItem.content}"/></textarea></label>
-            <label>Đường dẫn ảnh<input name="imageUrl" maxlength="1000" value="<c:out value='${formItem.imageUrl}'/>" placeholder="https://... hoặc /assets/images/..."><small>Chỉ URL HTTPS hoặc ảnh trong /assets/images/. Nội dung tin được hiển thị dạng văn bản.</small></label>
-            <label>Trạng thái<select name="status" required><option value="DRAFT" ${empty formItem.status or formItem.status eq 'DRAFT' ? 'selected' : ''}>Bản nháp</option><option value="PUBLISHED" ${formItem.status eq 'PUBLISHED' ? 'selected' : ''}>Đã xuất bản</option></select></label>
-            <div class="form-actions"><button class="button-primary" type="submit"><c:choose><c:when test="${formIsUpdate}">Lưu thay đổi</c:when><c:otherwise>Thêm tin</c:otherwise></c:choose></button><c:if test="${formIsUpdate}"><a class="button-secondary" href="${pageContext.request.contextPath}/manage-news">Hủy</a></c:if></div>
-        </form>
-    </section>
 
     <section class="news-list-section">
         <div class="section-heading"><h2>Danh sách tin</h2><span><c:out value="${fn:length(newsList)}"/> kết quả</span></div>
@@ -43,7 +26,7 @@
                 <td><c:out value="${item.newsId}"/></td><td class="title-cell"><strong><c:out value="${item.title}"/></strong><small><c:out value="${item.summary}"/></small></td>
                 <td><span class="status-pill ${item.status eq 'PUBLISHED' ? 'published' : 'draft'}"><c:out value="${item.status eq 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}"/></span></td>
                 <td><c:out value="${item.createdByName}"/></td><td><c:out value="${item.updatedAt}"/></td>
-                <td><div class="row-actions"><a class="button-small" href="${pageContext.request.contextPath}/manage-news?edit=${item.newsId}">Sửa</a>
+                <td><div class="row-actions"><a class="button-small" href="${pageContext.request.contextPath}/manage-news/new?edit=${item.newsId}">Sửa</a>
                     <form method="post" action="${pageContext.request.contextPath}/manage-news"><input type="hidden" name="action" value="toggleStatus"><input type="hidden" name="newsId" value="${item.newsId}"><input type="hidden" name="targetStatus" value="${item.status eq 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'}"><button class="button-small" type="submit"><c:out value="${item.status eq 'PUBLISHED' ? 'Ẩn' : 'Xuất bản'}"/></button></form>
                     <form method="post" action="${pageContext.request.contextPath}/manage-news" onsubmit="return confirm('Xóa tin này?');"><input type="hidden" name="action" value="delete"><input type="hidden" name="newsId" value="${item.newsId}"><button class="button-small danger" type="submit">Xóa</button></form>
                 </div></td>

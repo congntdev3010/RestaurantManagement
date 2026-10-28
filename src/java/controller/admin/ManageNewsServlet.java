@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpSession;
 import model.News;
 import model.User;
 
-@WebServlet(name = "ManageNewsServlet", urlPatterns = {"/manage-news"})
+@WebServlet(name = "ManageNewsServlet", urlPatterns = {"/manage-news", "/manage-news/new"})
 public class ManageNewsServlet extends HttpServlet {
     private static final int PAGE_SIZE = 10;
 
@@ -28,7 +28,31 @@ public class ManageNewsServlet extends HttpServlet {
         String status = request.getParameter("status");
         if (!"DRAFT".equals(status) && !"PUBLISHED".equals(status)) status = "";
         int page = positiveInt(request.getParameter("page"), 1);
+        boolean formPage = request.getRequestURI().endsWith("/manage-news/new");
         try (NewsDAO dao = new NewsDAO()) {
+            if (formPage) {
+                String editValue = request.getParameter("edit");
+                if (editValue != null) {
+                    int id = positiveInt(editValue, -1);
+                    News editing = id > 0 ? dao.getById(id) : null;
+                    if (editing == null) {
+                        flash(request.getSession(), "Không tìm thấy tin cần sửa.", "error");
+                        response.sendRedirect(request.getContextPath() + "/manage-news");
+                        return;
+                    }
+                    request.setAttribute("editingNews", editing);
+                }
+                HttpSession session = request.getSession();
+                News formNews = (News) session.getAttribute("newsForm");
+                if (formNews != null) {
+                    request.setAttribute("formNews", formNews);
+                    request.setAttribute("formAction", session.getAttribute("newsFormAction"));
+                    request.setAttribute("formError", session.getAttribute("newsFormError"));
+                    session.removeAttribute("newsForm"); session.removeAttribute("newsFormAction"); session.removeAttribute("newsFormError");
+                }
+                request.getRequestDispatcher("/WEB-INF/views/admin/news-form.jsp").forward(request, response);
+                return;
+            }
             int total = dao.countAdminNews(keyword, status);
             int pages = Math.max(1, (int) Math.ceil(total / (double) PAGE_SIZE));
             page = Math.min(page, pages);
@@ -38,22 +62,7 @@ public class ManageNewsServlet extends HttpServlet {
             request.setAttribute("statusFilter", status);
             request.setAttribute("currentPage", page);
             request.setAttribute("totalPages", pages);
-            String editValue = request.getParameter("edit");
-            if (editValue != null) {
-                int id = positiveInt(editValue, -1);
-                News editing = id > 0 ? dao.getById(id) : null;
-                if (editing == null) flash(request.getSession(), "Không tìm thấy tin cần sửa.", "error");
-                else request.setAttribute("editingNews", editing);
-            }
             HttpSession session = request.getSession();
-            News formNews = (News) session.getAttribute("newsForm");
-            if (formNews != null) {
-                request.setAttribute("formNews", formNews);
-                request.setAttribute("formAction", session.getAttribute("newsFormAction"));
-                request.setAttribute("formError", session.getAttribute("newsFormError"));
-                request.setAttribute("openForm", Boolean.TRUE);
-                session.removeAttribute("newsForm"); session.removeAttribute("newsFormAction"); session.removeAttribute("newsFormError");
-            }
             request.setAttribute("manageMessage", session.getAttribute("newsMessage"));
             request.setAttribute("manageMessageType", session.getAttribute("newsMessageType"));
             session.removeAttribute("newsMessage"); session.removeAttribute("newsMessageType");
@@ -107,7 +116,10 @@ public class ManageNewsServlet extends HttpServlet {
             message = "Có lỗi khi lưu dữ liệu. Vui lòng thử lại.";
         }
         if (!hasFormError) flash(request.getSession(), message, type);
-        response.sendRedirect(request.getContextPath() + "/manage-news");
+        if (hasFormError) {
+            String edit = "update".equals(action) ? "?edit=" + positiveInt(request.getParameter("newsId"), -1) : "";
+            response.sendRedirect(request.getContextPath() + "/manage-news/new" + edit);
+        } else response.sendRedirect(request.getContextPath() + "/manage-news");
     }
 
     private User requireManager(HttpServletRequest request, HttpServletResponse response) throws IOException {
