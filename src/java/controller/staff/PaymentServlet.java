@@ -103,14 +103,21 @@ public class PaymentServlet extends HttpServlet {
             if (bill == null) {
                 message = "Bàn không còn bill để thanh toán.";
             } else if ("linkLoyalty".equals(action)) {
-                LoyaltyDAO.Customer customer = loyalty.findCustomer(request.getParameter("customerKey"));
-                if (customer == null) {
-                    message = "Không tìm thấy tài khoản customer (nhập số điện thoại hoặc Gmail).";
-                } else if (loyalty.setBillLink(tableId, customer.getUserId(), 0, actor.getUserId())) {
-                    message = "Đã gắn tài khoản " + customer.getFullName() + " (" + customer.getPoints() + " điểm) vào bill; họ tên, số điện thoại và Gmail khách đã được tự điền.";
-                    type = "success";
+                String customerKey = request.getParameter("customerKey");
+                if (customerKey == null || customerKey.trim().isEmpty()) {
+                    message = "Vui lòng nhập số điện thoại hoặc Gmail của khách hàng.";
+                } else if (customerKey.length() > 30) {
+                    message = "Tài khoản khách hàng không được vượt quá 30 ký tự.";
                 } else {
-                    message = "Không thể gắn tài khoản vào bill.";
+                    LoyaltyDAO.Customer customer = loyalty.findCustomer(customerKey);
+                    if (customer == null) {
+                    message = "Không tìm thấy tài khoản customer (nhập số điện thoại hoặc Gmail).";
+                    } else if (loyalty.setBillLink(tableId, customer.getUserId(), 0, actor.getUserId())) {
+                        message = "Đã gắn tài khoản " + customer.getFullName() + " (" + customer.getPoints() + " điểm) vào bill; họ tên, số điện thoại và Gmail khách đã được tự điền.";
+                        type = "success";
+                    } else {
+                        message = "Không thể gắn tài khoản vào bill.";
+                    }
                 }
             } else if ("setLoyaltyPoints".equals(action)) {
                 int points = parseInt(request.getParameter("points"));

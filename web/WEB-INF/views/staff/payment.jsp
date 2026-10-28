@@ -124,7 +124,7 @@
                                     <label for="customerKey">Tài khoản khách hàng
                                         <span class="loyalty-hint">(số điện thoại hoặc Gmail)</span></label>
                                     <div class="loyalty-row">
-                                        <input id="customerKey" name="customerKey" maxlength="100" placeholder="Ví dụ: 0901234567" required>
+                                        <input id="customerKey" name="customerKey" type="text" maxlength="30" placeholder="Ví dụ: 0901234567" required>
                                         <button class="btn-sm btn-primary-sm" type="submit">Gắn tài khoản</button>
                                     </div>
                                 </form>
