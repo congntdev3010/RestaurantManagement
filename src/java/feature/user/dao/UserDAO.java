@@ -19,7 +19,7 @@ public class UserDAO extends DBContext {
     public User login(String userOrEmail, String password) {
         String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active "
                 + "FROM Users u JOIN Roles r ON u.role_id = r.role_id "
-            + "WHERE (u.username = ? OR u.email = ?) AND u.password = ? AND u.is_active = 1 AND u.is_deleted = 0";
+                + "WHERE (u.username = ? OR u.email = ?) AND u.password = ? AND u.is_active = 1 AND u.is_deleted = 0";
         try {
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.setString(1, userOrEmail);
@@ -45,8 +45,9 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Đăng nhập Google: tìm tài khoản chưa bị xóa theo email đã được Google xác minh.
-     * Trả về cả tài khoản bị khóa (isActive = false) để servlet báo đúng lý do.
+     * Đăng nhập Google: tìm tài khoản chưa bị xóa theo email đã được Google xác
+     * minh. Trả về cả tài khoản bị khóa (isActive = false) để servlet báo đúng
+     * lý do.
      */
     public User findByEmail(String email) {
         String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active "
@@ -77,8 +78,9 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Tạo tài khoản Customer cho người đăng nhập Google lần đầu. Mật khẩu là chuỗi ngẫu nhiên
-     * (không ai biết) nên tài khoản chỉ vào được bằng Google, hoặc qua "Quên mật khẩu" để tự đặt.
+     * Tạo tài khoản Customer cho người đăng nhập Google lần đầu. Mật khẩu là
+     * chuỗi ngẫu nhiên (không ai biết) nên tài khoản chỉ vào được bằng Google,
+     * hoặc qua "Quên mật khẩu" để tự đặt.
      */
     public boolean createGoogleCustomer(String email, String fullName) {
         String sql = "INSERT INTO Users (username, email, password, full_name, phone, role_id, is_active) "
@@ -257,7 +259,8 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Đổi mật khẩu khi mật khẩu hiện tại khớp và tài khoản còn hoạt động, chưa bị xóa.
+     * Đổi mật khẩu khi mật khẩu hiện tại khớp và tài khoản còn hoạt động, chưa
+     * bị xóa.
      */
     public boolean changePassword(int userId, String currentPassword, String newPassword) {
         String sql = "UPDATE Users SET password = ? "
@@ -279,7 +282,8 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Lấy tài khoản chưa xóa theo phạm vi của Admin/Manager và các bộ lọc được chọn.
+     * Lấy tài khoản chưa xóa theo phạm vi của Admin/Manager và các bộ lọc được
+     * chọn.
      */
     public List<User> getManageableUsers(boolean isAdmin, int roleId, String nameQuery) {
         List<User> users = new ArrayList<>();
@@ -352,7 +356,9 @@ public class UserDAO extends DBContext {
         return users;
     }
 
-    /** Lấy các vai trò mà người thao tác được phép gán cho tài khoản. */
+    /**
+     * Lấy các vai trò mà người thao tác được phép gán cho tài khoản.
+     */
     public Map<Integer, String> getManageableRoles(boolean isAdmin) {
         Map<Integer, String> roles = new LinkedHashMap<>();
         String sql = "SELECT role_id, role_name FROM Roles "
@@ -362,8 +368,7 @@ public class UserDAO extends DBContext {
             if (connection == null) {
                 return roles;
             }
-            try (PreparedStatement statement = connection.prepareStatement(sql);
-                    ResultSet results = statement.executeQuery()) {
+            try (PreparedStatement statement = connection.prepareStatement(sql); ResultSet results = statement.executeQuery()) {
                 while (results.next()) {
                     roles.put(results.getInt("role_id"), results.getString("role_name"));
                 }
@@ -374,10 +379,13 @@ public class UserDAO extends DBContext {
         return roles;
     }
 
-    /** Tìm tài khoản chưa xóa trong phạm vi vai trò mà Admin/Manager được quản lý. */
+    /**
+     * Tìm tài khoản chưa xóa trong phạm vi vai trò mà Admin/Manager được quản
+     * lý.
+     */
     public User getManageableUserById(int userId, boolean isAdmin) {
         String sql = "SELECT u.user_id, u.username, u.email, u.full_name, u.phone, u.role_id, r.role_name, u.is_active "
-            + "FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.user_id = ? AND u.is_deleted = 0 "
+                + "FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.user_id = ? AND u.is_deleted = 0 "
                 + (isAdmin ? "" : "AND " + STAFF_ROLE_FILTER);
         try {
             if (connection == null) {
@@ -395,7 +403,9 @@ public class UserDAO extends DBContext {
         return null;
     }
 
-    /** Tạo tài khoản mới sau khi xác nhận vai trò nằm trong phạm vi được phép. */
+    /**
+     * Tạo tài khoản mới sau khi xác nhận vai trò nằm trong phạm vi được phép.
+     */
     public boolean createManagedUser(User user, boolean isAdmin) {
         if (connection == null || !isAllowedRole(user.getRoleId(), isAdmin)) {
             return false;
@@ -436,7 +446,7 @@ public class UserDAO extends DBContext {
         }
         boolean updatePassword = user.getPassword() != null && !user.getPassword().isEmpty();
         String sql = "UPDATE Users SET username = ?, email = ?, full_name = ?, phone = ?, role_id = ?"
-            + (updatePassword ? ", password = ?" : "") + " WHERE user_id = ? AND is_deleted = 0"
+                + (updatePassword ? ", password = ?" : "") + " WHERE user_id = ? AND is_deleted = 0"
                 + (isAdmin ? "" : " AND role_id IN (SELECT role_id FROM Roles WHERE role_name IN ('Server', 'Chef', 'Receptionist'))");
         // Không cho Manager đổi Admin hoặc gán role ngoài phạm vi, kể cả khi request bị giả mạo.
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -458,7 +468,10 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-    /** Xóa mềm để giữ lịch sử và không cho thao tác lên chính tài khoản đang đăng nhập. */
+    /**
+     * Xóa mềm để giữ lịch sử và không cho thao tác lên chính tài khoản đang
+     * đăng nhập.
+     */
     public boolean deleteManagedUser(int userId, int actorId, boolean isAdmin) {
         if (connection == null || userId == actorId || !isManageableUser(userId, isAdmin)) {
             return false;
@@ -475,7 +488,10 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-    /** Khôi phục tài khoản dưới trạng thái khóa; tài khoản phải thuộc phạm vi được quản lý. */
+    /**
+     * Khôi phục tài khoản dưới trạng thái khóa; tài khoản phải thuộc phạm vi
+     * được quản lý.
+     */
     public boolean restoreManagedUser(int userId, int actorId, boolean isAdmin) {
         if (connection == null || userId == actorId) {
             return false;
@@ -491,7 +507,10 @@ public class UserDAO extends DBContext {
         }
     }
 
-    /** Khóa hoặc mở tài khoản, không cho người thao tác tự đổi trạng thái của mình. */
+    /**
+     * Khóa hoặc mở tài khoản, không cho người thao tác tự đổi trạng thái của
+     * mình.
+     */
     public boolean setManagedUserActive(int userId, int actorId, boolean isActive, boolean isAdmin) {
         if (connection == null || userId == actorId || !isManageableUser(userId, isAdmin)) {
             return false;
@@ -509,7 +528,9 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-    /** Xác nhận role tồn tại và được phép gán bởi Admin hoặc Manager. */
+    /**
+     * Xác nhận role tồn tại và được phép gán bởi Admin hoặc Manager.
+     */
     private boolean isAllowedRole(int roleId, boolean isAdmin) {
         String sql = "SELECT role_name FROM Roles WHERE role_id = ?";
         try {
@@ -528,7 +549,9 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-    /** Trả về true nếu role ID tương ứng với vai trò Admin. */
+    /**
+     * Trả về true nếu role ID tương ứng với vai trò Admin.
+     */
     private boolean isAdminRole(int roleId) {
         String sql = "SELECT 1 FROM Roles WHERE role_id = ? AND role_name = 'Admin'";
         try {
@@ -547,7 +570,10 @@ public class UserDAO extends DBContext {
         }
     }
 
-    /** Kiểm tra tài khoản còn hoạt động và nằm trong phạm vi vai trò được quản lý. */
+    /**
+     * Kiểm tra tài khoản còn hoạt động và nằm trong phạm vi vai trò được quản
+     * lý.
+     */
     private boolean isManageableUser(int userId, boolean isAdmin) {
         String sql = "SELECT 1 FROM Users u JOIN Roles r ON u.role_id = r.role_id WHERE u.user_id = ? AND u.is_deleted = 0 "
                 + (isAdmin ? "" : "AND " + STAFF_ROLE_FILTER);
@@ -567,14 +593,18 @@ public class UserDAO extends DBContext {
         return false;
     }
 
-    /** Xác định ba vai trò nhân viên Manager được phép quản lý. */
+    /**
+     * Xác định ba vai trò nhân viên Manager được phép quản lý.
+     */
     private boolean isStaffRole(String roleName) {
         return "Server".equalsIgnoreCase(roleName)
                 || "Chef".equalsIgnoreCase(roleName)
                 || "Receptionist".equalsIgnoreCase(roleName);
     }
 
-    /** Ánh xạ dòng kết quả truy vấn sang đối tượng User. */
+    /**
+     * Ánh xạ dòng kết quả truy vấn sang đối tượng User.
+     */
     private User readUser(ResultSet rs) throws SQLException {
         User user = new User();
         user.setUserId(rs.getInt("user_id"));
@@ -589,7 +619,8 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Bind role và tên tìm kiếm theo đúng thứ tự các điều kiện tùy chọn của danh sách.
+     * Bind role và tên tìm kiếm theo đúng thứ tự các điều kiện tùy chọn của
+     * danh sách.
      */
     private void bindManageableUserFilters(PreparedStatement statement, int roleId, String nameQuery)
             throws SQLException {
@@ -603,7 +634,8 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Bỏ dấu tiếng Việt và đổi khoảng trắng thành wildcard để tìm tên theo thứ tự từ.
+     * Bỏ dấu tiếng Việt và đổi khoảng trắng thành wildcard để tìm tên theo thứ
+     * tự từ.
      */
     private String toNameSearchPattern(String nameQuery) {
         String normalizedNameQuery = Normalizer.normalize(nameQuery, Normalizer.Form.NFD)

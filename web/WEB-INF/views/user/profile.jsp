@@ -44,10 +44,10 @@
                         <dd><c:out value="${profileUser.phone}" /></dd></div>
                     <div>
                         <c:if test="${sessionScope.user.roleName eq 'Customer'}"><dt>Điểm tích lũy</dt>
-                        <dd><strong><c:out value="${points}" /></strong> điểm · <a href="${pageContext.request.contextPath}/my-points">Xem lịch sử</a></dd></c:if>
-                    </div>
-                </dl>
-            </section>
+                            <dd><strong><c:out value="${points}" /></strong> điểm · <a href="${pageContext.request.contextPath}/my-points">Xem lịch sử</a></dd></c:if>
+                        </div>
+                    </dl>
+                </section>
 
             <%-- Hai form dùng chung route; action xác định thao tác cần xử lý trong servlet. --%>
             <section class="profile-editors" aria-label="Cập nhật tài khoản">
@@ -61,7 +61,7 @@
                         <label>
                             Họ và tên
                             <input type="text" name="fullName" maxlength="30" autocomplete="name" required
-                                value="<c:out value='${profileUser.fullName}' />">
+                                   value="<c:out value='${profileUser.fullName}' />">
                         </label>
                         <label>
                             Số điện thoại

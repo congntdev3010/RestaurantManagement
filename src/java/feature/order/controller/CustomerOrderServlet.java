@@ -23,6 +23,7 @@ import model.Dish;
 
 @WebServlet(name = "CustomerOrderServlet", urlPatterns = {"/order"})
 public class CustomerOrderServlet extends HttpServlet {
+
     public static final String GUEST_NAME = "orderGuestName";
     public static final String GUEST_PHONE = "orderGuestPhone";
 
@@ -102,7 +103,9 @@ public class CustomerOrderServlet extends HttpServlet {
         String keyword = request.getParameter("keyword");
         if (keyword != null) {
             keyword = keyword.trim();
-            if (keyword.length() > 50) keyword = keyword.substring(0, 50);
+            if (keyword.length() > 50) {
+                keyword = keyword.substring(0, 50);
+            }
             keyword = keyword.isEmpty() ? null : Normalizer.normalize(keyword, Normalizer.Form.NFC);
         }
         int categoryId = parseInt(request.getParameter("categoryId"), 0);
@@ -161,7 +164,9 @@ public class CustomerOrderServlet extends HttpServlet {
         if (sentIds instanceof java.util.Set<?>) {
             try (OrderDAO orderDAO = new OrderDAO()) {
                 for (Object idObj : (java.util.Set<?>) sentIds) {
-                    if (!(idObj instanceof Integer)) continue;
+                    if (!(idObj instanceof Integer)) {
+                        continue;
+                    }
                     model.Order order = orderDAO.getOrder((Integer) idObj, null);
                     if (order != null && ("PENDING".equals(order.getStatus())
                             || "OPEN".equals(order.getStatus()))) {
@@ -172,7 +177,9 @@ public class CustomerOrderServlet extends HttpServlet {
         }
         BigDecimal sentTotal = BigDecimal.ZERO;
         for (model.Order order : sentOrders) {
-            if (order.getTotalAmount() != null) sentTotal = sentTotal.add(order.getTotalAmount());
+            if (order.getTotalAmount() != null) {
+                sentTotal = sentTotal.add(order.getTotalAmount());
+            }
         }
         request.setAttribute("sentOrders", sentOrders);
         request.setAttribute("sentTotal", sentTotal);

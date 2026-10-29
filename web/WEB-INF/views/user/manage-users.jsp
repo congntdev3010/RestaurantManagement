@@ -22,37 +22,37 @@
             </header>
 
             <c:if test="${not empty manageMessage}">
-            <p class="manage-message ${manageMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
-                <c:out value="${manageMessage}" />
-            </p>
+                <p class="manage-message ${manageMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
+                    <c:out value="${manageMessage}" />
+                </p>
             </c:if>
 
             <c:choose>
                 <c:when test="${empty editUser}">
-            <details class="account-form-section account-create-section" ${not empty createUserForm ? 'open' : ''}>
-                <summary class="button-primary">Thêm tài khoản</summary>
-                <div class="account-form-content">
-                <div class="section-heading">
-                    <h2 id="account-form-title">Thông tin tài khoản mới</h2>
-                </div>
-                    <jsp:include page="/WEB-INF/views/fragments/managed-user-form.jsp" />
-                </div>
-            </details>
+                    <details class="account-form-section account-create-section" ${not empty createUserForm ? 'open' : ''}>
+                        <summary class="button-primary">Thêm tài khoản</summary>
+                        <div class="account-form-content">
+                            <div class="section-heading">
+                                <h2 id="account-form-title">Thông tin tài khoản mới</h2>
+                            </div>
+                            <jsp:include page="/WEB-INF/views/fragments/managed-user-form.jsp" />
+                        </div>
+                    </details>
                 </c:when>
                 <c:otherwise>
-            <section class="account-form-section" aria-labelledby="account-form-title">
-                <div class="section-heading">
-                    <h2 id="account-form-title">Sửa tài khoản</h2>
-                    <c:url var="cancelEditUrl" value="/manage-users">
-                        <c:param name="roleId" value="${roleFilterId}" />
-                        <c:param name="name" value="${nameQuery}" />
-                        <c:param name="archivedRoleId" value="${archivedRoleFilterId}" />
-                        <c:param name="archivedName" value="${archivedNameQuery}" />
-                    </c:url>
-                    <a href="${cancelEditUrl}">Hủy chỉnh sửa</a>
-                </div>
-                <jsp:include page="/WEB-INF/views/fragments/managed-user-form.jsp" />
-            </section>
+                    <section class="account-form-section" aria-labelledby="account-form-title">
+                        <div class="section-heading">
+                            <h2 id="account-form-title">Sửa tài khoản</h2>
+                            <c:url var="cancelEditUrl" value="/manage-users">
+                                <c:param name="roleId" value="${roleFilterId}" />
+                                <c:param name="name" value="${nameQuery}" />
+                                <c:param name="archivedRoleId" value="${archivedRoleFilterId}" />
+                                <c:param name="archivedName" value="${archivedNameQuery}" />
+                            </c:url>
+                            <a href="${cancelEditUrl}">Hủy chỉnh sửa</a>
+                        </div>
+                        <jsp:include page="/WEB-INF/views/fragments/managed-user-form.jsp" />
+                    </section>
                 </c:otherwise>
             </c:choose>
 
@@ -71,9 +71,9 @@
                             <select id="role-filter" name="roleId" onchange="this.form.submit()">
                                 <option value="0" ${roleFilterId == 0 ? 'selected' : ''}>Tất cả vai trò</option>
                                 <c:forEach var="role" items="${roles}">
-                                <option value="${role.key}" ${roleFilterId eq role.key ? 'selected' : ''}>
-                                    <c:out value="${role.value}" />
-                                </option>
+                                    <option value="${role.key}" ${roleFilterId eq role.key ? 'selected' : ''}>
+                                        <c:out value="${role.value}" />
+                                    </option>
                                 </c:forEach>
                             </select>
                         </div>
@@ -104,56 +104,56 @@
                         </thead>
                         <tbody>
                             <c:forEach var="user" items="${users}">
-                            <tr>
-                                <td>
-                                    <strong><c:out value="${user.fullName}" /></strong>
-                                    <span class="table-subtext"><c:out value="${user.username}" /></span>
-                                </td>
-                                <td>
-                                    <span><c:out value="${user.email}" /></span>
-                                    <span class="table-subtext"><c:out value="${user.phone}" /></span>
-                                </td>
-                                <td><c:out value="${user.roleName}" /></td>
-                                <td>
-                                    <span class="status ${user.isActive ? 'status-active' : 'status-inactive'}">
-                                        ${user.isActive ? 'Đang hoạt động' : 'Đã khóa'}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="row-actions">
-                                        <c:url var="editUserUrl" value="/manage-users">
-                                            <c:param name="edit" value="${user.userId}" />
-                                            <c:param name="roleId" value="${roleFilterId}" />
-                                            <c:param name="name" value="${nameQuery}" />
-                                            <c:param name="archivedRoleId" value="${archivedRoleFilterId}" />
-                                            <c:param name="archivedName" value="${archivedNameQuery}" />
-                                        </c:url>
-                                        <a class="action-link" href="${editUserUrl}">Sửa</a>
-                                        <form action="${pageContext.request.contextPath}/manage-users" method="post">
-                                            <input type="hidden" name="action" value="toggle">
-                                            <input type="hidden" name="userId" value="${user.userId}">
-                                            <input type="hidden" name="filterRoleId" value="${roleFilterId}">
-                                            <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
-                                            <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
-                                            <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
-                                            <button class="action-button" type="submit">${user.isActive ? 'Khóa' : 'Mở khóa'}</button>
-                                        </form>
-                                        <form action="${pageContext.request.contextPath}/manage-users" method="post"
-                                                onsubmit="return confirm('Xóa tài khoản này? Tài khoản sẽ bị vô hiệu và dữ liệu lịch sử được giữ lại.');">
-                                            <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="userId" value="${user.userId}">
-                                            <input type="hidden" name="filterRoleId" value="${roleFilterId}">
-                                            <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
-                                            <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
-                                            <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
-                                            <button class="action-button action-danger" type="submit">Xóa</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td>
+                                        <strong><c:out value="${user.fullName}" /></strong>
+                                        <span class="table-subtext"><c:out value="${user.username}" /></span>
+                                    </td>
+                                    <td>
+                                        <span><c:out value="${user.email}" /></span>
+                                        <span class="table-subtext"><c:out value="${user.phone}" /></span>
+                                    </td>
+                                    <td><c:out value="${user.roleName}" /></td>
+                                    <td>
+                                        <span class="status ${user.isActive ? 'status-active' : 'status-inactive'}">
+                                            ${user.isActive ? 'Đang hoạt động' : 'Đã khóa'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="row-actions">
+                                            <c:url var="editUserUrl" value="/manage-users">
+                                                <c:param name="edit" value="${user.userId}" />
+                                                <c:param name="roleId" value="${roleFilterId}" />
+                                                <c:param name="name" value="${nameQuery}" />
+                                                <c:param name="archivedRoleId" value="${archivedRoleFilterId}" />
+                                                <c:param name="archivedName" value="${archivedNameQuery}" />
+                                            </c:url>
+                                            <a class="action-link" href="${editUserUrl}">Sửa</a>
+                                            <form action="${pageContext.request.contextPath}/manage-users" method="post">
+                                                <input type="hidden" name="action" value="toggle">
+                                                <input type="hidden" name="userId" value="${user.userId}">
+                                                <input type="hidden" name="filterRoleId" value="${roleFilterId}">
+                                                <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
+                                                <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
+                                                <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
+                                                <button class="action-button" type="submit">${user.isActive ? 'Khóa' : 'Mở khóa'}</button>
+                                            </form>
+                                            <form action="${pageContext.request.contextPath}/manage-users" method="post"
+                                                  onsubmit="return confirm('Xóa tài khoản này? Tài khoản sẽ bị vô hiệu và dữ liệu lịch sử được giữ lại.');">
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="userId" value="${user.userId}">
+                                                <input type="hidden" name="filterRoleId" value="${roleFilterId}">
+                                                <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
+                                                <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
+                                                <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
+                                                <button class="action-button action-danger" type="submit">Xóa</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
                             </c:forEach>
                             <c:if test="${empty users}">
-                            <tr><td class="empty-state" colspan="5">Không tìm thấy tài khoản phù hợp.</td></tr>
+                                <tr><td class="empty-state" colspan="5">Không tìm thấy tài khoản phù hợp.</td></tr>
                             </c:if>
                         </tbody>
                     </table>
@@ -176,9 +176,9 @@
                             <select id="archived-role-filter" name="archivedRoleId" onchange="this.form.submit()">
                                 <option value="0" ${archivedRoleFilterId == 0 ? 'selected' : ''}>Tất cả vai trò</option>
                                 <c:forEach var="role" items="${roles}">
-                                <option value="${role.key}" ${archivedRoleFilterId eq role.key ? 'selected' : ''}>
-                                    <c:out value="${role.value}" />
-                                </option>
+                                    <option value="${role.key}" ${archivedRoleFilterId eq role.key ? 'selected' : ''}>
+                                        <c:out value="${role.value}" />
+                                    </option>
                                 </c:forEach>
                             </select>
                         </div>
@@ -213,30 +213,30 @@
                                 </thead>
                                 <tbody>
                                     <c:forEach var="user" items="${archivedUsers}">
-                                    <tr>
-                                        <td>
-                                            <strong><c:out value="${user.fullName}" /></strong>
-                                            <span class="table-subtext"><c:out value="${user.username}" /></span>
-                                        </td>
-                                        <td>
-                                            <span><c:out value="${user.email}" /></span>
-                                            <span class="table-subtext"><c:out value="${user.phone}" /></span>
-                                        </td>
-                                        <td><c:out value="${user.roleName}" /></td>
-                                        <td><span class="status status-inactive">Đã xóa</span></td>
-                                        <td>
-                                            <form action="${pageContext.request.contextPath}/manage-users" method="post"
-                                                  onsubmit="return confirm('Khôi phục tài khoản này ở trạng thái khóa?');">
-                                                <input type="hidden" name="action" value="restore">
-                                                <input type="hidden" name="userId" value="${user.userId}">
-                                                <input type="hidden" name="filterRoleId" value="${roleFilterId}">
-                                                <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
-                                                <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
-                                                <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
-                                                <button class="action-button" type="submit">Khôi phục</button>
-                                            </form>
-                                        </td>
-                                    </tr>
+                                        <tr>
+                                            <td>
+                                                <strong><c:out value="${user.fullName}" /></strong>
+                                                <span class="table-subtext"><c:out value="${user.username}" /></span>
+                                            </td>
+                                            <td>
+                                                <span><c:out value="${user.email}" /></span>
+                                                <span class="table-subtext"><c:out value="${user.phone}" /></span>
+                                            </td>
+                                            <td><c:out value="${user.roleName}" /></td>
+                                            <td><span class="status status-inactive">Đã xóa</span></td>
+                                            <td>
+                                                <form action="${pageContext.request.contextPath}/manage-users" method="post"
+                                                      onsubmit="return confirm('Khôi phục tài khoản này ở trạng thái khóa?');">
+                                                    <input type="hidden" name="action" value="restore">
+                                                    <input type="hidden" name="userId" value="${user.userId}">
+                                                    <input type="hidden" name="filterRoleId" value="${roleFilterId}">
+                                                    <input type="hidden" name="filterName" value="<c:out value='${nameQuery}' />">
+                                                    <input type="hidden" name="filterArchivedRoleId" value="${archivedRoleFilterId}">
+                                                    <input type="hidden" name="filterArchivedName" value="<c:out value='${archivedNameQuery}' />">
+                                                    <button class="action-button" type="submit">Khôi phục</button>
+                                                </form>
+                                            </td>
+                                        </tr>
                                     </c:forEach>
                                 </tbody>
                             </table>

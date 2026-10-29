@@ -12,18 +12,27 @@ import jakarta.servlet.http.HttpSession;
 import model.User;
 
 /**
- * Màn hình nấu của bếp. Chef chỉ xem; Server/Manager có thể điều chỉnh món đang nấu.
+ * Màn hình nấu của bếp. Chef chỉ xem; Server/Manager có thể điều chỉnh món đang
+ * nấu.
  */
 @WebServlet(name = "KitchenServlet", urlPatterns = {"/kitchen"})
 public class KitchenServlet extends HttpServlet {
-    @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setHeader("Cache-Control", "no-store");
         HttpSession session = request.getSession(false);
         Object value = session == null ? null : session.getAttribute("user");
-        if (!(value instanceof User)) { response.sendRedirect(request.getContextPath() + "/login"); return; }
+        if (!(value instanceof User)) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
         String role = ((User) value).getRoleName();
-        if (!canAccess(role)) { response.sendError(403); return; }
+        if (!canAccess(role)) {
+            response.sendError(403);
+            return;
+        }
         CartServlet.ensureToken(session);
         request.setAttribute("canEdit", canEdit(role));
         request.setAttribute("kitchenMessage", session.getAttribute("kitchenMessage"));
@@ -34,16 +43,24 @@ public class KitchenServlet extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/order/kitchen.jsp").forward(request, response);
     }
 
-    @Override protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
         Object value = session == null ? null : session.getAttribute("user");
-        if (!(value instanceof User)) { response.sendRedirect(request.getContextPath() + "/login"); return; }
+        if (!(value instanceof User)) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
         String role = ((User) value).getRoleName();
-        if (!canEdit(role)) { response.sendError(403); return; }
+        if (!canEdit(role)) {
+            response.sendError(403);
+            return;
+        }
         if (!CartServlet.validToken(session, request.getParameter("csrfToken"))) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN); return;
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
         }
         int itemId = parseInt(request.getParameter("itemId"), -1);
         int orderId = parseInt(request.getParameter("orderId"), -1);
@@ -70,6 +87,10 @@ public class KitchenServlet extends HttpServlet {
     }
 
     private int parseInt(String value, int fallback) {
-        try { return Integer.parseInt(value); } catch (Exception e) { return fallback; }
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception e) {
+            return fallback;
+        }
     }
 }

@@ -13,7 +13,10 @@ import java.util.List;
 import model.PaidBill;
 import model.TableBillItem;
 
-/** Đọc lịch sử các đơn đã thanh toán (ServiceHistory) cho Lễ tân, Manager và khách thành viên (đơn của chính mình). */
+/**
+ * Đọc lịch sử các đơn đã thanh toán (ServiceHistory) cho Lễ tân, Manager và
+ * khách thành viên (đơn của chính mình).
+ */
 public class ServiceHistoryDAO extends DBContext {
 
     private static final String SELECT_BILL
@@ -26,8 +29,8 @@ public class ServiceHistoryDAO extends DBContext {
             + "LEFT JOIN Users u ON u.user_id = h.paid_by ";
 
     /**
-     * Danh sách đơn đã thanh toán, mới nhất trước, lọc theo khoảng ngày (null = không giới hạn).
-     * Giới hạn 500 dòng để trang không quá nặng.
+     * Danh sách đơn đã thanh toán, mới nhất trước, lọc theo khoảng ngày (null =
+     * không giới hạn). Giới hạn 500 dòng để trang không quá nặng.
      */
     public List<PaidBill> search(LocalDate from, LocalDate to) throws SQLException {
         List<PaidBill> list = new ArrayList<>();
@@ -38,10 +41,20 @@ public class ServiceHistoryDAO extends DBContext {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             Timestamp start = from == null ? null : Timestamp.valueOf(from.atStartOfDay());
             Timestamp end = to == null ? null : Timestamp.valueOf(to.plusDays(1).atStartOfDay());
-            if (start == null) { ps.setNull(1, Types.TIMESTAMP); ps.setNull(2, Types.TIMESTAMP); }
-            else { ps.setTimestamp(1, start); ps.setTimestamp(2, start); }
-            if (end == null) { ps.setNull(3, Types.TIMESTAMP); ps.setNull(4, Types.TIMESTAMP); }
-            else { ps.setTimestamp(3, end); ps.setTimestamp(4, end); }
+            if (start == null) {
+                ps.setNull(1, Types.TIMESTAMP);
+                ps.setNull(2, Types.TIMESTAMP);
+            } else {
+                ps.setTimestamp(1, start);
+                ps.setTimestamp(2, start);
+            }
+            if (end == null) {
+                ps.setNull(3, Types.TIMESTAMP);
+                ps.setNull(4, Types.TIMESTAMP);
+            } else {
+                ps.setTimestamp(3, end);
+                ps.setTimestamp(4, end);
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(readBill(rs));
@@ -51,7 +64,9 @@ public class ServiceHistoryDAO extends DBContext {
         return list;
     }
 
-    /** Một đơn kèm danh sách món; null nếu không tồn tại. */
+    /**
+     * Một đơn kèm danh sách món; null nếu không tồn tại.
+     */
     public PaidBill getById(int historyId) throws SQLException {
         requireConnection();
         PaidBill bill = null;
@@ -85,7 +100,10 @@ public class ServiceHistoryDAO extends DBContext {
         return bill;
     }
 
-    /** Các đơn đã thanh toán gắn với tài khoản khách thành viên này, mới nhất trước (tối đa 200). Không tính tổng, không lấy món. */
+    /**
+     * Các đơn đã thanh toán gắn với tài khoản khách thành viên này, mới nhất
+     * trước (tối đa 200). Không tính tổng, không lấy món.
+     */
     public List<PaidBill> findForCustomer(int customerId) throws SQLException {
         List<PaidBill> list = new ArrayList<>();
         requireConnection();
@@ -102,13 +120,19 @@ public class ServiceHistoryDAO extends DBContext {
         return list;
     }
 
-    /** Một đơn của chính khách này kèm món; null nếu không tồn tại hoặc là đơn của khách khác. */
+    /**
+     * Một đơn của chính khách này kèm món; null nếu không tồn tại hoặc là đơn
+     * của khách khác.
+     */
     public PaidBill getForCustomer(int historyId, int customerId) throws SQLException {
         PaidBill bill = getById(historyId);
         return bill != null && bill.getLoyaltyCustomerId() == customerId ? bill : null;
     }
 
-    /** Id đơn thanh toán mới nhất của một bàn (dùng ngay sau khi thanh toán); null nếu chưa có. */
+    /**
+     * Id đơn thanh toán mới nhất của một bàn (dùng ngay sau khi thanh toán);
+     * null nếu chưa có.
+     */
     public Integer findLatestHistoryId(int tableId) throws SQLException {
         requireConnection();
         try (PreparedStatement ps = connection.prepareStatement(

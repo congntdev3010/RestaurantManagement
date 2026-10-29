@@ -25,7 +25,9 @@ import model.TableBill;
 @WebServlet(name = "ManageTablesServlet", urlPatterns = {"/manage-tables"})
 public class ManageTablesServlet extends HttpServlet {
 
-    /** Trạng thái được chấp nhận từ form và lưu vào cơ sở dữ liệu. */
+    /**
+     * Trạng thái được chấp nhận từ form và lưu vào cơ sở dữ liệu.
+     */
     private static final Set<String> TABLE_STATUSES = Set.of("AVAILABLE", "RESERVED", "OCCUPIED");
 
     /**
@@ -78,7 +80,9 @@ public class ManageTablesServlet extends HttpServlet {
                 for (RestaurantTable table : tables) {
                     if ("OCCUPIED".equals(table.getStatus())) {
                         TableBill bill = orderDAO.getTableBill(table.getTableId());
-                        if (bill != null) tableBills.put(table.getTableId(), bill);
+                        if (bill != null) {
+                            tableBills.put(table.getTableId(), bill);
+                        }
                     }
                 }
             }
@@ -129,9 +133,9 @@ public class ManageTablesServlet extends HttpServlet {
     }
 
     /**
-     * QR phải trỏ đến địa chỉ mà điện thoại khách truy cập được, không phải địa chỉ
-     * nhân viên dùng để mở trang quản trị. QR_BASE_URL cho phép giữ URL công khai
-     * ổn định khi nhân viên truy cập Tomcat bằng localhost.
+     * QR phải trỏ đến địa chỉ mà điện thoại khách truy cập được, không phải địa
+     * chỉ nhân viên dùng để mở trang quản trị. QR_BASE_URL cho phép giữ URL
+     * công khai ổn định khi nhân viên truy cập Tomcat bằng localhost.
      */
     private String resolveQrBaseUrl(HttpServletRequest request) throws ServletException {
         String configured = System.getenv("QR_BASE_URL");
@@ -160,7 +164,8 @@ public class ManageTablesServlet extends HttpServlet {
     }
 
     /**
-     * Kiểm tra quyền theo hành động, xác thực dữ liệu và gọi DAO để thay đổi bàn.
+     * Kiểm tra quyền theo hành động, xác thực dữ liệu và gọi DAO để thay đổi
+     * bàn.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -206,7 +211,9 @@ public class ManageTablesServlet extends HttpServlet {
                     TableBill receipt = orderDAO.getTableBill(tableId);
                     if (orderDAO.markTablePaid(tableId, actor.getUserId(), method,
                             reference == null ? null : reference.trim(), cashReceived, cashChange)) {
-                        if (receipt == null) receipt = new TableBill();
+                        if (receipt == null) {
+                            receipt = new TableBill();
+                        }
                         receipt.setTableId(tableId);
                         receipt.setCashReceived(cashReceived);
                         receipt.setCashChange(cashChange);
@@ -282,7 +289,8 @@ public class ManageTablesServlet extends HttpServlet {
     }
 
     /**
-     * Yêu cầu đăng nhập và giới hạn quyền xem sơ đồ cho Manager, Server, Receptionist.
+     * Yêu cầu đăng nhập và giới hạn quyền xem sơ đồ cho Manager, Server,
+     * Receptionist.
      */
     private User requireTableViewer(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -301,17 +309,23 @@ public class ManageTablesServlet extends HttpServlet {
         return actor;
     }
 
-    /** Trả về true nếu người dùng có vai trò Manager. */
+    /**
+     * Trả về true nếu người dùng có vai trò Manager.
+     */
     private boolean isManager(User user) {
         return hasRole(user, "Manager");
     }
 
-    /** So sánh tên vai trò không phân biệt chữ hoa/thường. */
+    /**
+     * So sánh tên vai trò không phân biệt chữ hoa/thường.
+     */
     private boolean hasRole(User user, String roleName) {
         return user.getRoleName() != null && roleName.equalsIgnoreCase(user.getRoleName());
     }
 
-    /** Đọc và chuẩn hóa các trường bàn được gửi từ form. */
+    /**
+     * Đọc và chuẩn hóa các trường bàn được gửi từ form.
+     */
     private RestaurantTable readFormTable(HttpServletRequest request) {
         RestaurantTable table = new RestaurantTable();
         table.setTableName(trim(request.getParameter("tableName")));
@@ -346,7 +360,10 @@ public class ManageTablesServlet extends HttpServlet {
         return null;
     }
 
-    /** Chuyển chuỗi sang số nguyên; dùng giá trị dự phòng khi đầu vào sai định dạng. */
+    /**
+     * Chuyển chuỗi sang số nguyên; dùng giá trị dự phòng khi đầu vào sai định
+     * dạng.
+     */
     private int parseInt(String value, int fallback) {
         try {
             return Integer.parseInt(value);
@@ -357,19 +374,25 @@ public class ManageTablesServlet extends HttpServlet {
 
     private BigDecimal decimal(String value) {
         try {
-            if (value == null || value.trim().isEmpty()) return null;
+            if (value == null || value.trim().isEmpty()) {
+                return null;
+            }
             return new BigDecimal(value.trim());
         } catch (NumberFormatException e) {
             return null;
         }
     }
 
-    /** Xóa khoảng trắng hai đầu; giữ null nếu tham số không được gửi. */
+    /**
+     * Xóa khoảng trắng hai đầu; giữ null nếu tham số không được gửi.
+     */
     private String trim(String value) {
         return value == null ? null : value.trim();
     }
 
-    /** Lưu thông báo trong session để hiển thị một lần sau redirect. */
+    /**
+     * Lưu thông báo trong session để hiển thị một lần sau redirect.
+     */
     private void setFlash(HttpSession session, String message, String messageType) {
         session.setAttribute("tableMessage", message);
         session.setAttribute("tableMessageType", messageType);

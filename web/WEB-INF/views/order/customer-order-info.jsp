@@ -22,8 +22,8 @@
         <small>Việt À la carte</small>
         <h1>Chào mừng bạn</h1>
         <c:if test="${not empty orderTableName}"><span class="qr-table">Bàn: <strong><c:out value="${orderTableName}"/></strong></span></c:if>
-    </header>
-    <form class="qr-info" action="${pageContext.request.contextPath}/order" method="post" accept-charset="UTF-8">
+        </header>
+        <form class="qr-info" action="${pageContext.request.contextPath}/order" method="post" accept-charset="UTF-8">
         <h2>Thông tin của bạn</h2>
         <p>Vui lòng nhập tên và số điện thoại để nhân viên phục vụ bạn tốt hơn.</p>
         <c:if test="${not empty infoError}"><p class="qr-err" role="alert"><c:out value="${infoError}"/></p></c:if>
@@ -32,7 +32,9 @@
             <input name="customerName" maxlength="30" required autocomplete="name" value="<c:out value='${not empty infoName ? infoName : sessionScope.user.fullName}'/>">
         </label>
         <label>Số điện thoại
-            <input name="customerPhone" type="tel" inputmode="numeric" maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại bắt đầu bằng số 0 và có đúng 10 chữ số" required autocomplete="tel" value="<c:out value='${not empty infoPhone ? infoPhone : sessionScope.user.phone}'/>">
+            <input name="customerPhone" type="tel" inputmode="numeric" maxlength="10" pattern="0[0-9]{9}"
+                   title="Số điện thoại bắt đầu bằng số 0 và có đúng 10 chữ số" required autocomplete="tel"
+                   value="<c:out value='${not empty infoPhone ? infoPhone : sessionScope.user.phone}'/>">
         </label>
         <button type="submit">Bắt đầu gọi món</button>
     </form>

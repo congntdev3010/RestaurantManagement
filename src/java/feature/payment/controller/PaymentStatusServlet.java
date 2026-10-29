@@ -16,6 +16,7 @@ import model.User;
 
 @WebServlet(name = "PaymentStatusServlet", urlPatterns = {"/payment-status"})
 public class PaymentStatusServlet extends HttpServlet {
+
     private static final Pattern COMPACT_REFERENCE = Pattern.compile(
             "^RMTABLE(\\d{1,3})(\\d{13})$", Pattern.CASE_INSENSITIVE);
 

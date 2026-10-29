@@ -18,9 +18,9 @@ import model.TableBill;
 import model.User;
 
 /**
- * Lịch sử thanh toán — chỉ Manager. Tổng số đơn và doanh thu cũng chỉ Manager được xem.
- * - Ngay sau khi thanh toán (tiền mặt/QR) chuyển thẳng tới hóa đơn vừa trả.
- * - Danh sách lọc theo ngày; xem và in lại hóa đơn bất kỳ lúc nào.
+ * Lịch sử thanh toán — chỉ Manager. Tổng số đơn và doanh thu cũng chỉ Manager
+ * được xem. - Ngay sau khi thanh toán (tiền mặt/QR) chuyển thẳng tới hóa đơn
+ * vừa trả. - Danh sách lọc theo ngày; xem và in lại hóa đơn bất kỳ lúc nào.
  */
 @WebServlet(name = "ServiceHistoryServlet", urlPatterns = {"/service-history"})
 public class ServiceHistoryServlet extends HttpServlet {

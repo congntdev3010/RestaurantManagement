@@ -17,6 +17,7 @@ import model.User;
 
 @WebServlet(name = "PaymentServlet", urlPatterns = {"/payment"})
 public class PaymentServlet extends HttpServlet {
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -72,14 +73,17 @@ public class PaymentServlet extends HttpServlet {
             request.setAttribute("paymentBankCode", getServletContext().getInitParameter("paymentBankCode"));
             request.setAttribute("paymentAccountNumber", getServletContext().getInitParameter("paymentAccountNumber"));
             request.setAttribute("paymentAccountName", getServletContext().getInitParameter("paymentAccountName"));
-                request.setAttribute("sepayWebhookConfigured", isSePayConfigured());
+            request.setAttribute("sepayWebhookConfigured", isSePayConfigured());
             request.getRequestDispatcher("/WEB-INF/views/payment/payment.jsp").forward(request, response);
         } catch (SQLException e) {
             throw new ServletException("Không thể tải bill thanh toán.", e);
         }
     }
 
-    /** Lễ tân gắn tài khoản customer / chọn số điểm dùng cho bill của bàn, trước khi thanh toán. */
+    /**
+     * Lễ tân gắn tài khoản customer / chọn số điểm dùng cho bill của bàn, trước
+     * khi thanh toán.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -111,7 +115,7 @@ public class PaymentServlet extends HttpServlet {
                 } else {
                     LoyaltyDAO.Customer customer = loyalty.findCustomer(customerKey);
                     if (customer == null) {
-                    message = "Không tìm thấy tài khoản customer (nhập số điện thoại hoặc Gmail).";
+                        message = "Không tìm thấy tài khoản customer (nhập số điện thoại hoặc Gmail).";
                     } else if (loyalty.setBillLink(tableId, customer.getUserId(), 0, actor.getUserId())) {
                         message = "Đã gắn tài khoản " + customer.getFullName() + " (" + customer.getPoints() + " điểm) vào bill; họ tên, số điện thoại và Gmail khách đã được tự điền.";
                         type = "success";

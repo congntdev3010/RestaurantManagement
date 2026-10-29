@@ -1,0 +1,50 @@
+/* Tạo order tại bàn của nhân viên (order/table-order.jsp) */
+.oc-filter{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.oc-cats{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.oc-cats button{padding:8px 16px;border-radius:999px;border:1px solid #e3ddd3;background:#fff;color:#444;font-size:.95rem;cursor:pointer}
+.oc-cats button:hover{border-color:#7a1f1f}
+.oc-cats button.active{background:#7a1f1f;border-color:#7a1f1f;color:#fff}
+.oc-filter input{padding:9px 12px;border:1px solid #ddd;border-radius:10px;font-size:1rem}
+.oc-filter input{flex:1;min-width:180px}
+.oc-none{color:#888;display:none}
+.oc-layout{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);gap:20px;align-items:start}
+.oc-panel{position:sticky;top:16px;background:#fff;border:1px solid #e8e1d6;border-radius:14px;padding:14px 16px}
+.oc-panel h2{margin:0 0 8px;font-size:1.05rem}
+.oc-lines{list-style:none;margin:0;padding:0}
+.oc-lines li{display:grid;grid-template-columns:minmax(0,1fr) 84px;align-items:center;column-gap:10px;padding:8px 0;border-bottom:1px solid #f0ebe3}
+.oc-lines li .oc-note{grid-column:1 / -1}
+.oc-lines .oc-note-btn{background:#fff !important;color:#7a1f1f !important;border:1px solid #d9d2c6 !important}
+.oc-lines .oc-note-btn.has{background:#fff3cd !important}
+.oc-lines small{display:block;color:#7a1f1f;font-weight:600}
+.oc-lines .oc-note-text{color:#666;font-weight:400}
+.oc-right{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:none}
+.oc-right strong{display:inline-block;width:34px;text-align:right}
+.oc-note-btn{border:1px solid #e3ddd3;background:#fff;border-radius:6px;padding:0;height:16px;line-height:14px;font-size:9px !important;letter-spacing:0;overflow:hidden;white-space:nowrap;min-width:0;font-weight:400;width:34px;text-align:center;cursor:pointer;color:#7a1f1f;margin:0}
+.oc-note-btn.has{background:#fff3cd}
+.oc-note{flex-basis:100%;margin-top:6px;padding:6px 10px;border:1px solid #ddd;border-radius:8px;font-size:.9rem;box-sizing:border-box}
+.oc-total{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
+.oc-total strong{font-size:1.2rem;color:#7a1f1f}
+.oc-send{width:100%;padding:13px;border:0;border-radius:12px;background:#7a1f1f;color:#fff;font-weight:700;cursor:pointer}
+.oc-send:disabled{background:#c9c4bb;cursor:not-allowed}
+.oc-empty{color:#888}
+.oc-grand{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px;padding:12px 14px;border-radius:12px;background:#7a1f1f;color:#fff}
+.oc-grand span{font-size:.9rem;font-weight:600;line-height:1.2}
+.oc-grand small{display:block;font-weight:400;opacity:.8;font-size:.72rem}
+.oc-grand strong{font-size:1.6rem;font-weight:800;white-space:nowrap}
+.oc-sub{padding:8px 0;font-weight:600}
+.oc-back{display:inline-block;margin-bottom:12px}
+.oc-divider{border:0;border-top:2px dashed #e3ddd3;margin:12px 0}
+.oc-status{font-size:.7rem;width:42px;text-align:center}
+.oc-status.is-served{color:#14532d}
+.oc-status.is-cooking{color:#b34100}
+.oc-status.is-pending{color:#e08a00}
+
+/* Chỉ dùng trên máy tính: mở rộng khung trang và xếp món thành lưới 2 cột. */
+.orders-page.oc-page{max-width:none;width:auto;margin:24px 24px 40px;padding:0}
+.oc-page .order-form{max-width:none;width:100%}
+.oc-page .oc-layout{width:100%}
+.oc-page .dish-choice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.oc-page .dish-choice-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin:0}
+.oc-page .dish-choice-row input{width:72px;flex:none;margin:0}
+.oc-page .form-grid{max-width:none}
+.oc-panel{max-height:calc(100vh - 32px);overflow:auto}

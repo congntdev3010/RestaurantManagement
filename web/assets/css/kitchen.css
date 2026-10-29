@@ -1,0 +1,24 @@
+/* Màn hình bếp (order/kitchen.jsp) */
+body.kitchen-page,
+body.kitchen-page input,
+body.kitchen-page button {
+font-family: Arial, "Segoe UI", sans-serif;
+}
+body.kitchen-page .orders-page h1 {
+font-family: Arial, "Segoe UI", sans-serif;
+}
+.k-table{width:100%;border-collapse:collapse;background:#fff}
+.k-table td{padding:9px 16px;border-bottom:1px solid #eee;font-size:1.05rem}
+.k-sep td{padding:0;border:0;height:6px;background:#7a1f1f}
+.k-head td{padding:14px 16px 6px;border-bottom:0}
+.k-head .k-title{font-size:1.5rem;font-weight:800;color:#2c2c2c}
+.k-head .k-title span{color:#7a1f1f}
+.k-head .k-time{float:right;color:#666;font-size:.9rem;font-weight:400;line-height:2}
+.k-qtycell{width:1%;white-space:nowrap;text-align:right;padding-right:6px !important}
+.k-namecell{padding-left:6px !important}
+.k-qty{font-size:1.3rem;font-weight:800}
+.k-note{display:inline-block;margin-left:14px;padding:1px 10px;border-radius:6px;background:#fff3e0;color:#b34100;font-weight:700;font-size:.95rem}
+.k-actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.k-actions input{width:70px;padding:5px;border:1px solid #d8cfc3;border-radius:6px}
+.k-actions button{padding:5px 9px;border:1px solid #7a1f1f;border-radius:6px;background:#7a1f1f;color:#fff;cursor:pointer}
+.k-actions .k-cancel{background:#fff;color:#7a1f1f}

@@ -13,7 +13,7 @@
         <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
         <main class="tables-page">
             <%-- Tổng quan và thông báo flash do servlet chuẩn bị trước khi forward. --%>
-                        <header class="tables-heading">
+            <header class="tables-heading">
                 <div>
                     <p class="tables-eyebrow">VẬN HÀNH NHÀ HÀNG</p>
                     <h1>Sơ đồ bàn</h1>
@@ -118,74 +118,74 @@
                                 </header>
                                 <div class="table-grid">
                                     <%-- Mỗi thẻ bàn hiển thị thông tin, trạng thái và thao tác theo quyền. --%>
-                            <c:forEach var="table" items="${group.value}">
-                                <article class="table-card status-${fn:escapeXml(fn:toLowerCase(table.status))}">
-                                    <div class="card-topline">
-                                        <span class="table-icon"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i></span>
-                                        <span class="table-status">
-                                            <c:choose>
-                                                <c:when test="${table.status eq 'AVAILABLE'}">Còn trống</c:when>
-                                                <c:when test="${table.status eq 'RESERVED'}">Đã đặt</c:when>
-                                                <c:when test="${table.status eq 'OCCUPIED'}">Đang phục vụ</c:when>
-                                                <c:otherwise>Đang phục vụ</c:otherwise>
-                                            </c:choose>
-                                        </span>
-                                    </div>
-                                    <div class="table-name-row">
-                                        <h3><c:out value="${table.tableName}" /></h3>
-                                    </div>
-                                    <p class="capacity"><c:out value="${table.capacity}" /> khách</p>
-                                    <c:if test="${not empty table.description}">
-                                        <p class="table-description"><c:out value="${table.description}" /></p>
-                                    </c:if>
-                                    <div class="table-actions">
-                                        <c:if test="${not empty tableBills[table.tableId] and (sessionScope.user.roleName eq 'Receptionist' or sessionScope.user.roleName eq 'Manager')}">
-                                            <a href="${pageContext.request.contextPath}/payment?tableId=${table.tableId}">
-                                                <i class="fa-solid fa-cash-register" aria-hidden="true"></i> Thanh toán
-                                            </a>
-                                        </c:if>
-                                        <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
-                                            <a href="${pageContext.request.contextPath}/table-order?tableId=${table.tableId}">Order</a>
-                                        </c:if>
-                                        <c:if test="${table.status eq 'OCCUPIED' and releasableTables.contains(table.tableId)}">
-                                            <form action="${pageContext.request.contextPath}/manage-tables" method="post"
-                                                  onsubmit="return confirm('Bàn chưa có order. Chuyển bàn này về còn trống?');">
-                                                <input type="hidden" name="action" value="releaseTable">
-                                                <input type="hidden" name="tableId" value="${table.tableId}">
-                                                <button type="submit"><i class="fa-solid fa-broom" aria-hidden="true"></i> Bàn trống</button>
-                                            </form>
-                                        </c:if>
-                                        <c:if test="${not empty table.qrToken}">
-                                            <a href="#" class="qr-open" data-name="${fn:escapeXml(table.tableName)}" data-token="${fn:escapeXml(table.qrToken)}">
-                                                <i class="fa-solid fa-qrcode" aria-hidden="true"></i> QR bàn
-                                            </a>
-                                        </c:if>
-                                    </div>
-                                    <%-- Manager quản lý thông tin bàn; Server/Receptionist chỉ đổi trạng thái. --%>
-                                    <c:choose>
-                                        <c:when test="${canManage}">
-                                            <div class="table-actions">
-                                                <a href="${pageContext.request.contextPath}/manage-tables?edit=${table.tableId}">Sửa</a>
+                                    <c:forEach var="table" items="${group.value}">
+                                        <article class="table-card status-${fn:escapeXml(fn:toLowerCase(table.status))}">
+                                            <div class="card-topline">
+                                                <span class="table-icon"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i></span>
+                                                <span class="table-status">
+                                                    <c:choose>
+                                                        <c:when test="${table.status eq 'AVAILABLE'}">Còn trống</c:when>
+                                                        <c:when test="${table.status eq 'RESERVED'}">Đã đặt</c:when>
+                                                        <c:when test="${table.status eq 'OCCUPIED'}">Đang phục vụ</c:when>
+                                                        <c:otherwise>Đang phục vụ</c:otherwise>
+                                                    </c:choose>
+                                                </span>
                                             </div>
-                                        </c:when>
-                                        <c:when test="${canChangeStatus}">
-                                            <form class="table-status-form" action="${pageContext.request.contextPath}/manage-tables" method="post">
-                                                <input type="hidden" name="action" value="changeStatus">
-                                                <input type="hidden" name="tableId" value="${table.tableId}">
-                                                <label>
-                                                    Trạng thái
-                                                    <select name="status" required>
-                                                        <option value="AVAILABLE" ${table.status eq 'AVAILABLE' ? 'selected' : ''}>Còn trống</option>
-                                                        <option value="RESERVED" ${table.status eq 'RESERVED' ? 'selected' : ''}>Đã đặt</option>
-                                                        <option value="OCCUPIED" ${table.status eq 'OCCUPIED' ? 'selected' : ''}>Đang phục vụ</option>
-                                                    </select>
-                                                </label>
-                                                <button type="submit">Cập nhật</button>
-                                            </form>
-                                        </c:when>
-                                    </c:choose>
-                                </article>
-                            </c:forEach>
+                                            <div class="table-name-row">
+                                                <h3><c:out value="${table.tableName}" /></h3>
+                                            </div>
+                                            <p class="capacity"><c:out value="${table.capacity}" /> khách</p>
+                                            <c:if test="${not empty table.description}">
+                                                <p class="table-description"><c:out value="${table.description}" /></p>
+                                            </c:if>
+                                            <div class="table-actions">
+                                                <c:if test="${not empty tableBills[table.tableId] and (sessionScope.user.roleName eq 'Receptionist' or sessionScope.user.roleName eq 'Manager')}">
+                                                    <a href="${pageContext.request.contextPath}/payment?tableId=${table.tableId}">
+                                                        <i class="fa-solid fa-cash-register" aria-hidden="true"></i> Thanh toán
+                                                    </a>
+                                                </c:if>
+                                                <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
+                                                    <a href="${pageContext.request.contextPath}/table-order?tableId=${table.tableId}">Order</a>
+                                                </c:if>
+                                                <c:if test="${table.status eq 'OCCUPIED' and releasableTables.contains(table.tableId)}">
+                                                    <form action="${pageContext.request.contextPath}/manage-tables" method="post"
+                                                          onsubmit="return confirm('Bàn chưa có order. Chuyển bàn này về còn trống?');">
+                                                        <input type="hidden" name="action" value="releaseTable">
+                                                        <input type="hidden" name="tableId" value="${table.tableId}">
+                                                        <button type="submit"><i class="fa-solid fa-broom" aria-hidden="true"></i> Bàn trống</button>
+                                                    </form>
+                                                </c:if>
+                                                <c:if test="${not empty table.qrToken}">
+                                                    <a href="#" class="qr-open" data-name="${fn:escapeXml(table.tableName)}" data-token="${fn:escapeXml(table.qrToken)}">
+                                                        <i class="fa-solid fa-qrcode" aria-hidden="true"></i> QR bàn
+                                                    </a>
+                                                </c:if>
+                                            </div>
+                                            <%-- Manager quản lý thông tin bàn; Server/Receptionist chỉ đổi trạng thái. --%>
+                                            <c:choose>
+                                                <c:when test="${canManage}">
+                                                    <div class="table-actions">
+                                                        <a href="${pageContext.request.contextPath}/manage-tables?edit=${table.tableId}">Sửa</a>
+                                                    </div>
+                                                </c:when>
+                                                <c:when test="${canChangeStatus}">
+                                                    <form class="table-status-form" action="${pageContext.request.contextPath}/manage-tables" method="post">
+                                                        <input type="hidden" name="action" value="changeStatus">
+                                                        <input type="hidden" name="tableId" value="${table.tableId}">
+                                                        <label>
+                                                            Trạng thái
+                                                            <select name="status" required>
+                                                                <option value="AVAILABLE" ${table.status eq 'AVAILABLE' ? 'selected' : ''}>Còn trống</option>
+                                                                <option value="RESERVED" ${table.status eq 'RESERVED' ? 'selected' : ''}>Đã đặt</option>
+                                                                <option value="OCCUPIED" ${table.status eq 'OCCUPIED' ? 'selected' : ''}>Đang phục vụ</option>
+                                                            </select>
+                                                        </label>
+                                                        <button type="submit">Cập nhật</button>
+                                                    </form>
+                                                </c:when>
+                                            </c:choose>
+                                        </article>
+                                    </c:forEach>
                                 </div>
                             </section>
                         </c:forEach>
@@ -193,8 +193,8 @@
                 </c:choose>
             </section>
         </main>
-    <c:set var="qrDefaultBase" value="${pageContext.request.scheme}://${pageContext.request.serverName}${(pageContext.request.serverPort == 80 or pageContext.request.serverPort == 443) ? '' : ':'.concat(pageContext.request.serverPort)}${pageContext.request.contextPath}" />
-            <c:set var="qrBase" value="${not empty qrBaseUrl ? qrBaseUrl : qrDefaultBase}" />
+        <c:set var="qrDefaultBase" value="${pageContext.request.scheme}://${pageContext.request.serverName}${(pageContext.request.serverPort == 80 or pageContext.request.serverPort == 443) ? '' : ':'.concat(pageContext.request.serverPort)}${pageContext.request.contextPath}" />
+        <c:set var="qrBase" value="${not empty qrBaseUrl ? qrBaseUrl : qrDefaultBase}" />
         <dialog id="qrDialog" data-base="${fn:escapeXml(qrBase)}" data-local="${fn:escapeXml(qrDefaultBase)}" style="border:0;border-radius:12px;padding:20px;text-align:center;max-width:340px;width:90%">
             <h3 id="qrTitle" style="margin:0 0 10px"></h3>
             <img id="qrImg" alt="QR bàn" width="260" height="260">
@@ -206,48 +206,57 @@
         </dialog>
         <script src="${pageContext.request.contextPath}/assets/js/qrcode.min.js"></script>
         <script>
-            (function () {
-                var dlg = document.getElementById('qrDialog');
-                var base = dlg.getAttribute('data-base').replace(/\/+$/, '');
-                var localBase = dlg.getAttribute('data-local').replace(/\/+$/, '');
-                var title = document.getElementById('qrTitle');
-                var img = document.getElementById('qrImg');
-                var preloaded = [];
-                document.querySelectorAll('.qr-open').forEach(function (a) {
-                    var url = base + '/order?table=' + encodeURIComponent(a.dataset.token);
-                    var localUrl = localBase + '/order?table=' + encodeURIComponent(a.dataset.token);
-                    var qr = qrcode(0, 'M'); qr.addData(url); qr.make();
-                    var qrSrc = qr.createDataURL(8, 2); // sinh QR ngay trên trình duyệt, không cần mạng
-                    // Tải sẵn ảnh QR ngay khi mở trang để popup hiện tức thì.
-                    var pre = new Image();
-                    pre.src = qrSrc;
-                    preloaded.push(pre);
-                    a.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        title.textContent = a.dataset.name;
-                        document.getElementById('qrUrl').textContent = url;
-                        document.getElementById('qrLocalUrl').textContent = localUrl;
-                        img.src = qrSrc;
-                        dlg.showModal();
-                    });
-                });
-                document.getElementById('qrClose').addEventListener('click', function () { dlg.close(); });
-                var downOnBackdrop = false;
-                dlg.addEventListener('mousedown', function (e) { downOnBackdrop = (e.target === dlg); });
-                dlg.addEventListener('click', function (e) {
-                    if (e.target === dlg && downOnBackdrop) dlg.close();
-                    downOnBackdrop = false;
-                });
-                document.getElementById('qrPrint').addEventListener('click', function () {
-                    var w = window.open('', '_blank', 'width=400,height=520');
-                    var h = document.createElement('h2');
-                    h.textContent = title.textContent;
-                    w.document.write('<body style="text-align:center;font-family:sans-serif">' + h.outerHTML
-                        + '<img src="' + img.src + '" width="300"><p>Quét để gọi món</p></body>');
-                    w.document.close();
-                    w.onload = function () { w.print(); };
-                });
-            })();
+                                                              (function () {
+                                                                  var dlg = document.getElementById('qrDialog');
+                                                                  var base = dlg.getAttribute('data-base').replace(/\/+$/, '');
+                                                                  var localBase = dlg.getAttribute('data-local').replace(/\/+$/, '');
+                                                                  var title = document.getElementById('qrTitle');
+                                                                  var img = document.getElementById('qrImg');
+                                                                  var preloaded = [];
+                                                                  document.querySelectorAll('.qr-open').forEach(function (a) {
+                                                                      var url = base + '/order?table=' + encodeURIComponent(a.dataset.token);
+                                                                      var localUrl = localBase + '/order?table=' + encodeURIComponent(a.dataset.token);
+                                                                      var qr = qrcode(0, 'M');
+                                                                      qr.addData(url);
+                                                                      qr.make();
+                                                                      var qrSrc = qr.createDataURL(8, 2); // sinh QR ngay trên trình duyệt, không cần mạng
+                                                                      // Tải sẵn ảnh QR ngay khi mở trang để popup hiện tức thì.
+                                                                      var pre = new Image();
+                                                                      pre.src = qrSrc;
+                                                                      preloaded.push(pre);
+                                                                      a.addEventListener('click', function (e) {
+                                                                          e.preventDefault();
+                                                                          title.textContent = a.dataset.name;
+                                                                          document.getElementById('qrUrl').textContent = url;
+                                                                          document.getElementById('qrLocalUrl').textContent = localUrl;
+                                                                          img.src = qrSrc;
+                                                                          dlg.showModal();
+                                                                      });
+                                                                  });
+                                                                  document.getElementById('qrClose').addEventListener('click', function () {
+                                                                      dlg.close();
+                                                                  });
+                                                                  var downOnBackdrop = false;
+                                                                  dlg.addEventListener('mousedown', function (e) {
+                                                                      downOnBackdrop = (e.target === dlg);
+                                                                  });
+                                                                  dlg.addEventListener('click', function (e) {
+                                                                      if (e.target === dlg && downOnBackdrop)
+                                                                          dlg.close();
+                                                                      downOnBackdrop = false;
+                                                                  });
+                                                                  document.getElementById('qrPrint').addEventListener('click', function () {
+                                                                      var w = window.open('', '_blank', 'width=400,height=520');
+                                                                      var h = document.createElement('h2');
+                                                                      h.textContent = title.textContent;
+                                                                      w.document.write('<body style="text-align:center;font-family:sans-serif">' + h.outerHTML
+                                                                              + '<img src="' + img.src + '" width="300"><p>Quét để gọi món</p></body>');
+                                                                      w.document.close();
+                                                                      w.onload = function () {
+                                                                          w.print();
+                                                                      };
+                                                                  });
+                                                              })();
         </script>
     </body>
 </html>

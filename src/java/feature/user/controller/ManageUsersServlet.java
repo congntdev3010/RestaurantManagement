@@ -20,7 +20,9 @@ public class ManageUsersServlet extends HttpServlet {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9}$");
 
-    /** Hiển thị danh sách tài khoản và nạp dữ liệu cho các bộ lọc/form. */
+    /**
+     * Hiển thị danh sách tài khoản và nạp dữ liệu cho các bộ lọc/form.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -81,7 +83,9 @@ public class ManageUsersServlet extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/user/manage-users.jsp").forward(request, response);
     }
 
-    /** Xử lý thao tác tạo, sửa, xóa mềm, khôi phục hoặc khóa/mở tài khoản. */
+    /**
+     * Xử lý thao tác tạo, sửa, xóa mềm, khôi phục hoặc khóa/mở tài khoản.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -183,7 +187,9 @@ public class ManageUsersServlet extends HttpServlet {
         response.sendRedirect(redirect);
     }
 
-    /** Xác thực phiên và giới hạn endpoint này cho Admin hoặc Manager. */
+    /**
+     * Xác thực phiên và giới hạn endpoint này cho Admin hoặc Manager.
+     */
     private User requireManagerOrAdmin(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);
@@ -200,17 +206,23 @@ public class ManageUsersServlet extends HttpServlet {
         return actor;
     }
 
-    /** Trả về true nếu người dùng hiện tại có vai trò Admin. */
+    /**
+     * Trả về true nếu người dùng hiện tại có vai trò Admin.
+     */
     private boolean isAdmin(User user) {
         return user.getRoleName() != null && "Admin".equalsIgnoreCase(user.getRoleName());
     }
 
-    /** Trả về true nếu người dùng hiện tại có vai trò Manager. */
+    /**
+     * Trả về true nếu người dùng hiện tại có vai trò Manager.
+     */
     private boolean isManager(User user) {
         return user.getRoleName() != null && "Manager".equalsIgnoreCase(user.getRoleName());
     }
 
-    /** Đọc và chuẩn hóa các trường form thành đối tượng User. */
+    /**
+     * Đọc và chuẩn hóa các trường form thành đối tượng User.
+     */
     private User readFormUser(HttpServletRequest request) {
         User user = new User();
         user.setUsername(trim(request.getParameter("username")));
@@ -222,7 +234,10 @@ public class ManageUsersServlet extends HttpServlet {
         return user;
     }
 
-    /** Kiểm tra dữ liệu tài khoản trước khi gọi DAO; mật khẩu có thể tùy chọn khi cập nhật. */
+    /**
+     * Kiểm tra dữ liệu tài khoản trước khi gọi DAO; mật khẩu có thể tùy chọn
+     * khi cập nhật.
+     */
     private String validateUser(User user, boolean passwordRequired) {
         if (user.getUsername() == null || user.getUsername().isEmpty() || user.getUsername().length() > 30) {
             return "Tên đăng nhập là bắt buộc và tối đa 30 ký tự.";
@@ -251,7 +266,10 @@ public class ManageUsersServlet extends HttpServlet {
         return null;
     }
 
-    /** Chuyển tham số sang số nguyên hoặc trả về giá trị mặc định nếu không hợp lệ. */
+    /**
+     * Chuyển tham số sang số nguyên hoặc trả về giá trị mặc định nếu không hợp
+     * lệ.
+     */
     private int parseInt(String value, int fallback) {
         try {
             return Integer.parseInt(value);
@@ -260,7 +278,9 @@ public class ManageUsersServlet extends HttpServlet {
         }
     }
 
-    /** Xóa khoảng trắng ở hai đầu chuỗi và giữ nguyên null. */
+    /**
+     * Xóa khoảng trắng ở hai đầu chuỗi và giữ nguyên null.
+     */
     private String trim(String value) {
         return value == null ? null : value.trim();
     }
@@ -269,7 +289,10 @@ public class ManageUsersServlet extends HttpServlet {
         return value != null && value.length() > maxLength ? value.substring(0, maxLength) : value;
     }
 
-    /** Lưu thông báo một lần trong session cho lần GET kế tiếp (Post/Redirect/Get). */
+    /**
+     * Lưu thông báo một lần trong session cho lần GET kế tiếp
+     * (Post/Redirect/Get).
+     */
     private void setFlash(HttpSession session, String message, String messageType) {
         session.setAttribute("manageMessage", message);
         session.setAttribute("manageMessageType", messageType);

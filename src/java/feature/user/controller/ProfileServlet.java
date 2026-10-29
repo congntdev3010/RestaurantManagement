@@ -15,11 +15,14 @@ import jakarta.servlet.http.HttpSession;
 @WebServlet(name = "ProfileServlet", urlPatterns = {"/profile"})
 public class ProfileServlet extends HttpServlet {
 
-    /** Số điện thoại hợp lệ phải có 10 chữ số và bắt đầu bằng số 0. */
+    /**
+     * Số điện thoại hợp lệ phải có 10 chữ số và bắt đầu bằng số 0.
+     */
     private static final Pattern PHONE_PATTERN = Pattern.compile("^0\\d{9}$");
 
     /**
-     * Yêu cầu đăng nhập, chuyển flash message sang request và hiển thị trang hồ sơ.
+     * Yêu cầu đăng nhập, chuyển flash message sang request và hiển thị trang hồ
+     * sơ.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -45,7 +48,8 @@ public class ProfileServlet extends HttpServlet {
     }
 
     /**
-     * Xử lý cập nhật hồ sơ hoặc đổi mật khẩu, sau đó redirect để tránh gửi lại form.
+     * Xử lý cập nhật hồ sơ hoặc đổi mật khẩu, sau đó redirect để tránh gửi lại
+     * form.
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -125,7 +129,10 @@ public class ProfileServlet extends HttpServlet {
         return (User) sessionUser;
     }
 
-    /** Xóa khoảng trắng đầu/cuối nhưng giữ nguyên null để validation phát hiện dữ liệu thiếu. */
+    /**
+     * Xóa khoảng trắng đầu/cuối nhưng giữ nguyên null để validation phát hiện
+     * dữ liệu thiếu.
+     */
     private String trim(String value) {
         return value == null ? null : value.trim();
     }

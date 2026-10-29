@@ -10,9 +10,9 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Đích của error-page 404 trong web.xml.
  *
- * Mọi địa chỉ không tồn tại (ví dụ /linh-tinh) được đưa về trang chủ bằng một lần
- * CHUYỂN HƯỚNG THẬT (302) — thanh địa chỉ trên trình duyệt đổi thành /home, chứ không
- * giữ nguyên đường dẫn sai như khi dùng forward nội bộ.
+ * Mọi địa chỉ không tồn tại (ví dụ /linh-tinh) được đưa về trang chủ bằng một
+ * lần CHUYỂN HƯỚNG THẬT (302) — thanh địa chỉ trên trình duyệt đổi thành /home,
+ * chứ không giữ nguyên đường dẫn sai như khi dùng forward nội bộ.
  */
 @WebServlet(name = "NotFoundServlet", urlPatterns = {"/error-404"})
 public class NotFoundServlet extends HttpServlet {

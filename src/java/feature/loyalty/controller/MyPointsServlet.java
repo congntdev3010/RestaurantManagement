@@ -10,9 +10,13 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import model.User;
 
-/** Màn hình điểm tích lũy của khách: số dư, quy tắc quy đổi hiện hành và lịch sử cộng/trừ điểm. */
+/**
+ * Màn hình điểm tích lũy của khách: số dư, quy tắc quy đổi hiện hành và lịch sử
+ * cộng/trừ điểm.
+ */
 @WebServlet(name = "MyPointsServlet", urlPatterns = {"/my-points"})
 public class MyPointsServlet extends HttpServlet {
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

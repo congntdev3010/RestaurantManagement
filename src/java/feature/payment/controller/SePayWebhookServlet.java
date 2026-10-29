@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
  */
 @WebServlet(name = "SePayWebhookServlet", urlPatterns = {"/webhooks/sepay"})
 public class SePayWebhookServlet extends HttpServlet {
+
     private static final Pattern TABLE = Pattern.compile("(RM-TABLE-(\\d+)(?:-\\d+)?)", Pattern.CASE_INSENSITIVE);
     private static final Pattern COMPACT_TABLE = Pattern.compile("(RMTABLE(\\d{1,3})(\\d{13}))", Pattern.CASE_INSENSITIVE);
     private static final Pattern AMOUNT = Pattern.compile(
@@ -31,7 +32,9 @@ public class SePayWebhookServlet extends HttpServlet {
         String token = System.getenv("SEPAY_WEBHOOK_TOKEN");
         String actor = System.getenv("SEPAY_ACTOR_USER_ID");
         String supplied = request.getHeader("Authorization");
-        if (supplied == null) supplied = request.getHeader("X-SePay-Token");
+        if (supplied == null) {
+            supplied = request.getHeader("X-SePay-Token");
+        }
         if (token == null || token.trim().isEmpty() || supplied == null
                 || !supplied.replaceFirst("(?i)^Apikey\\s+", "").equals(token)
                 || actor == null) {
@@ -46,7 +49,7 @@ public class SePayWebhookServlet extends HttpServlet {
         boolean compactReference = !standardReference && compactTable.find();
         if (!standardReference && !compactReference) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST,
-                "Payload thiếu content chứa mã RM-TABLE-<tableId> hoặc RMTABLE<id><timestamp>. Body=" + body);
+                    "Payload thiếu content chứa mã RM-TABLE-<tableId> hoặc RMTABLE<id><timestamp>. Body=" + body);
             return;
         }
         if (!amount.find()) {

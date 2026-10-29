@@ -1,0 +1,25 @@
+/* Khối "Món đã gửi" trong trang gọi món của khách (order/customer-order.jsp) */
+.qr-sent{background:#fff8e9;border:1px solid #e7c77d;border-radius:10px;padding:10px 12px;margin-bottom:14px}
+.qr-sent h2{margin:0 0 8px;font-size:1rem}
+.qr-sent-order{padding:0}
+.qr-sent-sum{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #e7c77d;margin-top:6px;padding-top:8px;font-size:.95rem}
+.qr-sent-sum strong{color:#7a1f1f;font-size:1.05rem}
+.qs-name{font-weight:600}
+.qs-total{color:#421217;white-space:nowrap}
+.qs-calc{color:#6a6259;font-size:.82rem}
+.qs-action{justify-self:end;align-self:center}
+.qs-st{justify-self:end;align-self:center;border-radius:20px;padding:2px 10px;font-size:.75rem!important;font-weight:700;white-space:nowrap;color:inherit}
+.qs-pending{background:#dbeafe;color:#1e40af!important}
+.qs-cooking{background:#fde9c8;color:#b45309!important}
+.qs-served{background:#dcfce7;color:#166534!important}
+.qs-out{background:#fee2e2;color:#991b1b!important}
+.qr-total-sub{font-size:.95rem}
+
+.qr-sent-head{display:none}
+.qr-sent-badge{background:#421217;color:#fff;border-radius:20px;padding:2px 10px;font-size:.75rem;font-weight:700;white-space:nowrap}
+.qr-sent ul{list-style:none;margin:6px 0 0;padding:0}
+.qr-sent li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:.9rem;padding:7px 0;border-top:1px solid #f0dfb3}
+.qr-sent li:first-child{border-top:0}
+
+/* Ô "không tìm thấy món" bắt đầu ẩn; JS vẫn bật/tắt bằng style.display. */
+#qrEmptySearch[hidden]{display:none}

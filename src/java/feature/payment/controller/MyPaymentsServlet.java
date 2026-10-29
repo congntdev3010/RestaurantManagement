@@ -13,11 +13,13 @@ import model.PaidBill;
 import model.User;
 
 /**
- * Lịch sử thanh toán của khách thành viên đang đăng nhập: các hóa đơn đã gắn tài khoản khi tích điểm.
- * Chỉ đọc đơn của chính khách này (lọc theo loyalty_customer_id); không hiện tổng doanh thu.
+ * Lịch sử thanh toán của khách thành viên đang đăng nhập: các hóa đơn đã gắn
+ * tài khoản khi tích điểm. Chỉ đọc đơn của chính khách này (lọc theo
+ * loyalty_customer_id); không hiện tổng doanh thu.
  */
 @WebServlet(name = "MyPaymentsServlet", urlPatterns = {"/my-payments"})
 public class MyPaymentsServlet extends HttpServlet {
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

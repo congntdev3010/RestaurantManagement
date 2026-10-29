@@ -20,14 +20,18 @@ import model.User;
 
 @WebServlet(name = "CartServlet", urlPatterns = {"/cart"})
 public class CartServlet extends HttpServlet {
+
     private static final String CART = "orderCart";
-    /** Bàn gắn vào phiên khi khách quét QR (xem MenuServlet). */
+    /**
+     * Bàn gắn vào phiên khi khách quét QR (xem MenuServlet).
+     */
     public static final String TABLE_ID = "orderTableId";
     public static final String TABLE_NAME = "orderTableName";
 
     /**
-     * Tên bàn trong phiên được đọc lại từ CSDL mỗi lần vào màn gọi món/giỏ hàng,
-     * để khi quản lý đổi tên bàn thì khách thấy tên mới (không giữ bản cũ trong phiên).
+     * Tên bàn trong phiên được đọc lại từ CSDL mỗi lần vào màn gọi món/giỏ
+     * hàng, để khi quản lý đổi tên bàn thì khách thấy tên mới (không giữ bản cũ
+     * trong phiên).
      */
     public static void refreshTableName(HttpSession session) {
         Object tableId = session.getAttribute(TABLE_ID);
@@ -44,7 +48,8 @@ public class CartServlet extends HttpServlet {
         }
     }
 
-    @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession();
         ensureToken(session);
@@ -53,15 +58,19 @@ public class CartServlet extends HttpServlet {
         List<Integer> unavailable = new ArrayList<>();
         BigDecimal total = BigDecimal.ZERO;
         try (DishDAO dao = new DishDAO()) {
-            for (Map.Entry<Integer,Integer> entry : cart.entrySet()) {
+            for (Map.Entry<Integer, Integer> entry : cart.entrySet()) {
                 Dish dish = dao.getActiveDishById(entry.getKey());
                 if (dish != null) {
                     dishes.add(dish);
                     total = total.add(dish.getPrice().multiply(BigDecimal.valueOf(entry.getValue())));
-                } else unavailable.add(entry.getKey());
+                } else {
+                    unavailable.add(entry.getKey());
+                }
             }
         }
-        for (Integer dishId : unavailable) cart.remove(dishId);
+        for (Integer dishId : unavailable) {
+            cart.remove(dishId);
+        }
         session.setAttribute(CART, cart);
         request.setAttribute("cartDishes", dishes);
         request.setAttribute("cartQuantities", cart);
@@ -76,42 +85,53 @@ public class CartServlet extends HttpServlet {
             return;
         }
         // Không còn màn giỏ hàng riêng: về màn gọi món, giữ lại thông báo (nếu có) để màn đó hiện.
-        if (request.getAttribute("message") != null) session.setAttribute("cartMessage", request.getAttribute("message"));
+        if (request.getAttribute("message") != null) {
+            session.setAttribute("cartMessage", request.getAttribute("message"));
+        }
         response.sendRedirect(request.getContextPath() + "/order");
     }
 
-    @Override protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
         String action = request.getParameter("action");
         boolean addAction = "add".equals(action);
-        if (session == null && addAction) session = request.getSession(true);
+        if (session == null && addAction) {
+            session = request.getSession(true);
+        }
         if (session == null || (!addAction && !validToken(session, request.getParameter("csrfToken")))) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN); return;
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
         }
         if ("add".equals(action)) {
             int dishId = parseInt(request.getParameter("dishId"), -1);
             int quantity = parseInt(request.getParameter("quantity"), 1);
             if (dishId > 0 && quantity > 0 && quantity <= 99) {
-                Map<Integer,Integer> cart = getCart(session);
+                Map<Integer, Integer> cart = getCart(session);
                 cart.put(dishId, Math.min(99, cart.getOrDefault(dishId, 0) + quantity));
                 session.setAttribute(CART, cart);
                 session.setAttribute("cartMessage", "Đã thêm món vào giỏ.");
             }
         } else if ("update".equals(action)) {
-            Map<Integer,Integer> cart = getCart(session);
-            for (String name : request.getParameterMap().keySet()) if (name.startsWith("quantity_")) {
-                int dishId = parseInt(name.substring(9), -1), quantity = parseInt(request.getParameter(name), -1);
-                if (dishId > 0 && cart.containsKey(dishId)) {
-                    if (quantity == 0) cart.remove(dishId);
-                    else if (quantity > 0 && quantity <= 99) cart.put(dishId, quantity);
+            Map<Integer, Integer> cart = getCart(session);
+            for (String name : request.getParameterMap().keySet()) {
+                if (name.startsWith("quantity_")) {
+                    int dishId = parseInt(name.substring(9), -1), quantity = parseInt(request.getParameter(name), -1);
+                    if (dishId > 0 && cart.containsKey(dishId)) {
+                        if (quantity == 0) {
+                            cart.remove(dishId);
+                        } else if (quantity > 0 && quantity <= 99) {
+                            cart.put(dishId, quantity);
+                        }
+                    }
                 }
             }
             session.setAttribute(CART, cart);
         } else if ("remove".equals(action)) {
             int dishId = parseInt(request.getParameter("dishId"), -1);
-            Map<Integer,Integer> cart = getCart(session);
+            Map<Integer, Integer> cart = getCart(session);
             cart.remove(dishId);
             session.setAttribute(CART, cart);
         } else if ("clear".equals(action)) {
@@ -121,8 +141,8 @@ public class CartServlet extends HttpServlet {
         String menuPath = request.getContextPath() + "/menu";
         String orderPath = request.getContextPath() + "/order";
         if (("add".equals(action) || "update".equals(action)) && returnTo != null
-            && (returnTo.equals(menuPath) || returnTo.startsWith(menuPath + "?")
-            || returnTo.equals(orderPath) || returnTo.startsWith(orderPath + "?"))
+                && (returnTo.equals(menuPath) || returnTo.startsWith(menuPath + "?")
+                || returnTo.equals(orderPath) || returnTo.startsWith(orderPath + "?"))
                 && !returnTo.contains("\r") && !returnTo.contains("\n")) {
             response.sendRedirect(returnTo);
         } else {
@@ -131,17 +151,32 @@ public class CartServlet extends HttpServlet {
     }
 
     @SuppressWarnings("unchecked")
-    public static Map<Integer,Integer> getCart(HttpSession session) {
+    public static Map<Integer, Integer> getCart(HttpSession session) {
         Object stored = session.getAttribute(CART);
-        if (stored instanceof Map<?,?>) return (Map<Integer,Integer>) stored;
-        Map<Integer,Integer> cart = new LinkedHashMap<>(); session.setAttribute(CART, cart); return cart;
+        if (stored instanceof Map<?, ?>) {
+            return (Map<Integer, Integer>) stored;
+        }
+        Map<Integer, Integer> cart = new LinkedHashMap<>();
+        session.setAttribute(CART, cart);
+        return cart;
     }
+
     public static void ensureToken(HttpSession session) {
-        if (session.getAttribute("orderCsrf") == null) session.setAttribute("orderCsrf", UUID.randomUUID().toString());
+        if (session.getAttribute("orderCsrf") == null) {
+            session.setAttribute("orderCsrf", UUID.randomUUID().toString());
+        }
     }
+
     public static boolean validToken(HttpSession session, String token) {
         Object expected = session.getAttribute("orderCsrf");
         return expected instanceof String && expected.equals(token);
     }
-    private int parseInt(String value, int fallback) { try { return Integer.parseInt(value); } catch (Exception e) { return fallback; } }
+
+    private int parseInt(String value, int fallback) {
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
 }
