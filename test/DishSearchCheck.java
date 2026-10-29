@@ -1,4 +1,4 @@
-import dao.DishDAO;
+import feature.menu.dao.DishDAO;
 import model.Dish;
 import java.util.List;
 
