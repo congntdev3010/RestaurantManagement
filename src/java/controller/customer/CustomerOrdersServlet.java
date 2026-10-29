@@ -85,7 +85,7 @@ public class CustomerOrdersServlet extends HttpServlet {
                 Map<Integer,String> itemNotes = new java.util.LinkedHashMap<>();
                 for (Integer dishId : cart.keySet()) {
                     String n = trim(request.getParameter("note_" + dishId));
-                    if (n != null) itemNotes.put(dishId, n.length() > 255 ? n.substring(0, 255) : n);
+                    if (n != null) itemNotes.put(dishId, n.length() > 100 ? n.substring(0, 100) : n);
                 }
                 int createdId = dao.createOrder(user == null ? null : user.getUserId(), null, (Integer) tableId, null,
                         "PENDING", name, phone, email, null, cart, itemNotes);

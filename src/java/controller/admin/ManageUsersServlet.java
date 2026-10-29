@@ -41,11 +41,11 @@ public class ManageUsersServlet extends HttpServlet {
         if (!roles.containsKey(archivedRoleFilterId)) {
             archivedRoleFilterId = 0;
         }
-        String nameQuery = trim(request.getParameter("name"));
+        String nameQuery = limit(trim(request.getParameter("name")), 30);
         if (nameQuery == null) {
             nameQuery = "";
         }
-        String archivedNameQuery = trim(request.getParameter("archivedName"));
+        String archivedNameQuery = limit(trim(request.getParameter("archivedName")), 30);
         if (archivedNameQuery == null) {
             archivedNameQuery = "";
         }
@@ -263,6 +263,10 @@ public class ManageUsersServlet extends HttpServlet {
     /** Xóa khoảng trắng ở hai đầu chuỗi và giữ nguyên null. */
     private String trim(String value) {
         return value == null ? null : value.trim();
+    }
+
+    private String limit(String value, int maxLength) {
+        return value != null && value.length() > maxLength ? value.substring(0, maxLength) : value;
     }
 
     /** Lưu thông báo một lần trong session cho lần GET kế tiếp (Post/Redirect/Get). */

@@ -24,7 +24,7 @@
     <c:if test="${not empty cartMessage}"><p class="qr-flash" role="status"><c:out value="${cartMessage}"/></p></c:if>
 
     <div class="qr-search">
-        <input type="search" id="qrSearchInput" placeholder="Tìm món ăn (gõ để tìm ngay...)" value="<c:out value='${keyword}'/>" autocomplete="off" aria-label="Tìm món ăn">
+        <input type="search" id="qrSearchInput" maxlength="50" placeholder="Tìm món ăn (gõ để tìm ngay...)" value="<c:out value='${keyword}'/>" autocomplete="off" aria-label="Tìm món ăn">
     </div>
 
     <nav class="qr-cats" id="qrCats" aria-label="Danh mục món ăn">

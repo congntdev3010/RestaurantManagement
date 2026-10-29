@@ -64,7 +64,7 @@
                         <input type="hidden" name="archivedRoleId" value="${archivedRoleFilterId}">
                         <div class="filter-field name-filter">
                             <label for="name-filter">Tìm theo tên</label>
-                            <input id="name-filter" type="search" name="name" value="<c:out value='${nameQuery}' />" placeholder="Nhập họ tên">
+                            <input id="name-filter" type="search" name="name" maxlength="30" value="<c:out value='${nameQuery}' />" placeholder="Nhập họ tên">
                         </div>
                         <div class="filter-field role-filter">
                             <label for="role-filter">Vai trò</label>
@@ -168,7 +168,7 @@
                         <input type="hidden" name="roleId" value="${roleFilterId}">
                         <div class="filter-field name-filter">
                             <label for="archived-name-filter">Tìm theo tên</label>
-                            <input id="archived-name-filter" type="search" name="archivedName"
+                            <input id="archived-name-filter" type="search" name="archivedName" maxlength="30"
                                    value="<c:out value='${archivedNameQuery}' />" placeholder="Nhập họ tên">
                         </div>
                         <div class="filter-field role-filter">

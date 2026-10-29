@@ -7,12 +7,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Chi tiết order</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/orders.css?v=1.1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/orders.css?v=1.2">
     <style>
         .orders-page {
             max-width: 860px;
             margin: 28px auto;
             padding: 0 16px 40px;
+        }
+        .orders-page h1 {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: 700;
         }
         .review-top-meta {
             display: flex;
@@ -186,7 +190,7 @@
                         <td class="rv-name"><c:out value="${dish.dishName}"/></td>
                         <td class="rv-qty" data-label="Số lượng"><c:out value="${cartQuantities[dish.dishId]}"/></td>
                         <td class="rv-price" data-label="Đơn giá"><fmt:formatNumber value="${dish.price}" pattern="#,###"/> đ</td>
-                        <td class="rv-notecell"><input type="text" class="rv-note" name="note_${dish.dishId}" maxlength="255" placeholder="Ghi chú (ít cay, không hành...)"></td>
+                        <td class="rv-notecell"><input type="text" class="rv-note" name="note_${dish.dishId}" maxlength="100" placeholder="Ghi chú (ít cay, không hành...)"></td>
                         <td class="rv-sum" data-label="Tạm tính"><fmt:formatNumber value="${dish.price * cartQuantities[dish.dishId]}" pattern="#,###"/> đ</td>
                     </tr>
                     </c:forEach>
@@ -213,5 +217,23 @@
         </div>
     </form>
 </main>
+<script>
+    (function () {
+        var storageKey = 'qrOrderItemNotes';
+        var notes = {};
+        try { notes = JSON.parse(sessionStorage.getItem(storageKey) || '{}'); } catch (e) { notes = {}; }
+        document.querySelectorAll('.rv-note').forEach(function (input) {
+            var dishId = input.name.substring(5);
+            if (notes[dishId]) input.value = notes[dishId];
+            input.addEventListener('input', function () {
+                notes[dishId] = input.value;
+                try { sessionStorage.setItem(storageKey, JSON.stringify(notes)); } catch (e) {}
+            });
+        });
+        document.querySelector('.checkout-form').addEventListener('submit', function () {
+            try { sessionStorage.removeItem(storageKey); } catch (e) {}
+        });
+    })();
+</script>
 </body>
 </html>

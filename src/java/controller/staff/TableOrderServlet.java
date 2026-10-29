@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -29,6 +30,7 @@ import model.User;
  */
 @WebServlet(name = "TableOrderServlet", urlPatterns = {"/table-order"})
 public class TableOrderServlet extends HttpServlet {
+    private static final Pattern PHONE_PATTERN = Pattern.compile("0\\d{9}");
     /** Dùng chung key với ManageOrdersServlet cũ để món đã lưu tạm không bị mất khi chuyển màn. */
     private static final String STAFF_ORDER_DRAFTS = "staffOrderDrafts";
 
@@ -74,6 +76,16 @@ public class TableOrderServlet extends HttpServlet {
         Integer tableId = parsePositive(request.getParameter("tableId"));
         Map<Integer, Integer> quantities = readQuantities(request);
         String message = "Không thể thực hiện thao tác với đơn hàng.";
+        String customerName = trim(request.getParameter("customerName"));
+        String customerPhone = trim(request.getParameter("customerPhone"));
+        String orderNote = trim(request.getParameter("note"));
+        if (customerName != null && customerName.length() > 30) {
+            message = "Tên khách tối đa 30 ký tự.";
+        } else if (customerPhone != null && !PHONE_PATTERN.matcher(customerPhone).matches()) {
+            message = "Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số.";
+        } else if (orderNote != null && orderNote.length() > 100) {
+            message = "Ghi chú tối đa 100 ký tự.";
+        } else {
         try (OrderDAO dao = new OrderDAO()) {
             if (tableId != null && dao.hasPendingOrder(tableId)) {
                 // Bàn đã có order chờ duyệt: chỉ lưu tạm món mới, không đụng order cũ.
@@ -84,8 +96,7 @@ public class TableOrderServlet extends HttpServlet {
             if (tableId != null && !quantities.isEmpty()) {
                 // Order của server cũng phải qua bước chờ duyệt, giống order của khách.
                 int created = dao.createOrder(null, actor.getUserId(), tableId, null, "PENDING",
-                        trim(request.getParameter("customerName")), trim(request.getParameter("customerPhone")),
-                        null, trim(request.getParameter("note")), quantities, readItemNotes(request, quantities));
+                    customerName, customerPhone, null, orderNote, quantities, readItemNotes(request, quantities));
                 if (created > 0) {
                     getDrafts(session).remove(tableId);
                     // Gửi xong quay về sơ đồ bàn.
@@ -97,6 +108,7 @@ public class TableOrderServlet extends HttpServlet {
             } else {
                 message = "Hãy chọn bàn và ít nhất một món.";
             }
+        }
         }
         session.setAttribute("staffOrderMessage", message);
         response.sendRedirect(request.getContextPath() + "/table-order" + (tableId == null ? "" : "?tableId=" + tableId));
@@ -111,12 +123,12 @@ public class TableOrderServlet extends HttpServlet {
         request.setAttribute("categories", categories); request.setAttribute("dishes", dishes);
     }
 
-    /** Ghi chú từng món (note_<dishId>), chỉ lấy cho món có số lượng, tối đa 255 ký tự. */
+    /** Ghi chú từng món (note_<dishId>), chỉ lấy cho món có số lượng, tối đa 100 ký tự. */
     private Map<Integer, String> readItemNotes(HttpServletRequest request, Map<Integer, Integer> quantities) {
         Map<Integer, String> notes = new LinkedHashMap<>();
         for (Integer dishId : quantities.keySet()) {
             String n = trim(request.getParameter("note_" + dishId));
-            if (n != null) notes.put(dishId, n.length() > 255 ? n.substring(0, 255) : n);
+            if (n != null) notes.put(dishId, n.length() > 100 ? n.substring(0, 100) : n);
         }
         return notes;
     }

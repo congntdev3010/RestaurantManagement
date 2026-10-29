@@ -37,10 +37,10 @@
 <main class="orders-page oc-page"><a class="button secondary" href="${pageContext.request.contextPath}/manage-tables" style="display:inline-block;margin-bottom:12px">&larr; Quay lại sơ đồ bàn</a><h1>Order - <c:out value="${table.tableName}"/></h1><c:if test="${not empty orderMessage}"><p class="notice"><c:out value="${orderMessage}"/></p></c:if>
 <c:choose><c:when test="${not empty pendingOrder}"><p>Bàn đang có order #<c:out value="${pendingOrder.orderId}"/> chờ duyệt. Món mới chọn chỉ được lưu tạm, chưa đưa vào danh sách duyệt.</p></c:when><c:otherwise><p>Order sẽ ở trạng thái chờ duyệt; bạn xác nhận với bếp rồi duyệt từng món ở bước sau.</p></c:otherwise></c:choose>
 <form id="orderForm" action="${pageContext.request.contextPath}/table-order" method="post" class="order-form"><input type="hidden" name="csrfToken" value="${sessionScope.orderCsrf}"><input type="hidden" name="tableId" value="${table.tableId}">
-<div class="form-grid"><label>Tên khách (tùy chọn)<input name="customerName" maxlength="100"></label><label>Số điện thoại (tùy chọn)<input name="customerPhone" maxlength="20"></label><label>Ghi chú<input name="note" maxlength="500"></label></div>
+<div class="form-grid"><label>Tên khách (tùy chọn)<input name="customerName" maxlength="30"></label><label>Số điện thoại (tùy chọn)<input name="customerPhone" type="tel" inputmode="numeric" maxlength="10" pattern="0[0-9]{9}" title="Số điện thoại gồm 10 chữ số, bắt đầu bằng 0"></label><label>Ghi chú<input name="note" maxlength="100"></label></div>
 <div class="oc-layout">
 <div><h2>Chọn món</h2>
-<div class="oc-filter"><input type="search" id="ocSearch" placeholder="Tìm món ăn" autocomplete="off"></div>
+<div class="oc-filter"><input type="search" id="ocSearch" maxlength="50" placeholder="Tìm món ăn" autocomplete="off"></div>
 <div class="oc-cats" id="ocCat"><button type="button" class="active" data-cat="">Tất cả</button><c:forEach var="cat" items="${categories}"><button type="button" data-cat="${cat.categoryId}"><c:out value="${cat.categoryName}"/></button></c:forEach></div>
 <p class="oc-none" id="ocNone">Không tìm thấy món phù hợp.</p>
 <div class="dish-choice"><c:forEach var="dish" items="${dishes}"><label class="dish-choice-row" data-cat="${dish.categoryId}" data-search="<c:out value='${dish.dishName}'/>"><span><c:out value="${dish.dishName}"/> — <fmt:formatNumber value="${dish.price}" pattern="#,###"/> đ / <c:out value="${dish.unit}"/></span><input type="number" min="0" max="99" name="quantity_${dish.dishId}" value="${draftQuantities[dish.dishId]}" placeholder="0" data-name="<c:out value='${dish.dishName}'/>" data-price="${dish.price}" aria-label="Số lượng ${dish.dishName}"></label></c:forEach></div></div>
@@ -79,7 +79,7 @@
       name.textContent=i.dataset.name;s.textContent=fmt(sub);name.appendChild(s);qty.textContent='x'+q;
       btn.type='button';btn.className='oc-note-btn'+(notes[id]?' has':'');btn.textContent='Note';
       right.className='oc-right';right.appendChild(qty);right.appendChild(btn);li.appendChild(name);li.appendChild(right);
-      var inp=document.createElement('input');inp.type='text';inp.name='note_'+id;inp.maxLength=255;inp.className='oc-note';inp.value=notes[id]||'';
+      var inp=document.createElement('input');inp.type='text';inp.name='note_'+id;inp.maxLength=100;inp.className='oc-note';inp.value=notes[id]||'';
       inp.style.display=(open[id]||notes[id])?'block':'none';
       inp.addEventListener('input',function(){notes[id]=inp.value;btn.className='oc-note-btn'+(inp.value?' has':'');});
       inp.addEventListener('keydown',function(e){if(e.key==='Enter')e.preventDefault();});

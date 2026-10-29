@@ -106,6 +106,7 @@ public class MenuServlet extends HttpServlet {
         String keyword = request.getParameter("keyword");
         if (keyword != null) {
             keyword = keyword.trim();
+            if (keyword.length() > 50) keyword = keyword.substring(0, 50);
             keyword = keyword.isEmpty() ? null : Normalizer.normalize(keyword, Normalizer.Form.NFC);
         }
         String categoryIdRaw = request.getParameter("categoryId");
