@@ -1,4 +1,4 @@
-import feature.menu.dao.DishDAO;
+import dao.DishDAO;
 import model.Dish;
 import java.math.BigDecimal;
 

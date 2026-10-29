@@ -1,6 +1,6 @@
 package filter;
 
-import feature.user.dao.UserDAO;
+import dao.UserDAO;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
