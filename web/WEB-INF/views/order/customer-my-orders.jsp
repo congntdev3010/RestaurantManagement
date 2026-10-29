@@ -1,0 +1,45 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Đơn hàng của tôi</title>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/orders.css">
+    </head>
+    <body>
+        <jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
+
+        <main class="orders-page">
+            <h1>Đơn hàng của tôi</h1>
+
+            <c:if test="${not empty orderMessage}">
+                <p class="notice"><c:out value="${orderMessage}"/></p>
+            </c:if>
+
+            <c:choose>
+                <c:when test="${empty orders}">
+                    <p>Bạn chưa có đơn hàng nào.</p>
+                </c:when>
+                <c:otherwise>
+                    <div class="order-list">
+                        <c:forEach var="order" items="${orders}">
+                            <article class="order-card">
+                                <div>
+                                    <strong>Đơn #<c:out value="${order.orderId}"/></strong>
+                                    <span class="status"><c:out value="${order.status}"/></span>
+                                </div>
+                                <p>Tạo lúc: <c:out value="${order.createdAt}"/></p>
+                                <p>Tổng: <c:out value="${order.totalAmount}"/> đ</p>
+                                <a class="button" href="${pageContext.request.contextPath}/my-orders?id=${order.orderId}">Xem chi tiết</a>
+                            </article>
+                        </c:forEach>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+
+            <a class="button secondary" href="${pageContext.request.contextPath}/menu">Tiếp tục chọn món</a>
+        </main>
+    </body>
+</html>

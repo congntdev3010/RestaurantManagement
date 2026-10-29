@@ -34,8 +34,7 @@ public class RestaurantTableDAO extends DBContext {
         }
 
         // Đóng statement và result set ngay sau khi đã ánh xạ xong kết quả.
-        try (PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet results = statement.executeQuery()) {
+        try (PreparedStatement statement = connection.prepareStatement(sql); ResultSet results = statement.executeQuery()) {
             while (results.next()) {
                 tables.add(readTable(results));
             }
@@ -44,7 +43,8 @@ public class RestaurantTableDAO extends DBContext {
     }
 
     /**
-     * Tìm bàn theo ID; trả về null nếu không tồn tại và ném SQLException nếu truy vấn lỗi.
+     * Tìm bàn theo ID; trả về null nếu không tồn tại và ném SQLException nếu
+     * truy vấn lỗi.
      */
     public RestaurantTable getTableById(int tableId) throws SQLException {
         String sql = "SELECT " + TABLE_COLUMNS + " FROM RestaurantTables WHERE table_id = ?";
@@ -60,7 +60,10 @@ public class RestaurantTableDAO extends DBContext {
         }
     }
 
-    /** Tìm bàn theo token QR; null nếu token sai. Không ném lỗi để trang khách xử lý nhẹ nhàng. */
+    /**
+     * Tìm bàn theo token QR; null nếu token sai. Không ném lỗi để trang khách
+     * xử lý nhẹ nhàng.
+     */
     public RestaurantTable getTableByQrToken(String token) {
         if (token == null || token.length() != 36 || connection == null) {
             return null;
@@ -77,26 +80,34 @@ public class RestaurantTableDAO extends DBContext {
         }
     }
 
-    /** Thêm bàn mới bằng dữ liệu đã được servlet kiểm tra. */
+    /**
+     * Thêm bàn mới bằng dữ liệu đã được servlet kiểm tra.
+     */
     public boolean createTable(RestaurantTable table) {
         String sql = "INSERT INTO RestaurantTables (table_name, table_type, capacity, table_status, description) "
                 + "VALUES (?, ?, ?, ?, ?)";
         return executeUpdate(sql, statement -> bindTable(statement, table));
     }
 
-    /** Cập nhật thông tin bàn và chỉ chấp nhận chuyển trạng thái hợp lệ. */
+    /**
+     * Cập nhật thông tin bàn (tên, loại, sức chứa, ghi chú). KHÔNG đổi trạng
+     * thái: trạng thái bàn do nghiệp vụ order/thanh toán quản lý.
+     */
     public boolean updateTable(RestaurantTable table) {
-        String sql = "UPDATE RestaurantTables SET table_name = ?, table_type = ?, capacity = ?, "
-                + "table_status = ?, description = ? WHERE table_id = ? AND " + STATUS_TRANSITION_CONDITION;
+        String sql = "UPDATE RestaurantTables SET table_name = ?, table_type = ?, capacity = ?, description = ? "
+                + "WHERE table_id = ?";
         return executeUpdate(sql, statement -> {
-            bindTable(statement, table);
-            statement.setInt(6, table.getTableId());
-            // Điều kiện SQL có bốn tham số trạng thái để bảo vệ cả cập nhật ngoài servlet.
-            bindTransitionStatus(statement, table.getStatus(), 7);
+            statement.setNString(1, table.getTableName());
+            statement.setNString(2, table.getTableType());
+            statement.setInt(3, table.getCapacity());
+            statement.setNString(4, table.getDescription());
+            statement.setInt(5, table.getTableId());
         });
     }
 
-    /** Chỉ cập nhật trạng thái, không thay đổi thông tin còn lại của bàn. */
+    /**
+     * Chỉ cập nhật trạng thái, không thay đổi thông tin còn lại của bàn.
+     */
     public boolean updateTableStatus(int tableId, String status) {
         String sql = "UPDATE RestaurantTables SET table_status = ? WHERE table_id = ? AND "
                 + STATUS_TRANSITION_CONDITION;
@@ -107,26 +118,32 @@ public class RestaurantTableDAO extends DBContext {
         });
     }
 
-    /** Điều kiện SQL: bàn không còn order PENDING/OPEN nào. */
+    /**
+     * Điều kiện SQL: bàn không còn order PENDING/OPEN nào.
+     */
     private static final String NO_ACTIVE_ORDER = "NOT EXISTS (SELECT 1 FROM Orders o "
             + "WHERE o.table_id = RestaurantTables.table_id AND o.order_status IN ('PENDING', 'OPEN'))";
 
-    /** Nhả bàn đang phục vụ nhưng không có order (khách đến rồi về). Bàn còn order thì trả về false. */
+    /**
+     * Nhả bàn đang phục vụ nhưng không có order (khách đến rồi về). Bàn còn
+     * order thì trả về false.
+     */
     public boolean releaseIfNoOrder(int tableId) {
         String sql = "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
                 + "WHERE table_id = ? AND table_status = 'OCCUPIED' AND " + NO_ACTIVE_ORDER;
         return executeUpdate(sql, statement -> statement.setInt(1, tableId));
     }
 
-    /** Tập id các bàn OCCUPIED không có order — dùng để hiện nút "Bàn trống". */
+    /**
+     * Tập id các bàn OCCUPIED không có order — dùng để hiện nút "Bàn trống".
+     */
     public java.util.Set<Integer> getReleasableTableIds() {
         java.util.Set<Integer> ids = new java.util.HashSet<>();
         if (connection == null) {
             return ids;
         }
         String sql = "SELECT table_id FROM RestaurantTables WHERE table_status = 'OCCUPIED' AND " + NO_ACTIVE_ORDER;
-        try (PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet rs = statement.executeQuery()) {
+        try (PreparedStatement statement = connection.prepareStatement(sql); ResultSet rs = statement.executeQuery()) {
             while (rs.next()) {
                 ids.add(rs.getInt("table_id"));
             }
@@ -136,7 +153,10 @@ public class RestaurantTableDAO extends DBContext {
         return ids;
     }
 
-    /** Mở bàn cho khách vãng lai: chỉ chuyển được khi bàn đang AVAILABLE/RESERVED, bàn đang phục vụ trả về false. */
+    /**
+     * Mở bàn cho khách vãng lai: chỉ chuyển được khi bàn đang
+     * AVAILABLE/RESERVED, bàn đang phục vụ trả về false.
+     */
     public boolean occupyIfFree(int tableId) {
         String sql = "UPDATE RestaurantTables SET table_status = 'OCCUPIED' "
                 + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED')";
@@ -144,8 +164,9 @@ public class RestaurantTableDAO extends DBContext {
     }
 
     /**
-     * Gộp bàn cho khách vãng lai: mở TẤT CẢ các bàn trong một transaction.
-     * Chỉ thành công khi mọi bàn đều đang AVAILABLE/RESERVED; một bàn bận thì không bàn nào được mở.
+     * Gộp bàn cho khách vãng lai: mở TẤT CẢ các bàn trong một transaction. Chỉ
+     * thành công khi mọi bàn đều đang AVAILABLE/RESERVED; một bàn bận thì không
+     * bàn nào được mở.
      */
     public boolean occupyAllIfFree(java.util.Collection<Integer> tableIds) {
         if (connection == null || tableIds.isEmpty()) {
@@ -181,13 +202,6 @@ public class RestaurantTableDAO extends DBContext {
         }
     }
 
-    /** Chỉ xóa bàn đang trống. */
-    public boolean deleteTable(int tableId) {
-        String sql = "DELETE FROM RestaurantTables "
-                + "WHERE table_id = ? AND table_status = 'AVAILABLE'";
-        return executeUpdate(sql, statement -> statement.setInt(1, tableId));
-    }
-
     /**
      * Gắn trạng thái vào bốn placeholder của điều kiện chuyển trạng thái SQL.
      */
@@ -213,14 +227,21 @@ public class RestaurantTableDAO extends DBContext {
         }
     }
 
-    /** Bộ gắn tham số để dùng chung hàm thực thi các câu lệnh ghi. */
+    /**
+     * Bộ gắn tham số để dùng chung hàm thực thi các câu lệnh ghi.
+     */
     @FunctionalInterface
     private interface StatementBinder {
-        /** Gắn các giá trị vào placeholder của PreparedStatement. */
+
+        /**
+         * Gắn các giá trị vào placeholder của PreparedStatement.
+         */
         void bind(PreparedStatement statement) throws SQLException;
     }
 
-    /** Gắn năm trường dùng chung theo thứ tự placeholder của lệnh INSERT/UPDATE. */
+    /**
+     * Gắn năm trường dùng chung theo thứ tự placeholder của lệnh INSERT.
+     */
     private void bindTable(PreparedStatement statement, RestaurantTable table) throws SQLException {
         statement.setNString(1, table.getTableName());
         statement.setNString(2, table.getTableType());
@@ -229,7 +250,9 @@ public class RestaurantTableDAO extends DBContext {
         statement.setNString(5, table.getDescription());
     }
 
-    /** Ánh xạ một dòng kết quả SQL sang model bàn. */
+    /**
+     * Ánh xạ một dòng kết quả SQL sang model bàn.
+     */
     private RestaurantTable readTable(ResultSet results) throws SQLException {
         RestaurantTable table = new RestaurantTable();
         table.setTableId(results.getInt("table_id"));

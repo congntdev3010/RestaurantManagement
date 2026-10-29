@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TableBill {
-    private int tableId;
+    private int tableId; private String tableName;
     private int orderCount;
     private int unfinishedItemCount;
     private BigDecimal totalAmount = BigDecimal.ZERO;
@@ -14,12 +14,15 @@ public class TableBill {
     private LocalDateTime checkedInAt;
     private String customerName;
     private String customerPhone;
+    private String customerEmail;
     private BigDecimal cashReceived;
     private BigDecimal cashChange;
     private String paymentMethod;
     // Điểm tích lũy: khách được lễ tân gắn vào bill, điểm dùng, tiền giảm, số phải trả, điểm sẽ được cộng.
     private int loyaltyCustomerId;
     private String loyaltyCustomerName;
+    private String loyaltyCustomerPhone;
+    private String loyaltyCustomerEmail;
     private int loyaltyBalance;
     private int pointsToUse;
     private BigDecimal discountAmount = BigDecimal.ZERO;
@@ -27,7 +30,7 @@ public class TableBill {
     private int pointsToEarn;
     private List<TableBillItem> items = new ArrayList<>();
 
-    public int getTableId() { return tableId; }
+    public int getTableId() { return tableId; } public String getTableName() { return tableName; } public void setTableName(String tableName) { this.tableName = tableName; }
     public void setTableId(int tableId) { this.tableId = tableId; }
     public int getOrderCount() { return orderCount; }
     public void setOrderCount(int orderCount) { this.orderCount = orderCount; }
@@ -49,6 +52,8 @@ public class TableBill {
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     public String getCustomerPhone() { return customerPhone; }
     public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
+    public String getCustomerEmail() { return customerEmail; }
+    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
     public List<TableBillItem> getItems() { return items; }
     public BigDecimal getCashReceived() { return cashReceived; }
     public void setCashReceived(BigDecimal cashReceived) { this.cashReceived = cashReceived; }
@@ -60,6 +65,10 @@ public class TableBill {
     public void setLoyaltyCustomerId(int v) { this.loyaltyCustomerId = v; }
     public String getLoyaltyCustomerName() { return loyaltyCustomerName; }
     public void setLoyaltyCustomerName(String v) { this.loyaltyCustomerName = v; }
+    public String getLoyaltyCustomerPhone() { return loyaltyCustomerPhone; }
+    public void setLoyaltyCustomerPhone(String v) { this.loyaltyCustomerPhone = v; }
+    public String getLoyaltyCustomerEmail() { return loyaltyCustomerEmail; }
+    public void setLoyaltyCustomerEmail(String v) { this.loyaltyCustomerEmail = v; }
     public int getLoyaltyBalance() { return loyaltyBalance; }
     public void setLoyaltyBalance(int v) { this.loyaltyBalance = v; }
     public int getPointsToUse() { return pointsToUse; }

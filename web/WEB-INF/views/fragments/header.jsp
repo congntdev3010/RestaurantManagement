@@ -61,6 +61,7 @@
                     <a href="${pageContext.request.contextPath}/profile"><i class="fa-regular fa-id-card"></i> Thông tin cá nhân</a>
                     <% if ("Customer".equalsIgnoreCase(roleName)) { %>
                     <a href="${pageContext.request.contextPath}/my-points"><i class="fa-solid fa-star"></i> Điểm tích lũy</a>
+                    <a href="${pageContext.request.contextPath}/my-payments"><i class="fa-solid fa-receipt"></i> Lịch sử thanh toán</a>
                     <% } %>
                     <% if (!"Server".equalsIgnoreCase(roleName)) { %>
                     <a href="${pageContext.request.contextPath}/my-bookings"><i class="fa-solid fa-utensils"></i> Lịch sử đặt bàn</a>
@@ -134,6 +135,10 @@
             <i class="fa-solid fa-calendar-check" aria-hidden="true"></i><span>Quản lý đặt bàn</span>
         </a>
         <% if (isReceptionist) { %>
+        <a class="sidebar-link <%= currentURI.contains("service-history") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/service-history" title="Lịch sử thanh toán" aria-label="Lịch sử thanh toán">
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Lịch sử thanh toán</span>
+        </a>
         <a class="sidebar-link <%= currentURI.contains("payment") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/payment" title="Thanh toán theo bàn" aria-label="Thanh toán theo bàn">
             <i class="fa-solid fa-cash-register" aria-hidden="true"></i><span>Thanh toán</span>
@@ -153,6 +158,10 @@
         </a>
         <% } %>
         <% if (isManager) { %>
+        <a class="sidebar-link <%= currentURI.contains("service-history") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/service-history" title="Lịch sử thanh toán" aria-label="Lịch sử thanh toán">
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Lịch sử thanh toán</span>
+        </a>
         <a class="sidebar-link <%= currentURI.contains("manage-news") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-news" title="Quản lý tin tức" aria-label="Quản lý tin tức">
             <i class="fa-regular fa-newspaper" aria-hidden="true"></i><span>Quản lý tin tức</span>
