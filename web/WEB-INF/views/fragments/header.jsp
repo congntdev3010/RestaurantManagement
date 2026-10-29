@@ -170,6 +170,10 @@
            href="${pageContext.request.contextPath}/loyalty-settings" title="Quy đổi điểm" aria-label="Quy đổi điểm">
             <i class="fa-solid fa-star" aria-hidden="true"></i><span>Quy đổi điểm</span>
         </a>
+        <a class="sidebar-link <%= currentURI.contains("vouchers") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/vouchers" title="Gửi voucher" aria-label="Gửi voucher">
+            <i class="fa-solid fa-ticket" aria-hidden="true"></i><span>Gửi voucher</span>
+        </a>
         <a class="sidebar-link <%= currentURI.contains("manage-dishes") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-dishes" title="Quản lý thực đơn" aria-label="Quản lý thực đơn">
             <i class="fa-solid fa-utensils" aria-hidden="true"></i><span>Quản lý thực đơn</span>

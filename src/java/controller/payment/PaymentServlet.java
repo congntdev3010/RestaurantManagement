@@ -3,6 +3,7 @@ package controller.payment;
 import dao.LoyaltyDAO;
 import dao.OrderDAO;
 import dao.RestaurantTableDAO;
+import dao.VoucherDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -61,7 +62,7 @@ public class PaymentServlet extends HttpServlet {
                 model.LoyaltySettings loyaltySettings = loyaltyDao.getSettings();
                 request.setAttribute("loyaltySettings", loyaltySettings);
                 // Số điểm tối đa dùng được: không quá số dư và không làm tiền giảm vượt tổng bill.
-                int byTotal = bill.getTotalAmount().divideToIntegralValue(loyaltySettings.getRedeemValuePerPoint()).intValue();
+                int byTotal = bill.getTotalAmount().subtract(bill.getVoucherDiscount()).divideToIntegralValue(loyaltySettings.getRedeemValuePerPoint()).intValue();
                 request.setAttribute("maxLoyaltyPoints", Math.min(bill.getLoyaltyBalance(), byTotal));
             }
             HttpSession flash = request.getSession();
@@ -101,7 +102,7 @@ public class PaymentServlet extends HttpServlet {
         String action = request.getParameter("action");
         String message;
         String type = "error";
-        try (OrderDAO orderDao = new OrderDAO(); LoyaltyDAO loyalty = new LoyaltyDAO()) {
+        try (OrderDAO orderDao = new OrderDAO(); LoyaltyDAO loyalty = new LoyaltyDAO(); VoucherDAO voucher = new VoucherDAO()) {
             TableBill bill = tableId > 0 ? orderDao.getTableBill(tableId) : null;
             model.LoyaltySettings settings = loyalty.getSettings();
             if (bill == null) {
@@ -132,7 +133,7 @@ public class PaymentServlet extends HttpServlet {
                 } else if (points > loyalty.getBalance(bill.getLoyaltyCustomerId())) {
                     message = "Khách không đủ điểm (hiện có " + loyalty.getBalance(bill.getLoyaltyCustomerId()) + " điểm).";
                 } else if (settings.getRedeemValuePerPoint().multiply(java.math.BigDecimal.valueOf(points))
-                        .compareTo(bill.getTotalAmount()) > 0) {
+                        .compareTo(bill.getTotalAmount().subtract(bill.getVoucherDiscount())) > 0) {
                     message = "Số tiền giảm không được vượt quá tổng hóa đơn.";
                 } else if (loyalty.setBillLink(tableId, bill.getLoyaltyCustomerId(), points, actor.getUserId())) {
                     message = points == 0 ? "Đã bỏ dùng điểm." : "Đã áp dụng " + points + " điểm cho bill.";
@@ -140,6 +141,18 @@ public class PaymentServlet extends HttpServlet {
                 } else {
                     message = "Không thể lưu số điểm sử dụng.";
                 }
+            } else if ("applyVoucher".equals(action)) {
+                String error = voucher.applyToTable(tableId, request.getParameter("voucherCode"), actor.getUserId());
+                if (error == null) {
+                    message = "Đã áp dụng mã voucher cho bill. Tiền giảm đã được cập nhật.";
+                    type = "success";
+                } else {
+                    message = error;
+                }
+            } else if ("clearVoucher".equals(action)) {
+                voucher.clearTableVoucher(tableId);
+                message = "Đã bỏ mã voucher khỏi bill.";
+                type = "success";
             } else if ("clearLoyalty".equals(action)) {
                 loyalty.clearBillLink(tableId);
                 message = "Đã bỏ gắn tài khoản customer khỏi bill.";

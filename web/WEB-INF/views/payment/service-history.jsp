@@ -78,6 +78,12 @@
                                 <strong>- <fmt:formatNumber value="${selected.discountAmount}" pattern="#,##0"/> đ</strong>
                             </div>
                         </c:if>
+                        <c:if test="${selected.hasVoucher}">
+                            <div class="receipt-total-bottom">
+                                <span>Giảm giá voucher (<fmt:formatNumber value="${selected.voucherPercent}" maxFractionDigits="2"/>%)</span>
+                                <strong>- <fmt:formatNumber value="${selected.voucherDiscount}" pattern="#,##0"/> đ</strong>
+                            </div>
+                        </c:if>
                         <div class="receipt-total-bottom">
                             <span>Khách đã trả</span>
                             <strong><fmt:formatNumber value="${selected.payableAmount}" pattern="#,##0"/> đ</strong>

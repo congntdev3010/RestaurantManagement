@@ -21,7 +21,7 @@ public class ServiceHistoryDAO extends DBContext {
 
     private static final String SELECT_BILL
             = "SELECT h.history_id, t.table_name, h.customer_name, h.customer_phone, h.customer_email, h.paid_at, "
-            + "h.payment_method, h.total_amount, COALESCE(h.loyalty_discount, 0) AS loyalty_discount, "
+            + "h.payment_method, h.total_amount, COALESCE(h.loyalty_discount, 0) AS loyalty_discount, COALESCE(h.voucher_discount, 0) AS voucher_discount, COALESCE(h.voucher_discount_percent, 0) AS voucher_percent, "
             + "COALESCE(h.loyalty_points_used, 0) AS points_used, COALESCE(h.loyalty_points_earned, 0) AS points_earned, "
             + "h.cash_received, h.cash_change, h.loyalty_customer_id, u.full_name AS paid_by_name "
             + "FROM ServiceHistory h "
@@ -165,6 +165,8 @@ public class ServiceHistoryDAO extends DBContext {
         BigDecimal total = rs.getBigDecimal("total_amount");
         bill.setTotalAmount(total == null ? BigDecimal.ZERO : total);
         bill.setDiscountAmount(rs.getBigDecimal("loyalty_discount"));
+        bill.setVoucherDiscount(rs.getBigDecimal("voucher_discount"));
+        bill.setVoucherPercent(rs.getBigDecimal("voucher_percent"));
         bill.setPointsUsed(rs.getInt("points_used"));
         bill.setPointsEarned(rs.getInt("points_earned"));
         bill.setCashReceived(rs.getBigDecimal("cash_received"));
