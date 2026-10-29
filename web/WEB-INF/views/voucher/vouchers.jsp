@@ -65,8 +65,8 @@
                                    value="${empty previewPercent ? '' : previewPercent.toPlainString()}">
                         </div>
                         <div>
-                            <label for="minSpent">Khách phải đã chi trên (đ)
-                                <span class="vc-hint">Tổng tiền khách đã thanh toán, lớn hơn mức này mới nhận. Từ 0 đến 1.000.000.000</span>
+                            <label for="minSpent">Khách phải đã chi từ (đ)
+                                <span class="vc-hint">Tổng tiền khách đã thanh toán, bằng hoặc lớn hơn mức này mới nhận. Đặt 0 để gửi cho cả khách mới. Từ 0 đến 1.000.000.000</span>
                             </label>
                             <input id="minSpent" name="minSpent" type="number" min="0" max="1000000000" step="1" required
                                    placeholder="Ví dụ: 500000"
@@ -88,7 +88,7 @@
                         <input type="hidden" name="minSpent" value="${previewMinSpent.toPlainString()}">
                         <p class="vc-summary">
                             Giảm <strong><c:out value="${previewPercent.stripTrailingZeros().toPlainString()}"/>%</strong>
-                            cho khách đã chi trên <strong><fmt:formatNumber value="${previewMinSpent}" pattern="#,##0"/> đ</strong>
+                            cho khách đã chi từ <strong><fmt:formatNumber value="${previewMinSpent}" pattern="#,##0"/> đ</strong>
                             · <strong>${recipients.size()}</strong> khách đủ điều kiện
                         </p>
                         <label class="vc-selectall">
@@ -124,7 +124,7 @@
             <c:if test="${recipients != null and empty recipients}">
                 <section class="vc-card">
                     <h2>2. Chọn khách và gửi</h2>
-                    <p class="vc-empty">Không có khách nào đã chi trên
+                    <p class="vc-empty">Không có khách nào đã chi từ
                         <fmt:formatNumber value="${previewMinSpent}" pattern="#,##0"/> đ. Thử giảm mức chi tiêu tối thiểu.</p>
                 </section>
             </c:if>

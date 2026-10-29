@@ -55,7 +55,7 @@ public class VoucherDAO extends DBContext {
     }
 
     /**
-     * Customer đang hoạt động có tổng đã chi LỚN HƠN requiredSpent. Hóa đơn tính
+     * Customer đang hoạt động có tổng đã chi TỪ requiredSpent trở lên (>=), kể cả khách chưa có hóa đơn nào khi ngưỡng là 0. Hóa đơn tính
      * cho khách qua loyalty_customer_id, hoặc qua Gmail nếu bill không gắn tài
      * khoản.
      */
@@ -67,7 +67,7 @@ public class VoucherDAO extends DBContext {
                 + "OR (h.loyalty_customer_id IS NULL AND h.customer_email = u.email) "
                 + "WHERE r.role_name = 'Customer' AND u.is_active = 1 AND u.is_deleted = 0 "
                 + "GROUP BY u.user_id, u.full_name, u.email "
-                + "HAVING COALESCE(SUM(" + PAID_EXPR + "), 0) > ? "
+                + "HAVING COALESCE(SUM(" + PAID_EXPR + "), 0) >= ? "
                 + "ORDER BY total_spent DESC, u.full_name";
         List<Recipient> list = new ArrayList<>();
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -102,8 +102,8 @@ public class VoucherDAO extends DBContext {
             for (Integer id : userIds) {
                 Recipient r = id == null ? null : eligible.get(id);
                 if (r == null) {
-                    throw new IllegalArgumentException("Có khách không còn đủ điều kiện (tổng đã chi phải lớn hơn "
-                            + requiredSpent.toPlainString() + " đ). Vui lòng tìm lại danh sách.");
+                    throw new IllegalArgumentException("Có khách không còn đủ điều kiện (tổng đã chi phải từ "
+                            + requiredSpent.toPlainString() + " đ trở lên). Vui lòng tìm lại danh sách.");
                 }
                 recipients.add(r);
             }

@@ -13,7 +13,7 @@ GO
 
 /* 1. Chiến dịch gửi voucher: mỗi lần Manager cấu hình và bấm gửi = 1 chiến dịch.
       discount_percent     : % giảm trên tổng hóa đơn, 0 < % <= 100.
-      required_total_spent : khách phải đã chi TRÊN (lớn hơn) giá trị này mới được nhận voucher. */
+      required_total_spent : khách phải đã chi TỪ (>=) giá trị này mới được nhận voucher; 0 = mọi khách kể cả khách mới. */
 IF OBJECT_ID('dbo.VoucherCampaigns', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.VoucherCampaigns (
@@ -53,7 +53,7 @@ BEGIN
         CONSTRAINT CK_Vouchers_Email CHECK (sent_to_email LIKE '%_@_%._%'),
         CONSTRAINT CK_Vouchers_Percent CHECK (discount_percent > 0 AND discount_percent <= 100),
         CONSTRAINT CK_Vouchers_Eligibility CHECK (
-            required_total_spent >= 0 AND customer_total_spent > required_total_spent),
+            required_total_spent >= 0 AND customer_total_spent >= required_total_spent),
         CONSTRAINT CK_Vouchers_Status CHECK (status IN ('ACTIVE', 'USED')),
         CONSTRAINT CK_Vouchers_UsedAt CHECK (
             (status = 'USED' AND used_at IS NOT NULL) OR (status = 'ACTIVE' AND used_at IS NULL)),
