@@ -278,7 +278,7 @@
                             refresh();
                             return;
                         }
-                        var reference = 'RMTABLE${bill.tableId}' + Date.now();
+                        var reference = '${qrReference}'; if (!reference) { method.value = 'CASH'; alert('Không tạo được mã chuyển khoản vì bàn chưa có bill đang mở. Vui lòng tải lại trang.'); refresh(); return; }
                         document.getElementById('paymentReference').value = reference;
                         document.getElementById('paymentQrImage').src =
                                 'https://img.vietqr.io/image/' + encodeURIComponent(qrFields.dataset.bank) + '-' + encodeURIComponent(qrFields.dataset.account)

@@ -18,7 +18,7 @@ import model.User;
 public class PaymentStatusServlet extends HttpServlet {
 
     private static final Pattern COMPACT_REFERENCE = Pattern.compile(
-            "^RMTABLE(\\d{1,3})(\\d{13})$", Pattern.CASE_INSENSITIVE);
+            "^RMTABLE(\\d{1,3})O(\\d+)$", Pattern.CASE_INSENSITIVE);
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

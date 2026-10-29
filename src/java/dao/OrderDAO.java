@@ -443,7 +443,6 @@ public class OrderDAO extends DBContext implements AutoCloseable {
             ps.setInt(3, tableId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next() || rs.getInt("order_count") == 0) {
-                    clearStaleLoyaltyLink(tableId);
                     return null;
                 }
                 TableBill bill = new TableBill();
@@ -692,7 +691,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         return bill.getPointsToUse();
     }
 
-    private void clearStaleLoyaltyLink(int tableId) {
+    public void clearStaleLoyaltyLink(int tableId) {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM TableBillLoyalty WHERE table_id = ?")) {
             ps.setInt(1, tableId);
             ps.executeUpdate();
@@ -842,7 +841,39 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         }
     }
 
+    /** Mã tham chiếu chuyển khoản của một bill: gắn với số đơn OPEN nhỏ nhất của bàn. */
+    public static String qrReference(int tableId, int billKey) {
+        return "RM-TABLE-" + tableId + "-" + billKey;
+    }
+
+    /** Số đơn OPEN nhỏ nhất của bàn (định danh bill đang mở); null nếu không có bill. */
+    public Integer getBillKey(int tableId) {
+        if (connection == null) {
+            return null;
+        }
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT MIN(order_id) FROM Orders WHERE table_id = ? AND order_status = 'OPEN'")) {
+            ps.setInt(1, tableId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                int value = rs.getInt(1);
+                return rs.wasNull() ? null : value;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public boolean markQrTablePaid(int tableId, int actorId, String reference, BigDecimal transferAmount) {
+        // Webhook phải báo đúng mã của bill đang mở: chuyển khoản cũ không chốt được bill mới.
+        Integer billKey = getBillKey(tableId);
+        if (billKey == null || !qrReference(tableId, billKey).equals(reference)) {
+            lastPaymentFailureReason = "Mã chuyển khoản không khớp bill đang mở của bàn.";
+            return false;
+        }
         TableBill bill = getTableBill(tableId);
         if (bill == null) {
             lastPaymentFailureReason = "Không có bill OPEN cho table_id=" + tableId + ".";

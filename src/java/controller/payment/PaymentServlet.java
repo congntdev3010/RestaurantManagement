@@ -53,10 +53,16 @@ public class PaymentServlet extends HttpServlet {
             }
             TableBill bill = dao.getTableBill(tableId);
             if (bill == null) {
-                response.sendRedirect(request.getContextPath() + "/manage-tables");
+                // Bàn không còn bill: dọn liên kết điểm còn sót (chỉ làm ở màn thanh toán).
+                dao.clearStaleLoyaltyLink(tableId);
+                response.sendRedirect(request.getContextPath() + "/payment");
                 return;
             }
             request.setAttribute("bill", bill);
+            // Dạng gọn RMTABLE<bàn>O<bill>, KHÔNG có dấu gạch: ngân hàng bỏ gạch khỏi nội dung CK nên dạng RM-TABLE-x-y bị hỏng.
+            // Webhook (SePayWebhookServlet) nhận dạng này qua COMPACT_TABLE.
+            Integer billKey = dao.getBillKey(tableId);
+            request.setAttribute("qrReference", billKey == null ? "" : "RMTABLE" + tableId + "O" + billKey);
             try (LoyaltyDAO loyaltyDao = new LoyaltyDAO()) {
                 model.LoyaltySettings loyaltySettings = loyaltyDao.getSettings();
                 request.setAttribute("loyaltySettings", loyaltySettings);
@@ -163,6 +169,8 @@ public class PaymentServlet extends HttpServlet {
 
     private void loadPaymentDashboard(HttpServletRequest request, OrderDAO orderDao)
             throws SQLException {
+        // Dọn đơn hủy không phát sinh tiền (dữ liệu cũ). Chỉ chạy ở màn thanh toán, không chạy khi xem sơ đồ bàn.
+        orderDao.cancelZeroValueOpenOrders();
         String filter = "READY".equalsIgnoreCase(request.getParameter("filter"))
                 ? "READY" : "ALL";
         java.util.List<RestaurantTable> tables;

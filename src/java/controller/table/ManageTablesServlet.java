@@ -73,32 +73,11 @@ public class ManageTablesServlet extends HttpServlet {
         request.setAttribute("canOrder", hasRole(actor, "Server"));
         // Bàn đang phục vụ mà không có order: lễ tân/server/quản lý được bật lại bàn trống.
         request.setAttribute("releasableTables", dao.getReleasableTableIds());
-        Map<Integer, TableBill> tableBills = new LinkedHashMap<>();
-        if (hasRole(actor, "Receptionist") || canManage) {
-            try (OrderDAO orderDAO = new OrderDAO()) {
-                orderDAO.cancelZeroValueOpenOrders();
-                for (RestaurantTable table : tables) {
-                    if ("OCCUPIED".equals(table.getStatus())) {
-                        TableBill bill = orderDAO.getTableBill(table.getTableId());
-                        if (bill != null) {
-                            tableBills.put(table.getTableId(), bill);
-                        }
-                    }
-                }
-            }
-        }
-        request.setAttribute("tableBills", tableBills);
-        String paymentFilter = "UNPAID".equalsIgnoreCase(request.getParameter("paymentFilter"))
-                ? "UNPAID" : "ALL";
-        int unpaidTableCount = tableBills.size();
+        // Sơ đồ bàn chỉ hiển thị trạng thái bàn. Đơn và thanh toán nằm ở màn Thanh toán.
         for (RestaurantTable table : tables) {
-            if (!"UNPAID".equals(paymentFilter) || tableBills.containsKey(table.getTableId())) {
-                tableGroups.computeIfAbsent(table.getTableType(), type -> new ArrayList<>()).add(table);
-            }
+            tableGroups.computeIfAbsent(table.getTableType(), type -> new ArrayList<>()).add(table);
         }
         request.setAttribute("tableGroups", tableGroups);
-        request.setAttribute("paymentFilter", paymentFilter);
-        request.setAttribute("unpaidTableCount", unpaidTableCount);
         request.setAttribute("paymentQrImageUrl", getServletContext().getInitParameter("paymentQrImageUrl"));
         request.setAttribute("paymentBankCode", getServletContext().getInitParameter("paymentBankCode"));
         request.setAttribute("paymentAccountNumber", getServletContext().getInitParameter("paymentAccountNumber"));
