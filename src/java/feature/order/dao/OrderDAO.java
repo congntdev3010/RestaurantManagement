@@ -179,13 +179,10 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         if (statusFilter != null && !statusFilter.isEmpty()) {
             sql.append("AND o.order_status = ? ");
         }
-        // Order hủy trước thời điểm chốt bill của bàn thuộc phiên đã kết thúc,
-        // nên giữ trong DB nhưng loại khỏi danh sách vận hành "Đã hủy".
+        // Order hủy đã được chốt khi bàn thanh toán (settled_at): giữ trong DB nhưng
+        // loại khỏi danh sách vận hành "Đã hủy".
         if (ownerId == null && (statusFilter == null || "CANCELLED".equals(statusFilter))) {
-            sql.append("AND NOT (o.order_status = 'CANCELLED' AND EXISTS ("
-                    + "SELECT 1 FROM ServiceHistory sh WHERE sh.table_id = o.table_id "
-                    + "AND o.created_at <= sh.paid_at "
-                    + "AND sh.paid_at >= COALESCE(o.cancelled_at, o.closed_at))) ");
+            sql.append("AND NOT (o.order_status = 'CANCELLED' AND o.settled_at IS NOT NULL) ");
         }
         // Đơn chờ duyệt luôn lên đầu danh sách, sau đó đến đơn mới nhất.
         // Đơn đang phục vụ: gọi trước hiện trước; các danh sách khác: mới nhất lên đầu.
@@ -408,6 +405,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 }
             }
             if (tableId != null) {
+                settleCancelledOrders(tableId);
                 try (PreparedStatement table = connection.prepareStatement(
                         "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
                         + "WHERE table_id = ? AND table_status = 'OCCUPIED'")) {
@@ -654,6 +652,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
             try (PreparedStatement table = connection.prepareStatement(
                     "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
                     + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED', 'OCCUPIED')")) {
+                settleCancelledOrders(tableId);
                 if (!applyLoyaltyOnPayment(bill, historyId, actorId)) {
                     rollback();
                     return false;
@@ -673,6 +672,19 @@ public class OrderDAO extends DBContext implements AutoCloseable {
             return false;
         } finally {
             resetAutoCommit();
+        }
+    }
+
+    /**
+     * Chốt các order HỦY của bàn khi bàn đã thanh toán, để chúng không còn hiện
+     * ở danh sách "Đã hủy" (chỉ ghi settled_at cho order chưa chốt).
+     */
+    private void settleCancelledOrders(int tableId) throws SQLException {
+        try (PreparedStatement settle = connection.prepareStatement(
+                "UPDATE Orders SET settled_at = SYSDATETIME() WHERE table_id = ? "
+                + "AND order_status = 'CANCELLED' AND settled_at IS NULL")) {
+            settle.setInt(1, tableId);
+            settle.executeUpdate();
         }
     }
 
