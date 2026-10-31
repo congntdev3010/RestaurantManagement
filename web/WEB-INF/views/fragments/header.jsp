@@ -59,9 +59,9 @@
             </div>
             <style>
                 .notif-wrap { position: relative; display: inline-flex; align-items: center; margin-right: 10px; }
-                .notif-bell { position: relative; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-                .notif-bell:hover { background: rgba(0, 0, 0, .06); }
-                .notif-badge { position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #c0392b; color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; box-sizing: border-box; }
+                .notif-bell { position: relative; width: 42px; height: 42px; border: 1px solid rgba(216, 155, 54, 0.4); border-radius: 50%; background: rgba(255, 255, 255, 0.1); color: #d89b36; font-size: 17px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.25s ease; }
+                .notif-bell:hover, .notif-bell[aria-expanded="true"] { background: rgba(255, 255, 255, 0.2); border-color: #d89b36; color: #f0b44c; }
+                .notif-badge { position: absolute; top: -3px; right: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: #e0463a; color: #fff; font-size: 11px; font-weight: 700; line-height: 17px; text-align: center; box-sizing: border-box; border: 2px solid #4a1620; }
                 .notif-badge[hidden], .notif-panel[hidden] { display: none; }
                 .notif-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 340px; max-height: 420px; overflow-y: auto; background: #fff; border: 1px solid #ecdfd5; border-radius: 14px; box-shadow: 0 12px 30px rgba(74, 22, 32, .18); z-index: 1000; text-align: left; }
                 .notif-head { padding: 14px 16px; font-weight: 700; color: #4a1620; border-bottom: 1px solid #f0e6df; }
