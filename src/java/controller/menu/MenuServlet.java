@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 @WebServlet(name = "MenuServlet", urlPatterns = {"/menu"})
 public class MenuServlet extends HttpServlet {
 
-    private static final int PAGE_SIZE = 20; // Hiển thị 8 món / trang
+    private static final int PAGE_SIZE = 8; // Hiển thị 8 món / trang
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
