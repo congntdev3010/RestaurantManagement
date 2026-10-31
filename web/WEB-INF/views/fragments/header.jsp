@@ -56,6 +56,103 @@
             <a href="${pageContext.request.contextPath}/register" class="btn-register">Đăng ký</a>
         <% } else { %>
             <!-- CUSTOMER: Đã đăng nhập -> Hiển thị icon user + Tên khách hàng -->
+            <% if ("Customer".equalsIgnoreCase(roleName)) { %>
+            <!-- Chuông thông báo: số tin chưa đọc + danh sách (tin mới nhất ở trên) -->
+            <div class="notif-wrap" id="notifWrap">
+                <button type="button" class="notif-bell" id="notifBell" aria-label="Thông báo" aria-expanded="false">
+                    <i class="fa-regular fa-bell" aria-hidden="true"></i>
+                    <span class="notif-badge" id="notifBadge" hidden>0</span>
+                </button>
+                <div class="notif-panel" id="notifPanel" hidden>
+                    <div class="notif-head">Thông báo</div>
+                    <ul class="notif-list" id="notifList"><li class="notif-empty">Đang tải...</li></ul>
+                </div>
+            </div>
+            <style>
+                .notif-wrap { position: relative; display: inline-flex; align-items: center; margin-right: 10px; }
+                .notif-bell { position: relative; width: 42px; height: 42px; border: 1px solid rgba(216, 155, 54, 0.4); border-radius: 50%; background: rgba(255, 255, 255, 0.1); color: #d89b36; font-size: 17px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.25s ease; }
+                .notif-bell:hover, .notif-bell[aria-expanded="true"] { background: rgba(255, 255, 255, 0.2); border-color: #d89b36; color: #f0b44c; }
+                .notif-badge { position: absolute; top: -3px; right: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: #e0463a; color: #fff; font-size: 11px; font-weight: 700; line-height: 17px; text-align: center; box-sizing: border-box; border: 2px solid #4a1620; }
+                .notif-badge[hidden], .notif-panel[hidden] { display: none; }
+                .notif-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 340px; max-height: 420px; overflow-y: auto; background: #fff; border: 1px solid #ecdfd5; border-radius: 14px; box-shadow: 0 12px 30px rgba(74, 22, 32, .18); z-index: 1000; text-align: left; }
+                .notif-head { padding: 14px 16px; font-weight: 700; color: #4a1620; border-bottom: 1px solid #f0e6df; }
+                .notif-list { list-style: none; margin: 0; padding: 0; }
+                .notif-item { padding: 12px 16px; border-bottom: 1px solid #f5ece6; color: #3f2f2a; }
+                .notif-item.unread { background: #fbf3e8; }
+                .notif-title { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+                .notif-body { font-size: 13px; line-height: 1.45; color: #5c4d47; }
+                .notif-time { font-size: 12px; color: #9a8a84; margin-top: 4px; }
+                .notif-empty { padding: 18px 16px; color: #8a7a73; font-size: 14px; }
+            </style>
+            <script>
+            (function () {
+                var ctx = '${pageContext.request.contextPath}';
+                var bell = document.getElementById('notifBell');
+                var badge = document.getElementById('notifBadge');
+                var panel = document.getElementById('notifPanel');
+                var list = document.getElementById('notifList');
+                var wrap = document.getElementById('notifWrap');
+                if (!bell) return;
+                var items = [];
+
+                function setBadge(n) {
+                    if (n > 0) { badge.textContent = n > 99 ? '99+' : String(n); badge.hidden = false; }
+                    else { badge.hidden = true; }
+                }
+                function render() {
+                    list.textContent = '';
+                    if (!items.length) {
+                        var empty = document.createElement('li');
+                        empty.className = 'notif-empty';
+                        empty.textContent = 'Chưa có thông báo nào.';
+                        list.appendChild(empty);
+                        return;
+                    }
+                    items.forEach(function (it) {
+                        var li = document.createElement('li');
+                        li.className = 'notif-item' + (it.read ? '' : ' unread');
+                        var t = document.createElement('div'); t.className = 'notif-title'; t.textContent = it.title;
+                        var b = document.createElement('div'); b.className = 'notif-body'; b.textContent = it.body;
+                        var d = document.createElement('div'); d.className = 'notif-time'; d.textContent = it.createdAt;
+                        li.appendChild(t); li.appendChild(b); li.appendChild(d);
+                        list.appendChild(li);
+                    });
+                }
+                function load() {
+                    fetch(ctx + '/notifications', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+                        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                        .then(function (data) { items = data.items; setBadge(data.unread); render(); })
+                        .catch(function () { });
+                }
+                function markAllRead() {
+                    fetch(ctx + '/notifications', { method: 'POST', credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'action=markAllRead' })
+                        .catch(function () { });
+                }
+                bell.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var opening = panel.hidden;
+                    panel.hidden = !opening;
+                    bell.setAttribute('aria-expanded', String(opening));
+                    if (opening) {
+                        render();
+                        setBadge(0);
+                        if (items.some(function (i) { return !i.read; })) {
+                            markAllRead();
+                            items.forEach(function (i) { i.read = true; });
+                        }
+                    }
+                });
+                document.addEventListener('click', function (e) {
+                    if (!wrap.contains(e.target)) {
+                        panel.hidden = true;
+                        bell.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                load();
+            })();
+            </script>
+            <% } %>
             <div class="user-account">
                 <div class="user-profile-btn">
                     <i class="fa-solid fa-user user-icon"></i>
@@ -180,6 +277,10 @@
         <a class="sidebar-link <%= currentURI.contains("loyalty-settings") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/loyalty-settings" title="Quy đổi điểm" aria-label="Quy đổi điểm">
             <i class="fa-solid fa-star" aria-hidden="true"></i><span>Quy đổi điểm</span>
+        </a>
+        <a class="sidebar-link <%= currentURI.contains("vouchers") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/vouchers" title="Gửi voucher" aria-label="Gửi voucher">
+            <i class="fa-solid fa-ticket" aria-hidden="true"></i><span>Gửi voucher</span>
         </a>
         <a class="sidebar-link <%= currentURI.contains("manage-dishes") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-dishes" title="Quản lý thực đơn" aria-label="Quản lý thực đơn">

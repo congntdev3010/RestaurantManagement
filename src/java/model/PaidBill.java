@@ -21,6 +21,9 @@ public class PaidBill {
     private String paymentMethod;
     private BigDecimal totalAmount = BigDecimal.ZERO;
     private BigDecimal discountAmount = BigDecimal.ZERO;
+    /** Giảm giá voucher: % lúc áp và số tiền đã làm tròn. */
+    private BigDecimal voucherPercent = BigDecimal.ZERO;
+    private BigDecimal voucherDiscount = BigDecimal.ZERO;
     private int pointsUsed;
     private int pointsEarned;
     private String paidByName;
@@ -67,8 +70,13 @@ public class PaidBill {
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public BigDecimal getDiscountAmount() { return discountAmount; }
     public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
-    /** Khách thực trả = tổng bill - giảm giá điểm. */
-    public BigDecimal getPayableAmount() { return totalAmount.subtract(discountAmount); }
+    public BigDecimal getVoucherPercent() { return voucherPercent; }
+    public void setVoucherPercent(BigDecimal voucherPercent) { this.voucherPercent = voucherPercent; }
+    public BigDecimal getVoucherDiscount() { return voucherDiscount; }
+    public void setVoucherDiscount(BigDecimal voucherDiscount) { this.voucherDiscount = voucherDiscount; }
+    public boolean isHasVoucher() { return voucherDiscount != null && voucherDiscount.signum() > 0; }
+    /** Khách thực trả = tổng bill - giảm giá điểm - giảm giá voucher. */
+    public BigDecimal getPayableAmount() { return totalAmount.subtract(discountAmount).subtract(voucherDiscount); }
     public int getPointsUsed() { return pointsUsed; }
     public void setPointsUsed(int pointsUsed) { this.pointsUsed = pointsUsed; }
     public int getPointsEarned() { return pointsEarned; }

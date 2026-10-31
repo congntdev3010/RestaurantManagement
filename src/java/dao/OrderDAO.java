@@ -444,6 +444,8 @@ public class OrderDAO extends DBContext implements AutoCloseable {
             ps.setInt(3, tableId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next() || rs.getInt("order_count") == 0) {
+                    clearStaleLoyaltyLink(tableId);
+                    clearStaleVoucherLink(tableId);
                     return null;
                 }
                 TableBill bill = new TableBill();
@@ -502,6 +504,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                         }
                     }
                 }
+                applyVoucher(bill);
                 applyLoyalty(bill);
                 return bill;
             }
@@ -578,15 +581,27 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 cashChange = cashReceived.subtract(bill.getPayableAmount());
                 lastCashChange = cashChange;
             }
+            // Voucher: khóa mã trong cùng giao dịch; nếu đã USED (bàn khác vừa dùng) thì hủy thanh toán.
+            if (bill.isHasVoucher()) {
+                try (PreparedStatement use = connection.prepareStatement(
+                        "UPDATE Vouchers SET status = 'USED', used_at = SYSDATETIME() WHERE voucher_id = ? AND status = 'ACTIVE'")) {
+                    use.setInt(1, bill.getVoucherId());
+                    if (use.executeUpdate() != 1) {
+                        lastPaymentFailureReason = "Mã voucher đã được dùng hoặc không còn hiệu lực. Vui lòng bỏ mã và áp lại.";
+                        rollback();
+                        return false;
+                    }
+                }
+            }
             int historyId;
             try (PreparedStatement history = connection.prepareStatement(
                     "INSERT INTO ServiceHistory (table_id, customer_name, customer_phone, customer_email, reservation_time, "
                     + "checked_in_at, paid_at, payment_method, total_amount, cash_received, cash_change, paid_by, "
-                    + "loyalty_customer_id, loyalty_points_used, loyalty_discount, loyalty_points_earned) "
+                    + "loyalty_customer_id, loyalty_points_used, loyalty_discount, loyalty_points_earned, voucher_id, voucher_discount_percent, voucher_discount) "
                     + "SELECT ?, MAX(o.customer_name), MAX(o.customer_phone), MAX(o.customer_email), "
                     + "MIN(CASE WHEN r.reservation_date IS NOT NULL AND r.reservation_time IS NOT NULL "
                     + "THEN DATEADD(SECOND, DATEDIFF(SECOND, '00:00:00', r.reservation_time), "
-                    + "CAST(r.reservation_date AS DATETIME2)) END), MAX(r.checked_in_at), SYSDATETIME(), ?, ?, ?, ?, ?, ?, ?, ?, ? "
+                    + "CAST(r.reservation_date AS DATETIME2)) END), MAX(r.checked_in_at), SYSDATETIME(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
                     + "FROM Orders o LEFT JOIN Reservations r ON r.reservation_id = o.reservation_id "
                     + "WHERE o.table_id = ? AND o.order_status = 'OPEN'",
                     Statement.RETURN_GENERATED_KEYS)) {
@@ -612,7 +627,14 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 history.setInt(8, loyaltyUsed(bill));
                 history.setBigDecimal(9, bill.getDiscountAmount());
                 history.setInt(10, bill.getPointsToEarn());
-                history.setInt(11, tableId);
+                if (bill.isHasVoucher()) {
+                    history.setInt(11, bill.getVoucherId());
+                } else {
+                    history.setNull(11, java.sql.Types.INTEGER);
+                }
+                history.setBigDecimal(12, bill.getVoucherPercent());
+                history.setBigDecimal(13, bill.getVoucherDiscount());
+                history.setInt(14, tableId);
                 history.executeUpdate();
                 try (ResultSet keys = history.getGeneratedKeys()) {
                     if (!keys.next()) {
@@ -662,6 +684,11 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                     rollback();
                     return false;
                 }
+                // Bàn đã thanh toán thì gỡ mã khỏi bàn (mã đã USED ở trên).
+                try (PreparedStatement delVoucher = connection.prepareStatement("DELETE FROM TableBillVoucher WHERE table_id = ?")) {
+                    delVoucher.setInt(1, tableId);
+                    delVoucher.executeUpdate();
+                }
                 table.setInt(1, tableId);
                 if (table.executeUpdate() != 1) {
                     lastPaymentFailureReason = "Không cập nhật được trạng thái bàn.";
@@ -693,6 +720,48 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         }
     }
 
+    /**
+     * Đọc mã voucher đang áp cho bàn (chỉ khi mã còn ACTIVE) và tính tiền giảm theo %, làm tròn đồng (HALF_UP,
+     * khớp với CK_ServiceHistory_Voucher). Phải chạy TRƯỚC applyLoyalty để điểm không vượt phần còn lại.
+     */
+    private void applyVoucher(TableBill bill) {
+        bill.setVoucherId(0);
+        bill.setVoucherCode(null);
+        bill.setVoucherPercent(BigDecimal.ZERO);
+        bill.setVoucherDiscount(BigDecimal.ZERO);
+        String sql = "SELECT v.voucher_id, v.code, v.discount_percent FROM TableBillVoucher b "
+                + "JOIN Vouchers v ON v.voucher_id = b.voucher_id "
+                + "WHERE b.table_id = ? AND v.status = 'ACTIVE'";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, bill.getTableId());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return;
+                }
+                // Đọc hết vào biến tạm trước: cột code là CHAR(8) nên dùng getString (getNString sẽ lỗi).
+                BigDecimal percent = rs.getBigDecimal("discount_percent");
+                int voucherId = rs.getInt("voucher_id");
+                String code = rs.getString("code");
+                bill.setVoucherId(voucherId);
+                bill.setVoucherCode(code == null ? null : code.trim());
+                bill.setVoucherPercent(percent);
+                bill.setVoucherDiscount(bill.getTotalAmount().multiply(percent)
+                        .divide(BigDecimal.valueOf(100), 0, java.math.RoundingMode.HALF_UP));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void clearStaleVoucherLink(int tableId) {
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM TableBillVoucher WHERE table_id = ?")) {
+            ps.setInt(1, tableId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private int loyaltyUsed(TableBill bill) {
         return bill.getPointsToUse();
     }
@@ -711,7 +780,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
      * giảm, số phải trả, điểm được cộng.
      */
     private void applyLoyalty(TableBill bill) {
-        bill.setPayableAmount(bill.getTotalAmount());
+        bill.setPayableAmount(bill.getTotalAmount().subtract(bill.getVoucherDiscount()));
         String sql = "SELECT l.customer_id, u.full_name, u.phone, u.email, u.loyalty_points, l.points_to_use, "
                 + "s.earn_spend_amount, s.earn_points, s.redeem_value_per_point "
                 + "FROM TableBillLoyalty l JOIN Users u ON u.user_id = l.customer_id "
@@ -727,13 +796,13 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 BigDecimal spend = rs.getBigDecimal("earn_spend_amount");
                 int earnPoints = rs.getInt("earn_points");
                 int maxByTotal = (redeem != null && redeem.signum() > 0)
-                        ? bill.getTotalAmount().divideToIntegralValue(redeem).intValue()
+                        ? bill.getTotalAmount().subtract(bill.getVoucherDiscount()).divideToIntegralValue(redeem).intValue()
                         : 0;
                 int use = Math.max(0, Math.min(rs.getInt("points_to_use"), Math.min(balance, maxByTotal)));
                 BigDecimal discount = (redeem != null && redeem.signum() > 0)
                         ? redeem.multiply(BigDecimal.valueOf(use))
                         : BigDecimal.ZERO;
-                BigDecimal payable = bill.getTotalAmount().subtract(discount);
+                BigDecimal payable = bill.getTotalAmount().subtract(discount).subtract(bill.getVoucherDiscount());
                 bill.setLoyaltyCustomerId(rs.getInt("customer_id"));
                 bill.setLoyaltyCustomerName(rs.getNString("full_name"));
                 bill.setLoyaltyCustomerPhone(rs.getNString("phone"));
@@ -915,7 +984,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
     public TableBill getQrReceipt(int tableId) throws SQLException {
         String sql = "SELECT TOP 1 h.history_id, h.table_id, h.customer_name, h.customer_phone, h.customer_email, "
                 + "h.reservation_time, h.checked_in_at, h.payment_method, h.total_amount, "
-                + "h.cash_received, h.cash_change, h.loyalty_points_used, h.loyalty_discount, h.loyalty_points_earned "
+                + "h.cash_received, h.cash_change, h.loyalty_points_used, h.loyalty_discount, h.loyalty_points_earned, h.voucher_id, h.voucher_discount_percent, h.voucher_discount "
                 + "FROM ServiceHistory h WHERE h.table_id = ? AND h.payment_method = 'QR' "
                 + "ORDER BY h.history_id DESC";
         TableBill bill = new TableBill();
@@ -954,7 +1023,10 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 bill.setPointsToUse(rs.getInt("loyalty_points_used"));
                 bill.setDiscountAmount(rs.getBigDecimal("loyalty_discount"));
                 bill.setPointsToEarn(rs.getInt("loyalty_points_earned"));
-                bill.setPayableAmount(bill.getTotalAmount().subtract(bill.getDiscountAmount()));
+                bill.setVoucherId(rs.getInt("voucher_id"));
+                bill.setVoucherPercent(rs.getBigDecimal("voucher_discount_percent"));
+                bill.setVoucherDiscount(rs.getBigDecimal("voucher_discount"));
+                bill.setPayableAmount(bill.getTotalAmount().subtract(bill.getDiscountAmount()).subtract(bill.getVoucherDiscount()));
                 bill.setCashChange(rs.getBigDecimal("cash_change"));
             }
         }

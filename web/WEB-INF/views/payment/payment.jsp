@@ -68,6 +68,12 @@
                                     <strong>- <fmt:formatNumber value="${bill.discountAmount}" pattern="#,##0"/> đ</strong>
                                 </div>
                             </c:if>
+                            <c:if test="${bill.voucherDiscount gt 0}">
+                                <div class="bill-sum-row discount">
+                                    <span>Giảm giá voucher (<fmt:formatNumber value="${bill.voucherPercent}" maxFractionDigits="2"/>%)</span>
+                                    <strong>- <fmt:formatNumber value="${bill.voucherDiscount}" pattern="#,##0"/> đ</strong>
+                                </div>
+                            </c:if>
                         </div>
 
                         <div class="bill-payable">
@@ -83,6 +89,47 @@
                                 <c:out value="${paymentMessage}"/>
                             </div>
                         </c:if>
+
+                        <div class="loyalty-card">
+                            <div class="loyalty-head">
+                                <h2>Voucher giảm giá</h2>
+                                <span class="loyalty-tag">Mã 8 ký tự</span>
+                            </div>
+                            <c:choose>
+                                <c:when test="${bill.hasVoucher}">
+                                    <div class="loyalty-customer">
+                                        <div>
+                                            <div class="name">Mã <c:out value="${bill.voucherCode}"/></div>
+                                            <div class="sub">Giảm <fmt:formatNumber value="${bill.voucherPercent}" maxFractionDigits="2"/>% tổng hóa đơn</div>
+                                        </div>
+                                        <div class="loyalty-balance">
+                                            <strong>- <fmt:formatNumber value="${bill.voucherDiscount}" pattern="#,##0"/> đ</strong>
+                                        </div>
+                                    </div>
+                                    <form action="${pageContext.request.contextPath}/payment" method="post">
+                                        <input type="hidden" name="action" value="clearVoucher">
+                                        <input type="hidden" name="tableId" value="${bill.tableId}">
+                                        <button class="btn-link" type="submit">Bỏ mã voucher</button>
+                                    </form>
+                                </c:when>
+                                <c:otherwise>
+                                    <form action="${pageContext.request.contextPath}/payment" method="post">
+                                        <input type="hidden" name="action" value="applyVoucher">
+                                        <input type="hidden" name="tableId" value="${bill.tableId}">
+                                        <label for="voucherCode">
+                                            Nhập mã voucher
+                                            <span class="loyalty-hint">(8 ký tự, khách nhận qua Gmail)</span>
+                                        </label>
+                                        <div class="loyalty-row">
+                                            <input id="voucherCode" name="voucherCode" type="text" maxlength="8"
+                                                   pattern="[A-Za-z0-9]{8}" autocomplete="off" placeholder="Ví dụ: K7M2QX9P" required
+                                                   style="text-transform: uppercase">
+                                            <button class="btn-sm btn-primary-sm" type="submit">Áp dụng</button>
+                                        </div>
+                                    </form>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
 
                         <div class="loyalty-card">
                             <div class="loyalty-head">
