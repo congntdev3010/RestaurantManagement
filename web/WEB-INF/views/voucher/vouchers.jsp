@@ -36,6 +36,25 @@
         .vc-table .num { text-align: right; white-space: nowrap; }
         .vc-empty { color: #8a7a73; margin: 0; }
         .vc-send-row { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+        /* payment.css đặt input (width 100%, height 46px) và label (grid, margin 18px) toàn cục:
+           ghi đè lại cho checkbox và nhãn trong trang này. */
+        .vc-table input[type=checkbox], .vc-selectall input[type=checkbox] {
+            width: 18px; height: 18px; padding: 0; margin: 0; accent-color: #7b1f28; cursor: pointer; flex: none;
+        }
+        .vc-selectall { margin: 0 0 12px; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: #4d3b35; font-weight: 600; cursor: pointer; }
+        .vc-table { table-layout: auto; }
+        .vc-table td, .vc-table th { vertical-align: middle; }
+        .vc-table td.check, .vc-table th.check { width: 44px; text-align: center; }
+        .vc-table td.name { min-width: 200px; white-space: normal; overflow-wrap: anywhere; font-weight: 600; color: #3f2f2a; }
+        .vc-table td.email { overflow-wrap: anywhere; word-break: break-word; min-width: 220px; color: #5c4d47; }
+        .vc-table th.name, .vc-table th.email { white-space: nowrap; }
+        .vc-table th.num, .vc-table td.num { min-width: 130px; }
+        @media (max-width: 760px) {
+            .vc-table td.email { min-width: 0; }
+            .vc-table td.name { min-width: 130px; }
+            .vc-table th.num, .vc-table td.num { min-width: 0; }
+        }
     </style>
 </head>
 <body class="payment-page">
@@ -97,18 +116,18 @@
                         <table class="vc-table">
                             <thead>
                                 <tr>
-                                    <th></th>
-                                    <th>Khách hàng</th>
-                                    <th>Gmail</th>
+                                    <th class="check"></th>
+                                    <th class="name">Khách hàng</th>
+                                    <th class="email">Gmail</th>
                                     <th class="num">Tổng đã chi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <c:forEach var="r" items="${recipients}">
                                     <tr>
-                                        <td><input class="rcpt" type="checkbox" name="userIds" value="${r.userId}" checked></td>
-                                        <td><c:out value="${r.fullName}"/></td>
-                                        <td><c:out value="${r.email}"/></td>
+                                        <td class="check"><input class="rcpt" type="checkbox" name="userIds" value="${r.userId}" checked></td>
+                                        <td class="name"><c:out value="${r.fullName}"/></td>
+                                        <td class="email"><c:out value="${r.email}"/></td>
                                         <td class="num"><fmt:formatNumber value="${r.totalSpent}" pattern="#,##0"/> đ</td>
                                     </tr>
                                 </c:forEach>
