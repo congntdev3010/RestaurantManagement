@@ -107,7 +107,7 @@
             <aside class="qr-panel" id="cart-panel" aria-label="Các món đã chọn">
                 <c:if test="${not empty sentOrders}">
                     <script>
-                        // Tự làm mới mục "Món đã gửi" mỗi 15 giây, không tải lại cả trang (giữ nguyên giỏ, ô tìm kiếm, vị trí cuộn).
+                        // Tự làm mới mục "Món đã gửi" mỗi 3 giây, không tải lại cả trang (giữ nguyên giỏ, ô tìm kiếm, vị trí cuộn).
                         setInterval(function () {
                             if (document.hidden)
                                 return;
@@ -135,7 +135,7 @@
                                             gv.textContent = ((parseFloat(g.getAttribute('data-cart')) || 0) + sent).toLocaleString('vi-VN') + ' đ';
                                     })
                                     .catch(function () {});
-                        }, 15000);
+                        }, 3000);
                     </script>
 
                     <section class="qr-sent" id="qrSent" aria-label="Món đã gửi">

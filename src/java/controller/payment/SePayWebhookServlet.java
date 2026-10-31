@@ -20,8 +20,8 @@ import java.util.regex.Pattern;
 @WebServlet(name = "SePayWebhookServlet", urlPatterns = {"/webhooks/sepay"})
 public class SePayWebhookServlet extends HttpServlet {
 
-    private static final Pattern TABLE = Pattern.compile("(RM-TABLE-(\\d+)(?:-\\d+)?)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern COMPACT_TABLE = Pattern.compile("(RMTABLE(\\d{1,3})(\\d{13}))", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TABLE = Pattern.compile("(RM-TABLE-(\\d+)-(\\d+))", Pattern.CASE_INSENSITIVE);
+    private static final Pattern COMPACT_TABLE = Pattern.compile("(RMTABLE(\\d{1,3})O(\\d+))", Pattern.CASE_INSENSITIVE);
     private static final Pattern AMOUNT = Pattern.compile(
             "\"(?:transferAmount|amount)\"\\s*:\\s*\"?([0-9]+(?:[.,][0-9]+)?)\"?",
             Pattern.CASE_INSENSITIVE);
@@ -49,7 +49,7 @@ public class SePayWebhookServlet extends HttpServlet {
         boolean compactReference = !standardReference && compactTable.find();
         if (!standardReference && !compactReference) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST,
-                    "Payload thiếu content chứa mã RM-TABLE-<tableId> hoặc RMTABLE<id><timestamp>. Body=" + body);
+                    "Payload thiếu content chứa mã RM-TABLE-<tableId>-<billKey> hoặc RMTABLE<tableId>O<billKey>. Body=" + body);
             return;
         }
         if (!amount.find()) {
@@ -59,20 +59,17 @@ public class SePayWebhookServlet extends HttpServlet {
         }
         int tableId;
         int actorId;
+        int billKey;
         try {
             tableId = Integer.parseInt(standardReference ? table.group(2) : compactTable.group(2));
+            billKey = Integer.parseInt(standardReference ? table.group(3) : compactTable.group(3));
             actorId = Integer.parseInt(actor);
         } catch (NumberFormatException e) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Mã bàn hoặc actor không hợp lệ.");
             return;
         }
-        String reference;
-        if (standardReference) {
-            reference = table.group(1).toUpperCase(Locale.ROOT);
-        } else {
-            reference = ("RM-TABLE-" + compactTable.group(2) + "-" + compactTable.group(3))
-                    .toUpperCase(Locale.ROOT);
-        }
+        // Mã phải khớp bill đang mở của bàn (kiểm trong DAO); chuyển khoản cũ không chốt được bill mới.
+        String reference = OrderDAO.qrReference(tableId, billKey);
         boolean paid;
         String failureReason = null;
         try (OrderDAO dao = new OrderDAO()) {

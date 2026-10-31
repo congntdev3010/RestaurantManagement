@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -52,13 +53,19 @@
                             </p>
                             <div class="payment-table-total">
                                 <span>Tổng bill</span>
-                                <strong><c:out value="${bill.payableAmount}"/> đ</strong>
+                                <strong><fmt:formatNumber value="${bill.payableAmount}" pattern="#,##0"/> đ</strong>
                             </div>
                             <c:choose>
                                 <c:when test="${bill.readyForPayment and bill.totalAmount gt 0}">
                                     <a class="payment-table-action"
                                        href="${pageContext.request.contextPath}/payment?tableId=${table.tableId}">
                                         Mở thanh toán <span>→</span>
+                                    </a>
+                                </c:when>
+                                <c:when test="${bill.totalAmount le 0}">
+                                    <a class="payment-table-action" style="background: #a855f7; color: white;"
+                                       href="${pageContext.request.contextPath}/payment?tableId=${table.tableId}">
+                                        Xử lý bàn 0 đ <span>→</span>
                                     </a>
                                 </c:when>
                                 <c:otherwise>
@@ -78,5 +85,15 @@
                 </c:if>
             </section>
         </main>
-    </body>
+    <script>
+    (function () {
+        // Tự tải lại danh sách bàn mỗi 3 giây; chỉ tải khi tab đang hiển thị.
+        setInterval(function () {
+            if (document.visibilityState === 'visible') {
+                window.location.reload();
+            }
+        }, 8000);
+    }());
+</script>
+</body>
 </html>

@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import model.TableBill;
 import model.RestaurantTable;
@@ -54,15 +55,24 @@ public class PaymentServlet extends HttpServlet {
             }
             TableBill bill = dao.getTableBill(tableId);
             if (bill == null) {
-                response.sendRedirect(request.getContextPath() + "/manage-tables");
+                // Bàn không còn bill: dọn liên kết điểm còn sót (chỉ làm ở màn thanh toán).
+                dao.clearStaleLoyaltyLink(tableId);
+                response.sendRedirect(request.getContextPath() + "/payment");
                 return;
             }
             request.setAttribute("bill", bill);
+            // Dạng gọn RMTABLE<bàn>O<bill>, KHÔNG có dấu gạch: ngân hàng bỏ gạch khỏi nội dung CK nên dạng RM-TABLE-x-y bị hỏng.
+            // Webhook (SePayWebhookServlet) nhận dạng này qua COMPACT_TABLE.
+            Integer billKey = dao.getBillKey(tableId);
+            request.setAttribute("qrReference", billKey == null ? "" : "RMTABLE" + tableId + "O" + billKey);
             try (LoyaltyDAO loyaltyDao = new LoyaltyDAO()) {
                 model.LoyaltySettings loyaltySettings = loyaltyDao.getSettings();
                 request.setAttribute("loyaltySettings", loyaltySettings);
                 // Số điểm tối đa dùng được: không quá số dư và không làm tiền giảm vượt tổng bill.
-                int byTotal = bill.getTotalAmount().subtract(bill.getVoucherDiscount()).divideToIntegralValue(loyaltySettings.getRedeemValuePerPoint()).intValue();
+                BigDecimal redeemRate = loyaltySettings.getRedeemValuePerPoint();
+                int byTotal = (redeemRate != null && redeemRate.signum() > 0)
+                        ? bill.getTotalAmount().subtract(bill.getVoucherDiscount()).divideToIntegralValue(redeemRate).intValue()
+                        : 0;
                 request.setAttribute("maxLoyaltyPoints", Math.min(bill.getLoyaltyBalance(), byTotal));
             }
             HttpSession flash = request.getSession();
@@ -141,6 +151,52 @@ public class PaymentServlet extends HttpServlet {
                 } else {
                     message = "Không thể lưu số điểm sử dụng.";
                 }
+            } else if ("payTable".equals(action)) {
+                String method = request.getParameter("paymentMethod");
+                String reference = request.getParameter("paymentReference");
+                BigDecimal cashReceived = decimal(request.getParameter("cashReceived"));
+
+                if ("QR".equals(method)) {
+                    message = "Thanh toán QR chỉ được xác nhận tự động sau khi webhook báo thành công.";
+                } else if (!"CASH".equals(method)) {
+                    message = "Phương thức thanh toán không hợp lệ.";
+                } else if (tableId > 0) {
+                    orderDao.cancelZeroValueOpenOrders();
+                    TableBill receipt = orderDao.getTableBill(tableId);
+                    if (orderDao.markTablePaid(tableId, actor.getUserId(), method,
+                            reference == null ? null : reference.trim(), cashReceived, null)) {
+                        if (receipt == null) {
+                            receipt = new TableBill();
+                        }
+                        receipt.setTableId(tableId);
+                        receipt.setCashReceived(cashReceived);
+                        receipt.setCashChange(orderDao.getLastCashChange());
+                        receipt.setPaymentMethod(method);
+                        request.getSession().setAttribute("oneTimeServiceReceipt", receipt);
+                        response.sendRedirect(request.getContextPath() + "/service-history");
+                        return;
+                    } else {
+                        String reason = orderDao.getLastPaymentFailureReason();
+                        message = reason == null ? "Bàn còn món chưa phục vụ hoặc bill không còn hợp lệ." : reason;
+                    }
+                } else {
+                    message = "Bàn thanh toán không hợp lệ.";
+                }
+            } else if ("releaseZeroBillTable".equals(action)) {
+                if (tableId > 0) {
+                    try (RestaurantTableDAO tableDao = new RestaurantTableDAO()) {
+                        if (tableDao.releaseIfNoOrder(tableId)) {
+                            request.getSession().setAttribute("paymentMessage", "Đã giải phóng bàn 0 đ về trạng thái còn trống.");
+                            request.getSession().setAttribute("paymentMessageType", "success");
+                            response.sendRedirect(request.getContextPath() + "/payment");
+                            return;
+                        } else {
+                            message = "Không thể giải phóng bàn: bàn còn món chưa phục vụ hoặc order chưa hoàn tất.";
+                        }
+                    }
+                } else {
+                    message = "Bàn không hợp lệ.";
+                }
             } else if ("applyVoucher".equals(action)) {
                 String error = voucher.applyToTable(tableId, request.getParameter("voucherCode"), actor.getUserId());
                 if (error == null) {
@@ -166,6 +222,17 @@ public class PaymentServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + (tableId > 0 ? "/payment?tableId=" + tableId : "/payment"));
     }
 
+    private BigDecimal decimal(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value.trim());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private int parseInt(String value) {
         try {
             return Integer.parseInt(value.trim());
@@ -176,6 +243,8 @@ public class PaymentServlet extends HttpServlet {
 
     private void loadPaymentDashboard(HttpServletRequest request, OrderDAO orderDao)
             throws SQLException {
+        
+        
         String filter = "READY".equalsIgnoreCase(request.getParameter("filter"))
                 ? "READY" : "ALL";
         java.util.List<RestaurantTable> tables;
@@ -183,10 +252,11 @@ public class PaymentServlet extends HttpServlet {
         try (RestaurantTableDAO tableDao = new RestaurantTableDAO()) {
             tables = tableDao.getAllTables();
         }
-        for (RestaurantTable table : tables) {
-            TableBill bill = orderDao.getTableBill(table.getTableId());
+        java.util.List<Integer> openTableIds = orderDao.getOpenTableIds();
+        for (Integer tid : openTableIds) {
+            TableBill bill = orderDao.getTableBill(tid);
             if (bill != null) {
-                bills.put(table.getTableId(), bill);
+                bills.put(tid, bill);
             }
         }
         request.setAttribute("paymentTables", tables);

@@ -22,6 +22,7 @@ import model.TableBillItem;
 public class OrderDAO extends DBContext implements AutoCloseable {
 
     private String lastPaymentFailureReason;
+    private BigDecimal lastCashChange;
 
     public static final int APPROVE_FAILED = -1;
     public static final int APPROVE_ORDER_CANCELLED = 0;
@@ -543,7 +544,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         if (connection == null || (!"CASH".equals(paymentMethod) && !"QR".equals(paymentMethod))) {
             return false;
         }
-        if ("CASH".equals(paymentMethod) && (cashReceived == null || cashChange == null || cashReceived.compareTo(cashChange) < 0)) {
+        if ("CASH".equals(paymentMethod) && cashReceived == null) {
             return false;
         }
         try {
@@ -574,6 +575,11 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 lastPaymentFailureReason = "Tiền khách đưa chưa đủ.";
                 rollback();
                 return false;
+            }
+            if ("CASH".equals(paymentMethod)) {
+                // Tiền thối luôn tính lại ở server, không tin giá trị gửi từ form.
+                cashChange = cashReceived.subtract(bill.getPayableAmount());
+                lastCashChange = cashChange;
             }
             // Voucher: khóa mã trong cùng giao dịch; nếu đã USED (bàn khác vừa dùng) thì hủy thanh toán.
             if (bill.isHasVoucher()) {
@@ -760,7 +766,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         return bill.getPointsToUse();
     }
 
-    private void clearStaleLoyaltyLink(int tableId) {
+    public void clearStaleLoyaltyLink(int tableId) {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM TableBillLoyalty WHERE table_id = ?")) {
             ps.setInt(1, tableId);
             ps.executeUpdate();
@@ -789,9 +795,13 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 BigDecimal redeem = rs.getBigDecimal("redeem_value_per_point");
                 BigDecimal spend = rs.getBigDecimal("earn_spend_amount");
                 int earnPoints = rs.getInt("earn_points");
-                int maxByTotal = bill.getTotalAmount().subtract(bill.getVoucherDiscount()).divideToIntegralValue(redeem).intValue();
+                int maxByTotal = (redeem != null && redeem.signum() > 0)
+                        ? bill.getTotalAmount().subtract(bill.getVoucherDiscount()).divideToIntegralValue(redeem).intValue()
+                        : 0;
                 int use = Math.max(0, Math.min(rs.getInt("points_to_use"), Math.min(balance, maxByTotal)));
-                BigDecimal discount = redeem.multiply(BigDecimal.valueOf(use));
+                BigDecimal discount = (redeem != null && redeem.signum() > 0)
+                        ? redeem.multiply(BigDecimal.valueOf(use))
+                        : BigDecimal.ZERO;
                 BigDecimal payable = bill.getTotalAmount().subtract(discount).subtract(bill.getVoucherDiscount());
                 bill.setLoyaltyCustomerId(rs.getInt("customer_id"));
                 bill.setLoyaltyCustomerName(rs.getNString("full_name"));
@@ -805,7 +815,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 bill.setPointsToUse(use);
                 bill.setDiscountAmount(discount);
                 bill.setPayableAmount(payable);
-                bill.setPointsToEarn(payable.signum() > 0
+                bill.setPointsToEarn((payable.signum() > 0 && spend != null && spend.signum() > 0)
                         ? payable.divideToIntegralValue(spend).intValue() * earnPoints : 0);
             }
         } catch (SQLException e) {
@@ -910,7 +920,55 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         }
     }
 
+    /** Danh sách table_id của các bàn đang có order OPEN. */
+    public List<Integer> getOpenTableIds() {
+        List<Integer> list = new ArrayList<>();
+        if (connection == null) {
+            return list;
+        }
+        String sql = "SELECT DISTINCT table_id FROM Orders WHERE order_status = 'OPEN'";
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(rs.getInt("table_id"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    /** Mã tham chiếu chuyển khoản của một bill: gắn với số đơn OPEN nhỏ nhất của bàn. */
+    public static String qrReference(int tableId, int billKey) {
+        return "RM-TABLE-" + tableId + "-" + billKey;
+    }
+
+    /** Số đơn OPEN nhỏ nhất của bàn (định danh bill đang mở); null nếu không có bill. */
+    public Integer getBillKey(int tableId) {
+        if (connection == null) {
+            return null;
+        }
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT MIN(order_id) FROM Orders WHERE table_id = ? AND order_status = 'OPEN'")) {
+            ps.setInt(1, tableId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                int value = rs.getInt(1);
+                return rs.wasNull() ? null : value;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public boolean markQrTablePaid(int tableId, int actorId, String reference, BigDecimal transferAmount) {
+        // Webhook phải báo đúng mã của bill đang mở: chuyển khoản cũ không chốt được bill mới.
+        Integer billKey = getBillKey(tableId);
+        if (billKey == null || !qrReference(tableId, billKey).equals(reference)) {
+            lastPaymentFailureReason = "Mã chuyển khoản không khớp bill đang mở của bàn.";
+            return false;
+        }
         TableBill bill = getTableBill(tableId);
         if (bill == null) {
             lastPaymentFailureReason = "Không có bill OPEN cho table_id=" + tableId + ".";
@@ -923,7 +981,7 @@ public class OrderDAO extends DBContext implements AutoCloseable {
         return markTablePaid(tableId, actorId, "QR", reference, null, null);
     }
 
-    public TableBill getQrReceipt(int tableId, String reference) throws SQLException {
+    public TableBill getQrReceipt(int tableId) throws SQLException {
         String sql = "SELECT TOP 1 h.history_id, h.table_id, h.customer_name, h.customer_phone, h.customer_email, "
                 + "h.reservation_time, h.checked_in_at, h.payment_method, h.total_amount, "
                 + "h.cash_received, h.cash_change, h.loyalty_points_used, h.loyalty_discount, h.loyalty_points_earned, h.voucher_id, h.voucher_discount_percent, h.voucher_discount "
@@ -1002,6 +1060,14 @@ public class OrderDAO extends DBContext implements AutoCloseable {
                 return rs.next() && rs.getInt(1) == 1;
             }
         }
+    }
+
+    public TableBill getQrReceipt(int tableId, String reference) throws SQLException {
+        return getQrReceipt(tableId);
+    }
+
+    public BigDecimal getLastCashChange() {
+        return lastCashChange;
     }
 
     public String getLastPaymentFailureReason() {

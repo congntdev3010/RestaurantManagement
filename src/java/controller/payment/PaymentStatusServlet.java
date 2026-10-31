@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,7 +19,7 @@ import model.User;
 public class PaymentStatusServlet extends HttpServlet {
 
     private static final Pattern COMPACT_REFERENCE = Pattern.compile(
-            "^RMTABLE(\\d{1,3})(\\d{13})$", Pattern.CASE_INSENSITIVE);
+            "^RMTABLE(\\d{1,3})O(\\d+)$", Pattern.CASE_INSENSITIVE);
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -47,8 +48,12 @@ public class PaymentStatusServlet extends HttpServlet {
 
         boolean paid;
         TableBill receipt = null;
+        BigDecimal currentPayable = null;
         try (OrderDAO dao = new OrderDAO()) {
             paid = dao.isQrPaymentCompleted(tableId, reference.trim());
+            // Trả thêm số tiền hiện tại của bill để trang biết QR đã cũ hay chưa.
+            TableBill current = dao.getTableBill(tableId);
+            currentPayable = current == null ? null : current.getPayableAmount();
             if (paid) {
                 receipt = dao.getQrReceipt(tableId, reference.trim());
             }
@@ -60,7 +65,8 @@ public class PaymentStatusServlet extends HttpServlet {
             session.setAttribute("oneTimeServiceReceipt", receipt);
         }
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().print("{\"paid\":" + (paid && receipt != null) + "}");
+        response.getWriter().print("{\"paid\":" + (paid && receipt != null)
+                + ",\"payable\":" + (currentPayable == null ? "null" : currentPayable.toPlainString()) + "}");
     }
 
     private boolean hasRole(User user, String role) {

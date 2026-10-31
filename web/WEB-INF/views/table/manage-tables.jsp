@@ -26,16 +26,6 @@
                     </c:if>
                 </div>
             </header>
-            <c:if test="${not tableLoadFailed and sessionScope.user.roleName eq 'Receptionist'}">
-                <form class="table-payment-filter" method="get" action="${pageContext.request.contextPath}/manage-tables">
-                    <label for="paymentFilter">Bàn chưa thanh toán</label>
-                    <select id="paymentFilter" name="paymentFilter" onchange="this.form.submit()">
-                        <option value="ALL" ${paymentFilter eq 'ALL' ? 'selected' : ''}>Tất cả bàn</option>
-                        <option value="UNPAID" ${paymentFilter eq 'UNPAID' ? 'selected' : ''}>Chỉ bàn chưa thanh toán</option>
-                    </select>
-                    <strong><c:out value="${unpaidTableCount}" /></strong> bàn
-                </form>
-            </c:if>
 
             <c:if test="${not empty tableMessage}">
                 <p class="table-message ${tableMessageType eq 'success' ? 'is-success' : 'is-error'}" role="status">
@@ -139,11 +129,6 @@
                                                 <p class="table-description"><c:out value="${table.description}" /></p>
                                             </c:if>
                                             <div class="table-actions">
-                                                <c:if test="${not empty tableBills[table.tableId] and (sessionScope.user.roleName eq 'Receptionist' or sessionScope.user.roleName eq 'Manager')}">
-                                                    <a href="${pageContext.request.contextPath}/payment?tableId=${table.tableId}">
-                                                        <i class="fa-solid fa-cash-register" aria-hidden="true"></i> Thanh toán
-                                                    </a>
-                                                </c:if>
                                                 <c:if test="${canOrder and table.status ne 'UNAVAILABLE'}">
                                                     <a href="${pageContext.request.contextPath}/table-order?tableId=${table.tableId}">Order</a>
                                                 </c:if>

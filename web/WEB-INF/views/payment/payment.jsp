@@ -211,14 +211,14 @@
                         <h2>Chọn phương thức</h2>
                         <c:choose>
                             <c:when test="${bill.readyForPayment and bill.totalAmount gt 0}">
-                                <form action="${pageContext.request.contextPath}/manage-tables" method="post" id="paymentForm">
+                                <form action="${pageContext.request.contextPath}/payment" method="post" id="paymentForm">
                                     <input type="hidden" name="action" value="payTable">
                                     <input type="hidden" name="tableId" value="${bill.tableId}">
 
                                     <label>Phương thức
                                         <select name="paymentMethod" id="paymentMethod" data-total="${bill.payableAmount}" required>
                                             <option value="CASH">Tiền mặt</option>
-                                            <option value="QR">QR chuyển khoản</option>
+                                            <c:if test="${bill.payableAmount ge 2000}"><option value="QR">QR chuyển khoản</option></c:if>
                                         </select>
                                     </label>
 
@@ -227,8 +227,8 @@
                                             <input name="cashReceived" id="cashReceived" type="number"
                                                    min="${bill.payableAmount}" step="1" inputmode="numeric" required>
                                         </label>
-                                        <p class="change">Tiền trả lại <strong id="cashChange">0</strong> đ</p>
-                                        <input type="hidden" name="cashChange" id="cashChangeValue" value="0">
+                                        <p class="change">Tiền trả lại <strong id="cashChange">0</strong></p>
+                                        
                                     </div>
 
                                     <div id="qrFields" hidden
@@ -240,6 +240,7 @@
                                             <c:when test="${sepayWebhookConfigured and not empty paymentAccountNumber and not empty paymentAccountName}">
                                                 <img id="paymentQrImage" alt="QR thanh toán">
                                                 <p class="waiting">Đang chờ hệ thống xác nhận giao dịch...</p>
+                                                <p class="warning">Sau 1 phút chưa thấy xác nhận: kiểm tra khách đã chuyển đúng số tiền và nội dung, hoặc đổi sang Tiền mặt.</p>
                                             </c:when>
                                             <c:otherwise>
                                                 <p class="warning">QR chưa được cấu hình SePay/webhook, chưa thể xác nhận tự động.</p>
@@ -280,11 +281,13 @@
                     var cash = method.value === 'CASH';
                     cashFields.hidden = !cash;
                     qrFields.hidden = cash;
+                    // Khi chọn tiền mặt thì ngắt các ô QR để mã chuyển khoản cũ không bị gửi đi.
+                    qrFields.querySelectorAll('input').forEach(function (el) { el.disabled = cash; });
                     received.required = cash;
                     if (cash) {
                         var change = Math.max(0, Number(received.value || 0) - total);
                         document.getElementById('cashChange').textContent = change.toLocaleString('vi-VN');
-                        document.getElementById('cashChangeValue').value = change;
+                        
                     }
                 }
                 function stopPolling() {
@@ -306,6 +309,13 @@
                                     return r.json();
                                 })
                                 .then(function (s) {
+                                    if (!s.paid && s.payable !== null && Number(s.payable) !== total) {
+                                        // Bill đã đổi (điểm, món mới...) nên mã QR đang hiện sai số tiền: tải lại để tạo QR mới.
+                                        stopPolling();
+                                        alert('Tổng bill vừa thay đổi. Trang sẽ tải lại, hãy chọn lại QR chuyển khoản.');
+                                        window.location.reload();
+                                        return;
+                                    }
                                     if (s.paid) {
                                         stopPolling();
                                         window.location.href = '${pageContext.request.contextPath}/service-history';
@@ -325,7 +335,7 @@
                             refresh();
                             return;
                         }
-                        var reference = 'RMTABLE${bill.tableId}' + Date.now();
+                        var reference = '${qrReference}'; if (!reference) { method.value = 'CASH'; alert('Không tạo được mã chuyển khoản vì bàn chưa có bill đang mở. Vui lòng tải lại trang.'); refresh(); return; }
                         document.getElementById('paymentReference').value = reference;
                         document.getElementById('paymentQrImage').src =
                                 'https://img.vietqr.io/image/' + encodeURIComponent(qrFields.dataset.bank) + '-' + encodeURIComponent(qrFields.dataset.account)

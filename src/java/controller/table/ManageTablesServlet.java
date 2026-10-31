@@ -73,32 +73,11 @@ public class ManageTablesServlet extends HttpServlet {
         request.setAttribute("canOrder", hasRole(actor, "Server"));
         // Bàn đang phục vụ mà không có order: lễ tân/server/quản lý được bật lại bàn trống.
         request.setAttribute("releasableTables", dao.getReleasableTableIds());
-        Map<Integer, TableBill> tableBills = new LinkedHashMap<>();
-        if (hasRole(actor, "Receptionist") || canManage) {
-            try (OrderDAO orderDAO = new OrderDAO()) {
-                orderDAO.cancelZeroValueOpenOrders();
-                for (RestaurantTable table : tables) {
-                    if ("OCCUPIED".equals(table.getStatus())) {
-                        TableBill bill = orderDAO.getTableBill(table.getTableId());
-                        if (bill != null) {
-                            tableBills.put(table.getTableId(), bill);
-                        }
-                    }
-                }
-            }
-        }
-        request.setAttribute("tableBills", tableBills);
-        String paymentFilter = "UNPAID".equalsIgnoreCase(request.getParameter("paymentFilter"))
-                ? "UNPAID" : "ALL";
-        int unpaidTableCount = tableBills.size();
+        // Sơ đồ bàn chỉ hiển thị trạng thái bàn. Đơn và thanh toán nằm ở màn Thanh toán.
         for (RestaurantTable table : tables) {
-            if (!"UNPAID".equals(paymentFilter) || tableBills.containsKey(table.getTableId())) {
-                tableGroups.computeIfAbsent(table.getTableType(), type -> new ArrayList<>()).add(table);
-            }
+            tableGroups.computeIfAbsent(table.getTableType(), type -> new ArrayList<>()).add(table);
         }
         request.setAttribute("tableGroups", tableGroups);
-        request.setAttribute("paymentFilter", paymentFilter);
-        request.setAttribute("unpaidTableCount", unpaidTableCount);
         request.setAttribute("paymentQrImageUrl", getServletContext().getInitParameter("paymentQrImageUrl"));
         request.setAttribute("paymentBankCode", getServletContext().getInitParameter("paymentBankCode"));
         request.setAttribute("paymentAccountNumber", getServletContext().getInitParameter("paymentAccountNumber"));
@@ -201,28 +180,31 @@ public class ManageTablesServlet extends HttpServlet {
             String method = request.getParameter("paymentMethod");
             String reference = request.getParameter("paymentReference");
             BigDecimal cashReceived = decimal(request.getParameter("cashReceived"));
-            BigDecimal cashChange = decimal(request.getParameter("cashChange"));
+            
             if ("QR".equals(method)) {
                 message = "Thanh toán QR chỉ được xác nhận tự động sau khi webhook báo thành công.";
             } else if (!"CASH".equals(method)) {
                 message = "Phương thức thanh toán không hợp lệ.";
             } else if (tableId > 0) {
                 try (OrderDAO orderDAO = new OrderDAO()) {
+                    // Dọn đơn 0 đ cũ chỉ khi có thao tác ghi thanh toán, không làm khi chỉ tải trang.
+                    orderDAO.cancelZeroValueOpenOrders();
                     TableBill receipt = orderDAO.getTableBill(tableId);
                     if (orderDAO.markTablePaid(tableId, actor.getUserId(), method,
-                            reference == null ? null : reference.trim(), cashReceived, cashChange)) {
+                            reference == null ? null : reference.trim(), cashReceived, null)) {
                         if (receipt == null) {
                             receipt = new TableBill();
                         }
                         receipt.setTableId(tableId);
                         receipt.setCashReceived(cashReceived);
-                        receipt.setCashChange(cashChange);
+                        receipt.setCashChange(orderDAO.getLastCashChange());
                         receipt.setPaymentMethod(method);
                         request.getSession().setAttribute("oneTimeServiceReceipt", receipt);
                         message = "Đã thanh toán toàn bộ bill của bàn và giải phóng bàn.";
                         messageType = "success";
                     } else {
-                        message = "Bàn còn món chưa phục vụ hoặc bill không còn hợp lệ.";
+                        String reason = orderDAO.getLastPaymentFailureReason();
+                        message = reason == null ? "Bàn còn món chưa phục vụ hoặc bill không còn hợp lệ." : reason;
                     }
                 }
             } else {
