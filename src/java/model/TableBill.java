@@ -28,6 +28,11 @@ public class TableBill {
     private BigDecimal discountAmount = BigDecimal.ZERO;
     private BigDecimal payableAmount;
     private int pointsToEarn;
+    // Voucher giảm theo % tổng bill: mã đang áp cho bàn, % lúc áp, số tiền giảm (đã làm tròn đồng).
+    private int voucherId;
+    private String voucherCode;
+    private BigDecimal voucherPercent = BigDecimal.ZERO;
+    private BigDecimal voucherDiscount = BigDecimal.ZERO;
     private List<TableBillItem> items = new ArrayList<>();
 
     public int getTableId() { return tableId; } public String getTableName() { return tableName; } public void setTableName(String tableName) { this.tableName = tableName; }
@@ -75,7 +80,16 @@ public class TableBill {
     public void setPointsToUse(int v) { this.pointsToUse = v; }
     public BigDecimal getDiscountAmount() { return discountAmount; }
     public void setDiscountAmount(BigDecimal v) { this.discountAmount = v; }
-    /** Số tiền khách thực trả = tổng bill - giảm giá điểm. */
+    public int getVoucherId() { return voucherId; }
+    public void setVoucherId(int v) { this.voucherId = v; }
+    public String getVoucherCode() { return voucherCode; }
+    public void setVoucherCode(String v) { this.voucherCode = v; }
+    public BigDecimal getVoucherPercent() { return voucherPercent; }
+    public void setVoucherPercent(BigDecimal v) { this.voucherPercent = v; }
+    public BigDecimal getVoucherDiscount() { return voucherDiscount; }
+    public void setVoucherDiscount(BigDecimal v) { this.voucherDiscount = v; }
+    public boolean isHasVoucher() { return voucherId > 0; }
+    /** Số tiền khách thực trả = tổng bill - giảm giá điểm - giảm giá voucher. */
     public BigDecimal getPayableAmount() { return payableAmount != null ? payableAmount : totalAmount; }
     public void setPayableAmount(BigDecimal v) { this.payableAmount = v; }
     public int getPointsToEarn() { return pointsToEarn; }
