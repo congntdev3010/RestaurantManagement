@@ -129,20 +129,82 @@ public class RestaurantTableDAO extends DBContext {
      * order thì trả về false.
      */
     public boolean releaseIfNoOrder(int tableId) {
-        String sql = "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
-                + "WHERE table_id = ? AND table_status = 'OCCUPIED' AND " + NO_ACTIVE_ORDER;
-        return executeUpdate(sql, statement -> statement.setInt(1, tableId));
+        if (connection == null) {
+            return false;
+        }
+        try {
+            connection.setAutoCommit(false);
+            // 1. Tự động hủy các đơn 0 đ nếu toàn bộ món đã bị hủy/từ chối
+            try (PreparedStatement psZero = connection.prepareStatement(
+                    "UPDATE Orders SET order_status = 'CANCELLED', closed_at = SYSDATETIME(), "
+                    + "cancelled_at = SYSDATETIME(), cancellation_reason = N'Giải phóng bàn trống (đơn không phát sinh món)' "
+                    + "WHERE table_id = ? AND order_status IN ('PENDING', 'OPEN') AND total_amount <= 0 "
+                    + "AND NOT EXISTS (SELECT 1 FROM OrderItems WHERE order_id = Orders.order_id AND item_status IN ('PENDING', 'COOKING'))")) {
+                psZero.setInt(1, tableId);
+                psZero.executeUpdate();
+            }
+
+            // 2. Chuyển trạng thái bàn về AVAILABLE nếu không còn order PENDING/OPEN nào
+            String sql = "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
+                    + "WHERE table_id = ? AND table_status = 'OCCUPIED' AND " + NO_ACTIVE_ORDER;
+            int updated;
+            try (PreparedStatement psTable = connection.prepareStatement(sql)) {
+                psTable.setInt(1, tableId);
+                updated = psTable.executeUpdate();
+            }
+
+            if (updated > 0) {
+                // 3. Chốt các đơn CANCELLED của bàn (settled_at) để không còn bị treo ở danh sách Đã hủy
+                try (PreparedStatement psSettle = connection.prepareStatement(
+                        "UPDATE Orders SET settled_at = SYSDATETIME() WHERE table_id = ? "
+                        + "AND order_status = 'CANCELLED' AND settled_at IS NULL")) {
+                    psSettle.setInt(1, tableId);
+                    psSettle.executeUpdate();
+                }
+
+                // 4. Dọn sạch liên kết tích điểm còn sót của bàn
+                try (PreparedStatement psLoyalty = connection.prepareStatement(
+                        "DELETE FROM TableBillLoyalty WHERE table_id = ?")) {
+                    psLoyalty.setInt(1, tableId);
+                    psLoyalty.executeUpdate();
+                }
+
+                connection.commit();
+                return true;
+            } else {
+                connection.rollback();
+                return false;
+            }
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
-     * Tập id các bàn OCCUPIED không có order — dùng để hiện nút "Bàn trống".
+     * Tập id các bàn OCCUPIED không có order (hoặc chỉ có đơn 0 đ không còn món đang làm) — dùng để hiện nút "Bàn trống".
      */
     public java.util.Set<Integer> getReleasableTableIds() {
         java.util.Set<Integer> ids = new java.util.HashSet<>();
         if (connection == null) {
             return ids;
         }
-        String sql = "SELECT table_id FROM RestaurantTables WHERE table_status = 'OCCUPIED' AND " + NO_ACTIVE_ORDER;
+        String sql = "SELECT table_id FROM RestaurantTables WHERE table_status = 'OCCUPIED' AND ("
+                + NO_ACTIVE_ORDER
+                + " OR NOT EXISTS (SELECT 1 FROM Orders o WHERE o.table_id = RestaurantTables.table_id "
+                + "AND o.order_status IN ('PENDING', 'OPEN') "
+                + "AND (o.total_amount > 0 OR EXISTS (SELECT 1 FROM OrderItems oi WHERE oi.order_id = o.order_id AND oi.item_status IN ('PENDING', 'COOKING')))))";
         try (PreparedStatement statement = connection.prepareStatement(sql); ResultSet rs = statement.executeQuery()) {
             while (rs.next()) {
                 ids.add(rs.getInt("table_id"));

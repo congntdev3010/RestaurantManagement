@@ -2,7 +2,18 @@
 <%@ page import="model.User" %>
 <%
     User currentUser = (User) session.getAttribute("user");
-    String currentURI = request.getRequestURI();
+    String forwardURI = (String) request.getAttribute("jakarta.servlet.forward.request_uri");
+    if (forwardURI == null) {
+        forwardURI = (String) request.getAttribute("javax.servlet.forward.request_uri");
+    }
+    String currentURI = (forwardURI != null) ? forwardURI : request.getRequestURI();
+    if (currentURI == null) {
+        currentURI = "";
+    }
+    boolean isPaymentActive = (currentURI.contains("/payment") || currentURI.contains("payment-dashboard") || currentURI.contains("payment.jsp"))
+            && !currentURI.contains("service-history")
+            && !currentURI.contains("my-payments")
+            && !currentURI.contains("payment-status");
         String roleName = currentUser == null ? "" : currentUser.getRoleName();
         String displayName = currentUser == null ? "" : currentUser.getFullName();
         if (displayName == null || displayName.trim().isEmpty()) {
@@ -139,7 +150,7 @@
            href="${pageContext.request.contextPath}/service-history" title="Lịch sử thanh toán" aria-label="Lịch sử thanh toán">
             <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Lịch sử thanh toán</span>
         </a>
-        <a class="sidebar-link <%= currentURI.endsWith("/payment") ? "active" : "" %>"
+        <a class="sidebar-link <%= isPaymentActive ? "active" : "" %>"
            href="${pageContext.request.contextPath}/payment" title="Thanh toán theo bàn" aria-label="Thanh toán theo bàn">
             <i class="fa-solid fa-cash-register" aria-hidden="true"></i><span>Thanh toán</span>
         </a>

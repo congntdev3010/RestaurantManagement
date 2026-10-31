@@ -180,28 +180,31 @@ public class ManageTablesServlet extends HttpServlet {
             String method = request.getParameter("paymentMethod");
             String reference = request.getParameter("paymentReference");
             BigDecimal cashReceived = decimal(request.getParameter("cashReceived"));
-            BigDecimal cashChange = decimal(request.getParameter("cashChange"));
+            
             if ("QR".equals(method)) {
                 message = "Thanh toán QR chỉ được xác nhận tự động sau khi webhook báo thành công.";
             } else if (!"CASH".equals(method)) {
                 message = "Phương thức thanh toán không hợp lệ.";
             } else if (tableId > 0) {
                 try (OrderDAO orderDAO = new OrderDAO()) {
+                    // Dọn đơn 0 đ cũ chỉ khi có thao tác ghi thanh toán, không làm khi chỉ tải trang.
+                    orderDAO.cancelZeroValueOpenOrders();
                     TableBill receipt = orderDAO.getTableBill(tableId);
                     if (orderDAO.markTablePaid(tableId, actor.getUserId(), method,
-                            reference == null ? null : reference.trim(), cashReceived, cashChange)) {
+                            reference == null ? null : reference.trim(), cashReceived, null)) {
                         if (receipt == null) {
                             receipt = new TableBill();
                         }
                         receipt.setTableId(tableId);
                         receipt.setCashReceived(cashReceived);
-                        receipt.setCashChange(cashChange);
+                        receipt.setCashChange(orderDAO.getLastCashChange());
                         receipt.setPaymentMethod(method);
                         request.getSession().setAttribute("oneTimeServiceReceipt", receipt);
                         message = "Đã thanh toán toàn bộ bill của bàn và giải phóng bàn.";
                         messageType = "success";
                     } else {
-                        message = "Bàn còn món chưa phục vụ hoặc bill không còn hợp lệ.";
+                        String reason = orderDAO.getLastPaymentFailureReason();
+                        message = reason == null ? "Bàn còn món chưa phục vụ hoặc bill không còn hợp lệ." : reason;
                     }
                 }
             } else {
