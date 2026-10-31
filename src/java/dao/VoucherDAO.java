@@ -113,6 +113,7 @@ public class VoucherDAO extends DBContext {
             for (Recipient r : recipients) {
                 String code = newCode(batchCodes);
                 int voucherId = insertVoucher(campaignId, code, r, discountPercent, requiredSpent);
+                insertVoucherNotification(r.getUserId(), discountPercent);
                 Voucher v = new Voucher();
                 v.setVoucherId(voucherId);
                 v.setCode(code);
@@ -251,6 +252,19 @@ public class VoucherDAO extends DBContext {
                 }
                 return keys.getInt(1);
             }
+        }
+    }
+
+    /** Thông báo trong app cho khách, ghi trong cùng transaction với voucher. */
+    private void insertVoucherNotification(int userId, BigDecimal discountPercent) throws SQLException {
+        String percent = discountPercent.stripTrailingZeros().toPlainString();
+        try (PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO Notifications (user_id, title, body) VALUES (?, ?, ?)")) {
+            ps.setInt(1, userId);
+            ps.setNString(2, "Bạn nhận được một voucher");
+            ps.setNString(3, "Bạn nhận được voucher giảm " + percent
+                    + "% tổng hóa đơn, mã voucher đã được gửi qua email của bạn.");
+            ps.executeUpdate();
         }
     }
 
