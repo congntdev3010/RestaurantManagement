@@ -147,6 +147,12 @@
         </a>
         <% } %>
         <% if (isManager || isAdmin) { %>
+        <% if (isManager) { %>
+        <a class="sidebar-link <%= currentURI.contains("manager-dashboard") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manager-dashboard" title="Dashboard quản lý" aria-label="Dashboard quản lý">
+            <i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Dashboard</span>
+        </a>
+        <% } %>
         <a class="sidebar-link <%= currentURI.contains("manage-users") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-users" title="Quản lý tài khoản" aria-label="Quản lý tài khoản">
             <i class="fa-solid fa-users-gear" aria-hidden="true"></i><span>Quản lý tài khoản</span>

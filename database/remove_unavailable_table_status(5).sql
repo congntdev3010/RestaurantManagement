@@ -2,7 +2,7 @@ USE AlacarteRestaurantDB;
 GO
 
 IF OBJECT_ID('dbo.RestaurantTables', 'U') IS NULL
-BEGIN
+BEGIN;
     THROW 50001, 'RestaurantTables does not exist.', 1;
 END;
 GO
