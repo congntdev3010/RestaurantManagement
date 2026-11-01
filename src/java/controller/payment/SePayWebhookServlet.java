@@ -1,6 +1,6 @@
 package controller.payment;
 
-import dao.OrderDAO;
+import dao.PaymentDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -69,10 +69,10 @@ public class SePayWebhookServlet extends HttpServlet {
             return;
         }
         // Mã phải khớp bill đang mở của bàn (kiểm trong DAO); chuyển khoản cũ không chốt được bill mới.
-        String reference = OrderDAO.qrReference(tableId, billKey);
+        String reference = PaymentDAO.qrReference(tableId, billKey);
         boolean paid;
         String failureReason = null;
-        try (OrderDAO dao = new OrderDAO()) {
+        try (PaymentDAO dao = new PaymentDAO()) {
             paid = dao.markQrTablePaid(tableId, actorId,
                     reference, new BigDecimal(amount.group(1).replace(',', '.')));
             failureReason = dao.getLastPaymentFailureReason();
