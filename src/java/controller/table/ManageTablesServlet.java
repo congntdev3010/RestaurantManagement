@@ -2,6 +2,7 @@ package controller.table;
 
 import dao.RestaurantTableDAO;
 import dao.OrderDAO;
+import dao.PaymentDAO;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -186,24 +187,24 @@ public class ManageTablesServlet extends HttpServlet {
             } else if (!"CASH".equals(method)) {
                 message = "Phương thức thanh toán không hợp lệ.";
             } else if (tableId > 0) {
-                try (OrderDAO orderDAO = new OrderDAO()) {
+                try (OrderDAO orderDAO = new OrderDAO(); PaymentDAO payDAO = new PaymentDAO()) {
                     // Dọn đơn 0 đ cũ chỉ khi có thao tác ghi thanh toán, không làm khi chỉ tải trang.
                     orderDAO.cancelZeroValueOpenOrders();
-                    TableBill receipt = orderDAO.getTableBill(tableId);
-                    if (orderDAO.markTablePaid(tableId, actor.getUserId(), method,
+                    TableBill receipt = payDAO.getTableBill(tableId);
+                    if (payDAO.markTablePaid(tableId, actor.getUserId(), method,
                             reference == null ? null : reference.trim(), cashReceived, null)) {
                         if (receipt == null) {
                             receipt = new TableBill();
                         }
                         receipt.setTableId(tableId);
                         receipt.setCashReceived(cashReceived);
-                        receipt.setCashChange(orderDAO.getLastCashChange());
+                        receipt.setCashChange(payDAO.getLastCashChange());
                         receipt.setPaymentMethod(method);
                         request.getSession().setAttribute("oneTimeServiceReceipt", receipt);
                         message = "Đã thanh toán toàn bộ bill của bàn và giải phóng bàn.";
                         messageType = "success";
                     } else {
-                        String reason = orderDAO.getLastPaymentFailureReason();
+                        String reason = payDAO.getLastPaymentFailureReason();
                         message = reason == null ? "Bàn còn món chưa phục vụ hoặc bill không còn hợp lệ." : reason;
                     }
                 }

@@ -1,6 +1,6 @@
 package controller.payment;
 
-import dao.OrderDAO;
+import dao.PaymentDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -49,7 +49,7 @@ public class PaymentStatusServlet extends HttpServlet {
         boolean paid;
         TableBill receipt = null;
         BigDecimal currentPayable = null;
-        try (OrderDAO dao = new OrderDAO()) {
+        try (PaymentDAO dao = new PaymentDAO()) {
             paid = dao.isQrPaymentCompleted(tableId, reference.trim());
             // Trả thêm số tiền hiện tại của bill để trang biết QR đã cũ hay chưa.
             TableBill current = dao.getTableBill(tableId);

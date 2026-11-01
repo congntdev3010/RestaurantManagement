@@ -4,6 +4,7 @@ import controller.order.CartServlet;
 import dao.CategoryDAO;
 import dao.DishDAO;
 import dao.OrderDAO;
+import dao.PaymentDAO;
 import dao.RestaurantTableDAO;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -113,7 +114,7 @@ public class ManageOrdersServlet extends HttpServlet {
         String message = "Không thể thực hiện thao tác với đơn hàng.";
         String anchor = "";
         String ls = listStatus(request.getParameter("listStatus"));
-        try (OrderDAO dao = new OrderDAO()) {
+        try (OrderDAO dao = new OrderDAO(); PaymentDAO payDao = new PaymentDAO()) {
             if ("approveItems".equals(action)) {
                 int result = dao.approveItems(id, actor.getUserId(), readApprovals(request));
                 if (result == OrderDAO.APPROVE_ORDER_OPENED) {
@@ -139,9 +140,10 @@ public class ManageOrdersServlet extends HttpServlet {
                 }
                 String method = trim(request.getParameter("paymentMethod"));
                 String reference = trim(request.getParameter("paymentReference"));
-                if ("QR".equals(method) && reference == null) {
-                    message = "Vui lòng nhập mã giao dịch QR.";
-                } else if (dao.markPaid(id, actor.getUserId(), method, reference)) {
+                if ("QR".equals(method)) {
+                    // QR chỉ được chốt tự động qua webhook SePay (đối chiếu mã và số tiền), không nhận mã nhập tay.
+                    message = "Thanh toán QR chỉ được xác nhận tự động sau khi webhook báo thành công.";
+                } else if (payDao.markPaid(id, actor.getUserId(), method, reference)) {
                     message = "Đã thanh toán bằng " + ("QR".equals(method) ? "QR" : "tiền mặt") + " và giải phóng bàn.";
                 } else {
                     message = "Chỉ được thanh toán khi tất cả món đã phục vụ hoặc hết món.";
