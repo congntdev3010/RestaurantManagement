@@ -19,6 +19,7 @@
 
         <!-- Nửa phải: Form đăng ký -->
         <div class="auth-content">
+            <a href="${pageContext.request.contextPath}/home" style="display:inline-flex;align-items:center;gap:6px;margin:0 0 14px;color:#7b1f28;font-size:14px;font-weight:600;text-decoration:none;">&larr; Về trang chủ</a>
             <h1 class="brand-logo">Việt <span>À la carte</span></h1>
 
             <div class="auth-card">

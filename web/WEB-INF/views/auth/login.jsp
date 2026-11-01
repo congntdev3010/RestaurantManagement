@@ -19,6 +19,7 @@
 
         <!-- Nửa phải: Form đăng nhập -->
         <div class="auth-content">
+            <a href="${pageContext.request.contextPath}/home" style="display:inline-flex;align-items:center;gap:6px;margin:0 0 14px;color:#7b1f28;font-size:14px;font-weight:600;text-decoration:none;">&larr; Về trang chủ</a>
             <h1 class="brand-logo">Việt <span>À la carte</span></h1>
 
             <div class="auth-card">
@@ -63,12 +64,6 @@
 
                     <button type="submit" class="btn-submit">Đăng nhập</button>
                 </form>
-
-                <div style="text-align:center;margin:14px 0;color:#888;font-size:13px;">hoặc</div>
-                <a href="${pageContext.request.contextPath}/login/google" class="btn-submit"
-                   style="display:block;text-align:center;text-decoration:none;background:#fff;color:#333;border:1px solid #ccc;box-sizing:border-box;">
-                    Đăng nhập bằng Google
-                </a>
 
                 <div class="auth-footer">
                     Chưa có tài khoản? <a href="${pageContext.request.contextPath}/register">Đăng ký ngay</a>
