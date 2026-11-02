@@ -22,7 +22,7 @@ Ung dung dung VietQR de tao ma chuyen khoan va SePay de xac nhan giao dich that 
 	- Dat ten, vi du `RestaurantManagement payment`.
 	- Chon su kien **Co tien vao**.
 	- Nhap URL public: `https://<ten-mien-cua-nha-hang>/RestaurantManagement/webhooks/sepay`.
-4. O buoc **Tai khoan va bo loc**, chon tai khoan TPBank da lien ket. Neu co bo loc tien to, khong gioi han sai tien to; ung dung se tu kiem tra noi dung `RM-TABLE-<tableId>`.
+4. O buoc **Tai khoan va bo loc**, chon tai khoan TPBank da lien ket. Neu co bo loc tien to, khong gioi han sai tien to; ung dung se tu kiem tra noi dung `RMTABLE<tableId>O<billKey>` (vi du `RMTABLE5O123`, khong co dau gach ngang).
 5. O buoc **Bao mat**, chon **API Key**.
 6. Tao/generate API key, sao chep ngay gia tri key va luu trong password manager. Day chinh la gia tri cua `SEPAY_WEBHOOK_TOKEN`.
 7. Hoan tat tao webhook. Khong dua API key vao JSP, JavaScript, Git hoac file `web.xml`.
@@ -76,7 +76,7 @@ SePay se tu gui header:
 Authorization: Apikey API_KEY_VUA_TAO_TREN_SEPAY
 ```
 
-Endpoint chi chap nhan giao dich co noi dung chua ma dang `RM-TABLE-<tableId>` va so tien dung voi bill.
+Endpoint chi chap nhan giao dich co noi dung chua ma dang `RMTABLE<tableId>O<billKey>` va so tien dung voi bill dang mo cua ban do. Ma nay do man thanh toan tao, khong phai `RM-TABLE-...`.
 
 ## 5. Chay local voi localhost va ngrok
 

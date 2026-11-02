@@ -1,0 +1,28 @@
+/* Trang "Điểm tích lũy của tôi" (loyalty/my-points.jsp) */
+.points-body { padding: 28px 32px 32px; }
+.points-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 28px; }
+.points-rule { background: #fbf3ee; border: 1px solid #efdfd5; border-radius: 14px; padding: 14px 18px; }
+.points-rule span { display: block; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: #8a6f66; margin-bottom: 4px; }
+.points-rule strong { font-size: 1.05rem; color: #5a1b22; }
+.points-note { margin: 0 0 26px; color: #7a6a64; font-size: .92rem; }
+.points-title { margin: 0 0 14px; font-size: 1.25rem; color: #4a1620; }
+.points-table-wrap { overflow-x: auto; border: 1px solid #efe4dc; border-radius: 14px; }
+.points-table { width: 100%; border-collapse: collapse; background: #fff; }
+.points-table th { text-align: left; padding: 12px 16px; font-size: .72rem; letter-spacing: .07em; text-transform: uppercase;
+                   color: #8a7a73; background: #faf5f1; border-bottom: 1px solid #efe4dc; white-space: nowrap; }
+.points-table td { padding: 14px 16px; border-bottom: 1px solid #f3ebe5; vertical-align: middle; }
+.points-table tr:last-child td { border-bottom: 0; }
+.points-table tbody tr:hover { background: #fffaf6; }
+.points-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.points-table th.num { text-align: right; }
+.points-time { white-space: nowrap; color: #5d4f49; }
+.points-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
+.points-badge.earn { background: #e6f4ea; color: #1e7a3c; }
+.points-badge.redeem { background: #fdeaea; color: #a8242b; }
+.points-badge.adjust { background: #eef0f6; color: #46506b; }
+.points-delta { font-weight: 700; font-size: 1.02rem; }
+.points-delta.plus { color: #1e7a3c; }
+.points-delta.minus { color: #a8242b; }
+.points-note-cell { color: #6b5d57; }
+.points-empty { text-align: center; padding: 36px 12px; color: #8a7a73; background: #fffaf6; border: 1px dashed #e5d3c8; border-radius: 14px; }
+@media (max-width: 640px) { .points-body { padding: 20px 14px 24px; } }
