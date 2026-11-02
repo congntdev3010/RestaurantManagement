@@ -1,27 +1,18 @@
 package controller.order;
 
-import controller.order.CartServlet;
-import dao.CategoryDAO;
-import dao.DishDAO;
 import dao.OrderDAO;
 import dao.PaymentDAO;
-import dao.RestaurantTableDAO;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Category;
-import model.Dish;
 import model.Order;
-import model.RestaurantTable;
 import model.User;
 
 /**

@@ -2,6 +2,7 @@ package controller.order;
 
 import dao.OrderDAO;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -19,8 +20,8 @@ import model.User;
  * mình. Order luôn vào trạng thái PENDING để server duyệt; không sửa món sau
  * khi gửi — muốn thêm món thì tạo order mới.
  */
-@WebServlet(name = "CustomerOrdersServlet", urlPatterns = {"/my-orders"})
-public class CustomerOrdersServlet extends HttpServlet {
+@WebServlet(name = "CustomerCheckoutServlet", urlPatterns = {"/my-orders"})
+public class CustomerCheckoutServlet extends HttpServlet {
 
     private static final String MY_ORDER_IDS = "myOrderIds";
 
@@ -30,8 +31,6 @@ public class CustomerOrdersServlet extends HttpServlet {
         HttpSession session = request.getSession();
         CartServlet.ensureToken(session);
         User user = customerOf(session);
-        request.setAttribute("orderMessage", session.getAttribute("orderMessage"));
-        session.removeAttribute("orderMessage");
         int id = parseInt(request.getParameter("id"), -1);
         try (OrderDAO dao = new OrderDAO()) {
             if (id > 0) {
@@ -44,6 +43,8 @@ public class CustomerOrdersServlet extends HttpServlet {
                     return;
                 }
                 request.setAttribute("order", order);
+                request.setAttribute("orderMessage", session.getAttribute("orderMessage"));
+                session.removeAttribute("orderMessage");
                 request.setAttribute("canCancel", user != null && order.getUserId() != null
                         && order.getUserId() == user.getUserId() && "PENDING".equals(order.getStatus()));
                 request.getRequestDispatcher("/WEB-INF/views/order/customer-order-detail.jsp").forward(request, response);
@@ -86,8 +87,8 @@ public class CustomerOrdersServlet extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/order");
                     return;
                 }
-                Object guestName = session.getAttribute(CustomerOrderServlet.GUEST_NAME);
-                Object guestPhone = session.getAttribute(CustomerOrderServlet.GUEST_PHONE);
+                Object guestName = session.getAttribute(CustomerMenuServlet.GUEST_NAME);
+                Object guestPhone = session.getAttribute(CustomerMenuServlet.GUEST_PHONE);
                 if (guestName == null || guestPhone == null) {
                     // Chưa điền tên + SĐT: đưa về bước vào bàn.
                     response.sendRedirect(request.getContextPath() + "/order");
@@ -96,11 +97,11 @@ public class CustomerOrdersServlet extends HttpServlet {
                 String name = guestName.toString();
                 String phone = guestPhone.toString();
                 String email = user != null ? user.getEmail() : null;
-                Map<Integer, String> itemNotes = new java.util.LinkedHashMap<>();
+                Map<Integer, String> itemNotes = new LinkedHashMap<>();
                 for (Integer dishId : cart.keySet()) {
-                    String n = trim(request.getParameter("note_" + dishId));
-                    if (n != null) {
-                        itemNotes.put(dishId, n.length() > 100 ? n.substring(0, 100) : n);
+                    String note = trim(request.getParameter("note_" + dishId));
+                    if (note != null) {
+                        itemNotes.put(dishId, note.length() > 100 ? note.substring(0, 100) : note);
                     }
                 }
                 int createdId = dao.createOrder(user == null ? null : user.getUserId(), null, (Integer) tableId, null,

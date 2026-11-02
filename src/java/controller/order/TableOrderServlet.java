@@ -1,6 +1,5 @@
 package controller.order;
 
-import controller.order.CartServlet;
 import dao.CategoryDAO;
 import dao.DishDAO;
 import dao.OrderDAO;

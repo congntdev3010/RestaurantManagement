@@ -1,6 +1,5 @@
 package controller.order;
 
-import controller.order.CartServlet;
 import dao.OrderDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;

@@ -21,8 +21,8 @@ import jakarta.servlet.http.HttpSession;
 import model.Category;
 import model.Dish;
 
-@WebServlet(name = "CustomerOrderServlet", urlPatterns = {"/order"})
-public class CustomerOrderServlet extends HttpServlet {
+@WebServlet(name = "CustomerMenuServlet", urlPatterns = {"/order"})
+public class CustomerMenuServlet extends HttpServlet {
 
     public static final String GUEST_NAME = "orderGuestName";
     public static final String GUEST_PHONE = "orderGuestPhone";
@@ -96,7 +96,7 @@ public class CustomerOrderServlet extends HttpServlet {
             request.setAttribute("infoPhone", session.getAttribute("infoPhone"));
             session.removeAttribute("infoName");
             session.removeAttribute("infoPhone");
-            request.getRequestDispatcher("/WEB-INF/views/order/customer-order-info.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/order/customer-info.jsp").forward(request, response);
             return;
         }
 
@@ -155,7 +155,7 @@ public class CustomerOrderServlet extends HttpServlet {
             request.setAttribute("cartTotal", cartTotal);
             loadSentOrders(request, session, cartTotal);
         }
-        request.getRequestDispatcher("/WEB-INF/views/order/customer-order.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/order/customer-menu.jsp").forward(request, response);
     }
 
     private void loadSentOrders(HttpServletRequest request, HttpSession session, BigDecimal cartTotal) {

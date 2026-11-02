@@ -450,7 +450,7 @@ body {
     }
 }
 
-/* Danh sách đơn hàng của tôi (my-orders.jsp) trên điện thoại */
+/* Danh sách đơn và bộ lọc trạng thái (manage-orders.jsp) trên điện thoại */
 @media (max-width: 600px) {
     .order-list {
         grid-template-columns: 1fr;
