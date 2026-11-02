@@ -208,6 +208,11 @@
                             </c:choose>
                         </div>
 
+                        <c:if test="${bill.unfinishedItemCount gt 0}"><p class="warning" style="background:#fee2e2;color:#7f1d1d;border-color:#fca5a5">Bàn còn <strong>${bill.unfinishedItemCount}</strong> món chưa phục vụ.</p></c:if>
+                        <c:if test="${bill.totalAmount le 0}"><p class="warning">Bill 0 đ; order không phát sinh thanh toán.</p></c:if>
+                        <c:if test="${bill.pendingOrder}">
+                            <p class="warning">Bàn đang có đơn mới chờ nhân viên duyệt. Hóa đơn này chưa gồm đơn đó; hãy gọi nhân viên duyệt trước khi khách gọi thêm món.</p>
+                        </c:if>
                         <h2>Chọn phương thức</h2>
                         <c:choose>
                             <c:when test="${bill.readyForPayment and bill.totalAmount gt 0}">
@@ -240,26 +245,18 @@
                                             <c:when test="${sepayWebhookConfigured and not empty paymentAccountNumber and not empty paymentAccountName}">
                                                 <img id="paymentQrImage" alt="QR thanh toán">
                                                 <p class="waiting">Đang chờ hệ thống xác nhận giao dịch...</p>
-                                                <p class="warning">Sau 1 phút chưa thấy xác nhận: kiểm tra khách đã chuyển đúng số tiền và nội dung, hoặc đổi sang Tiền mặt.</p>
+                                                
                                             </c:when>
                                             <c:otherwise>
                                                 <p class="warning">QR chưa được cấu hình SePay/webhook, chưa thể xác nhận tự động.</p>
                                             </c:otherwise>
                                         </c:choose>
-                                        <input name="paymentReference" id="paymentReference" maxlength="100" placeholder="Mã giao dịch">
+                                        <p class="waiting">Nội dung chuyển khoản: <strong id="paymentReferenceText"></strong></p>
                                     </div>
 
-                                    <button class="submit-button" type="submit">Xác nhận thanh toán</button>
+                                    <button class="submit-button" type="submit" id="submitButton">Xác nhận thanh toán</button>
                                 </form>
                             </c:when>
-                            <c:otherwise>
-                                <p class="warning">
-                                    <c:choose>
-                                        <c:when test="${bill.totalAmount le 0}">Bill 0 đ; order không phát sinh thanh toán.</c:when>
-                                        <c:otherwise>Bàn còn <strong><c:out value="${bill.unfinishedItemCount}"/> món</strong> chưa phục vụ.</c:otherwise>
-                                    </c:choose>
-                                </p>
-                            </c:otherwise>
                         </c:choose>
                     </section>
                 </div>
@@ -281,6 +278,7 @@
                     var cash = method.value === 'CASH';
                     cashFields.hidden = !cash;
                     qrFields.hidden = cash;
+                    document.getElementById('submitButton').style.display = cash ? '' : 'none';
                     // Khi chọn tiền mặt thì ngắt các ô QR để mã chuyển khoản cũ không bị gửi đi.
                     qrFields.querySelectorAll('input').forEach(function (el) { el.disabled = cash; });
                     received.required = cash;
@@ -298,7 +296,7 @@
                 }
                 function poll() {
                     stopPolling();
-                    var reference = document.getElementById('paymentReference').value;
+                    var reference = document.getElementById('paymentReferenceText').textContent;
                     function check() {
                         fetch('${pageContext.request.contextPath}/payment-status?tableId=${bill.tableId}&reference=' +
                                 encodeURIComponent(reference) + '&_=' + Date.now(),
@@ -336,7 +334,7 @@
                             return;
                         }
                         var reference = '${qrReference}'; if (!reference) { method.value = 'CASH'; alert('Không tạo được mã chuyển khoản vì bàn chưa có bill đang mở. Vui lòng tải lại trang.'); refresh(); return; }
-                        document.getElementById('paymentReference').value = reference;
+                        document.getElementById('paymentReferenceText').textContent = reference;
                         document.getElementById('paymentQrImage').src =
                                 'https://img.vietqr.io/image/' + encodeURIComponent(qrFields.dataset.bank) + '-' + encodeURIComponent(qrFields.dataset.account)
                                 + '-compact2.png?amount=' + Math.round(total) + '&addInfo=' + encodeURIComponent(reference)

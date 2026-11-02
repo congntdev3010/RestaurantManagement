@@ -9,6 +9,8 @@ public class TableBill {
     private int tableId; private String tableName;
     private int orderCount;
     private int unfinishedItemCount;
+    // Số đơn đang chờ nhân viên duyệt: KHÔNG chặn thanh toán, chỉ để báo cho lễ tân.
+    private boolean pendingOrder;
     private BigDecimal totalAmount = BigDecimal.ZERO;
     private LocalDateTime reservationTime;
     private LocalDateTime checkedInAt;
@@ -41,6 +43,8 @@ public class TableBill {
     public void setOrderCount(int orderCount) { this.orderCount = orderCount; }
     public int getUnfinishedItemCount() { return unfinishedItemCount; }
     public void setUnfinishedItemCount(int unfinishedItemCount) { this.unfinishedItemCount = unfinishedItemCount; }
+    public boolean isPendingOrder() { return pendingOrder; }
+    public void setPendingOrder(boolean pendingOrder) { this.pendingOrder = pendingOrder; }
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public boolean isReadyForPayment() {

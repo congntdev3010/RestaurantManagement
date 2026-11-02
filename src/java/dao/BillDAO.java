@@ -21,12 +21,12 @@ public class BillDAO extends DBContext implements AutoCloseable {
         }
         String sql = "SELECT COUNT(*) AS order_count, COALESCE(SUM(o.total_amount), 0) AS total_amount, "
                 + "COALESCE((SELECT COUNT(*) FROM OrderItems oi JOIN Orders ox ON ox.order_id = oi.order_id "
-                + "WHERE ox.table_id = ? AND ox.order_status IN ('PENDING', 'OPEN') "
-                + "AND oi.item_status IN ('PENDING', 'COOKING')), 0) "
-                + "+ CASE WHEN EXISTS (SELECT 1 FROM Orders op WHERE op.table_id = ? AND op.order_status = 'PENDING' "
-                + "AND EXISTS (SELECT 1 FROM OrderItems opi WHERE opi.order_id = op.order_id "
-                + "AND opi.item_status <> 'REJECTED')) "
-                + "THEN 1 ELSE 0 END AS unfinished_count "
+                + "WHERE ox.table_id = ? AND ox.order_status = 'OPEN' "
+                + "AND oi.item_status IN ('PENDING', 'COOKING')), 0) AS unfinished_count, "
+                + "CASE WHEN EXISTS (SELECT 1 FROM Orders op WHERE op.table_id = ? AND op.order_status = 'PENDING') THEN 1 ELSE 0 END AS has_pending "
+                
+                
+                
                 + "FROM Orders o WHERE o.table_id = ? AND o.order_status = 'OPEN'";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, tableId);
@@ -51,6 +51,7 @@ public class BillDAO extends DBContext implements AutoCloseable {
                 }
                 bill.setOrderCount(rs.getInt("order_count"));
                 bill.setUnfinishedItemCount(rs.getInt("unfinished_count"));
+                bill.setPendingOrder(rs.getInt("has_pending") == 1);
                 bill.setTotalAmount(rs.getBigDecimal("total_amount"));
                 try (PreparedStatement items = connection.prepareStatement(
                         "SELECT oi.dish_name, oi.unit, oi.unit_price, oi.quantity, oi.line_total "

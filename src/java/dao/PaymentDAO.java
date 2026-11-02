@@ -228,6 +228,7 @@ public class PaymentDAO extends DBContext implements AutoCloseable {
                     "UPDATE RestaurantTables SET table_status = 'AVAILABLE' "
                     + "WHERE table_id = ? AND table_status IN ('AVAILABLE', 'RESERVED', 'OCCUPIED')")) {
                 settleCancelledOrders(tableId);
+                releasePendingOrders(tableId);
                 if (!applyLoyaltyOnPayment(bill, historyId, actorId)) {
                     rollback();
                     return false;
@@ -265,6 +266,27 @@ public class PaymentDAO extends DBContext implements AutoCloseable {
                 + "AND order_status = 'CANCELLED' AND settled_at IS NULL")) {
             settle.setInt(1, tableId);
             settle.executeUpdate();
+        }
+    }
+
+    /**
+     * Khi thanh toán bàn: giải phóng các đơn đang chờ duyệt (khách gọi nhưng nhân viên chưa duyệt).
+     * Đơn bị hủy, món của đơn chuyển REJECTED để không còn hiện ở bếp hay màn duyệt đơn.
+     */
+    private void releasePendingOrders(int tableId) throws SQLException {
+        try (PreparedStatement items = connection.prepareStatement(
+                "UPDATE oi SET item_status = 'REJECTED', line_total = 0 FROM OrderItems oi JOIN Orders o ON o.order_id = oi.order_id "
+                + "WHERE o.table_id = ? AND o.order_status = 'PENDING' AND oi.item_status = 'PENDING'")) {
+            items.setInt(1, tableId);
+            items.executeUpdate();
+        }
+        try (PreparedStatement orders = connection.prepareStatement(
+                "UPDATE Orders SET order_status = 'CANCELLED', cancelled_at = SYSDATETIME(), closed_at = SYSDATETIME(), "
+                + "settled_at = SYSDATETIME(), cancellation_reason = ? "
+                + "WHERE table_id = ? AND order_status = 'PENDING'")) {
+            orders.setNString(1, "Bàn đã thanh toán khi đơn chưa được duyệt.");
+            orders.setInt(2, tableId);
+            orders.executeUpdate();
         }
     }
 
@@ -376,10 +398,11 @@ public class PaymentDAO extends DBContext implements AutoCloseable {
 
     private boolean hasUnfinishedTableItems(int tableId) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT 1 FROM Orders o LEFT JOIN OrderItems oi ON oi.order_id = o.order_id "
-                + "WHERE o.table_id = ? AND ((o.order_status = 'PENDING' "
-                + "AND oi.item_status IN ('PENDING', 'COOKING')) "
-                + "OR (o.order_status = 'OPEN' AND oi.item_status IN ('PENDING', 'COOKING')))")) {
+                // Chỉ món đã duyệt (COOKING) của đơn OPEN mới chặn thanh toán; đơn PENDING (chờ duyệt) thì không.
+                "SELECT 1 FROM Orders o JOIN OrderItems oi ON oi.order_id = o.order_id "
+                + "WHERE o.table_id = ? AND o.order_status = 'OPEN' "
+                + "AND oi.item_status IN ('PENDING', 'COOKING')")) {
+                
             ps.setInt(1, tableId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();

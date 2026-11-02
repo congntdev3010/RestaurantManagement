@@ -57,6 +57,10 @@
                             </div>
                             <c:choose>
                                 <c:when test="${bill.readyForPayment and bill.totalAmount gt 0}">
+                                    <a class="payment-table-action" style="background: #fff; color: #7f1d1d; border: 1px solid #7f1d1d;"
+                                       href="${pageContext.request.contextPath}/payment?tableId=${table.tableId}">
+                                        Xem hóa đơn
+                                    </a>
                                     <a class="payment-table-action"
                                        href="${pageContext.request.contextPath}/payment?tableId=${table.tableId}">
                                         Mở thanh toán <span>→</span>
@@ -69,7 +73,10 @@
                                     </a>
                                 </c:when>
                                 <c:otherwise>
-                                    <span class="payment-table-action is-disabled">Chưa đủ điều kiện thanh toán</span>
+                                    <a class="payment-table-action" style="background: #fff; color: #7f1d1d; border: 1px solid #7f1d1d;"
+                                       href="${pageContext.request.contextPath}/payment?tableId=${table.tableId}">
+                                        Xem hóa đơn <span>→</span>
+                                    </a>
                                 </c:otherwise>
                             </c:choose>
                         </article>
