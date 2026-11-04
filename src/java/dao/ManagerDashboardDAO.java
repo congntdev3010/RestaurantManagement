@@ -10,6 +10,7 @@ import java.util.Map;
 import model.ManagerDashboard;
 import model.ManagerDashboard.CategorySales;
 import model.ManagerDashboard.DishSales;
+import model.ManagerDashboard.TableTurnover;
 
 public class ManagerDashboardDAO extends DBContext {
     public ManagerDashboard getDashboard() throws SQLException {
@@ -20,6 +21,9 @@ public class ManagerDashboardDAO extends DBContext {
         ManagerDashboard dashboard = new ManagerDashboard();
         loadSummary(dashboard);
         loadCustomerCounts(dashboard);
+        loadCancellationStats(dashboard);
+        loadTablePerformance(dashboard);
+        loadLoyaltyStats(dashboard);
         loadBestSellers(dashboard);
         loadLeastSold(dashboard);
         return dashboard;
@@ -91,6 +95,79 @@ public class ManagerDashboardDAO extends DBContext {
             if (results.next()) {
                 dashboard.setNewCustomerCount(results.getInt("new_customers"));
                 dashboard.setReturningCustomerCount(results.getInt("returning_customers"));
+            }
+        }
+    }
+
+    private void loadCancellationStats(ManagerDashboard dashboard) throws SQLException {
+        String sql = "SELECT COUNT(*) AS all_orders, "
+                + "COALESCE(SUM(CASE WHEN order_status = 'CANCELLED' THEN 1 ELSE 0 END), 0) AS cancelled_orders "
+                + "FROM dbo.Orders "
+                + "WHERE created_at >= CONVERT(date, GETDATE()) "
+                + "AND created_at < DATEADD(day, 1, CONVERT(date, GETDATE()))";
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet results = statement.executeQuery()) {
+            if (results.next()) {
+                dashboard.setAllTodayOrderCount(results.getInt("all_orders"));
+                dashboard.setCancelledOrderCount(results.getInt("cancelled_orders"));
+            }
+        }
+    }
+
+    private void loadTablePerformance(ManagerDashboard dashboard) throws SQLException {
+        String dailySql = "SELECT COUNT(*) AS service_count, "
+                + "AVG(CASE WHEN checked_in_at IS NOT NULL AND paid_at >= checked_in_at "
+                + "THEN CAST(DATEDIFF(SECOND, checked_in_at, paid_at) AS DECIMAL(12,2)) / 60 END) "
+                + "AS average_service_minutes "
+                + "FROM dbo.ServiceHistory "
+                + "WHERE paid_at >= CONVERT(date, GETDATE()) "
+                + "AND paid_at < DATEADD(day, 1, CONVERT(date, GETDATE()))";
+        try (PreparedStatement statement = connection.prepareStatement(dailySql);
+                ResultSet results = statement.executeQuery()) {
+            if (results.next()) {
+                dashboard.setTodayServiceCount(results.getInt("service_count"));
+                dashboard.setAverageServiceMinutes(results.getBigDecimal("average_service_minutes"));
+            }
+        }
+
+        String tableSql = "SELECT TOP (5) t.table_name, COUNT(*) AS service_count "
+                + "FROM dbo.ServiceHistory h JOIN dbo.RestaurantTables t ON t.table_id = h.table_id "
+                + "WHERE h.paid_at >= CONVERT(date, GETDATE()) "
+                + "AND h.paid_at < DATEADD(day, 1, CONVERT(date, GETDATE())) "
+                + "GROUP BY t.table_id, t.table_name "
+                + "ORDER BY COUNT(*) DESC, t.table_name";
+        try (PreparedStatement statement = connection.prepareStatement(tableSql);
+                ResultSet results = statement.executeQuery()) {
+            while (results.next()) {
+                dashboard.getBusiestTables().add(new TableTurnover(
+                        results.getNString("table_name"), results.getInt("service_count")));
+            }
+        }
+    }
+
+    private void loadLoyaltyStats(ManagerDashboard dashboard) throws SQLException {
+        String historySql = "SELECT COUNT(DISTINCT loyalty_customer_id) AS loyalty_customers, "
+                + "COALESCE(SUM(loyalty_points_earned), 0) AS points_earned, "
+                + "COALESCE(SUM(loyalty_points_used), 0) AS points_used "
+                + "FROM dbo.ServiceHistory "
+                + "WHERE paid_at >= CONVERT(date, GETDATE()) "
+                + "AND paid_at < DATEADD(day, 1, CONVERT(date, GETDATE()))";
+        try (PreparedStatement statement = connection.prepareStatement(historySql);
+                ResultSet results = statement.executeQuery()) {
+            if (results.next()) {
+                dashboard.setLoyaltyCustomerCount(results.getInt("loyalty_customers"));
+                dashboard.setLoyaltyPointsEarnedToday(results.getInt("points_earned"));
+                dashboard.setLoyaltyPointsUsedToday(results.getInt("points_used"));
+            }
+        }
+
+        String balanceSql = "SELECT COALESCE(SUM(u.loyalty_points), 0) AS outstanding_points "
+                + "FROM dbo.Users u JOIN dbo.Roles r ON r.role_id = u.role_id "
+                + "WHERE r.role_name = 'Customer' AND u.is_deleted = 0";
+        try (PreparedStatement statement = connection.prepareStatement(balanceSql);
+                ResultSet results = statement.executeQuery()) {
+            if (results.next()) {
+                dashboard.setOutstandingLoyaltyPoints(results.getInt("outstanding_points"));
             }
         }
     }
