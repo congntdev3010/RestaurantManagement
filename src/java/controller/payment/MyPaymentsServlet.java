@@ -1,5 +1,6 @@
 package controller.payment;
 
+import dao.CustomerReviewDAO;
 import dao.ServiceHistoryDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Set;
 import model.PaidBill;
 import model.User;
 
@@ -36,8 +38,10 @@ public class MyPaymentsServlet extends HttpServlet {
             return;
         }
 
-        try (ServiceHistoryDAO dao = new ServiceHistoryDAO()) {
+        try (ServiceHistoryDAO dao = new ServiceHistoryDAO(); CustomerReviewDAO reviews = new CustomerReviewDAO()) {
             request.setAttribute("bills", dao.findForCustomer(user.getUserId()));
+            Set<Integer> reviewedHistoryIds = reviews.findSubmittedHistoryIds(user.getUserId());
+            request.setAttribute("reviewedHistoryIds", reviewedHistoryIds);
             String idParam = request.getParameter("id");
             if (idParam != null) {
                 int id = parseInt(idParam);
@@ -48,8 +52,13 @@ public class MyPaymentsServlet extends HttpServlet {
                     request.setAttribute("detailMessage", "Không tìm thấy hóa đơn #" + idParam + " trong lịch sử của bạn.");
                 }
             }
+            HttpSession currentSession = request.getSession();
+            request.setAttribute("reviewMessage", currentSession.getAttribute("reviewMessage"));
+            request.setAttribute("reviewMessageType", currentSession.getAttribute("reviewMessageType"));
+            currentSession.removeAttribute("reviewMessage");
+            currentSession.removeAttribute("reviewMessageType");
         } catch (SQLException e) {
-            e.printStackTrace();
+            getServletContext().log("Could not load customer payment and review history", e);
             request.setAttribute("loadFailed", true);
         }
         request.getRequestDispatcher("/WEB-INF/views/payment/my-payments.jsp").forward(request, response);

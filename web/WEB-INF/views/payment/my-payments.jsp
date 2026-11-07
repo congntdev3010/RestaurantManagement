@@ -29,6 +29,9 @@
                             <p class="mp-message" role="alert">Không tải được lịch sử thanh toán. Vui lòng thử lại sau.</p>
                         </c:when>
                         <c:otherwise>
+                            <c:if test="${not empty reviewMessage}">
+                                <p class="mp-message ${reviewMessageType eq 'success' ? 'mp-success' : ''}" role="status"><c:out value="${reviewMessage}"/></p>
+                            </c:if>
                             <c:if test="${not empty detailMessage}">
                                 <p class="mp-message" role="status"><c:out value="${detailMessage}"/></p>
                             </c:if>
@@ -142,8 +145,19 @@
                                                             <c:if test="${b.pointsEarned gt 0}">+<c:out value="${b.pointsEarned}"/></c:if>
                                                             </td>
                                                             <td>
-                                                                <a class="mp-link"
-                                                                   href="${pageContext.request.contextPath}/my-payments?id=${b.historyId}">Xem chi tiết</a>
+                                                                <div class="mp-actions">
+                                                                    <a class="mp-link"
+                                                                       href="${pageContext.request.contextPath}/my-payments?id=${b.historyId}">Xem chi tiết</a>
+                                                                    <c:choose>
+                                                                        <c:when test="${reviewedHistoryIds.contains(b.historyId)}">
+                                                                            <span class="mp-reviewed">Đã đánh giá</span>
+                                                                        </c:when>
+                                                                        <c:otherwise>
+                                                                            <a class="mp-review-link"
+                                                                               href="${pageContext.request.contextPath}/submit-review?billId=${b.historyId}">Đánh giá</a>
+                                                                        </c:otherwise>
+                                                                    </c:choose>
+                                                                </div>
                                                         </td>
                                                     </tr>
                                                 </c:forEach>

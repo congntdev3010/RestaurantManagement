@@ -89,10 +89,16 @@ public class PaymentDAO extends DBContext implements AutoCloseable {
     public boolean markTablePaid(int tableId, int actorId, String paymentMethod, String paymentReference,
             BigDecimal cashReceived, BigDecimal cashChange) {
         lastPaymentFailureReason = null;
-        if (connection == null || (!"CASH".equals(paymentMethod) && !"QR".equals(paymentMethod))) {
+        if (connection == null) {
+            lastPaymentFailureReason = "Không kết nối được cơ sở dữ liệu để thanh toán.";
+            return false;
+        }
+        if (!"CASH".equals(paymentMethod) && !"QR".equals(paymentMethod)) {
+            lastPaymentFailureReason = "Phương thức thanh toán không hợp lệ.";
             return false;
         }
         if ("CASH".equals(paymentMethod) && cashReceived == null) {
+            lastPaymentFailureReason = "Vui lòng nhập số tiền khách đã đưa.";
             return false;
         }
         try {
