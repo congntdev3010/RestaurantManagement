@@ -21,8 +21,11 @@ public class ManagerDashboard {
     private int loyaltyPointsEarnedToday;
     private int loyaltyPointsUsedToday;
     private int outstandingLoyaltyPoints;
+    private String period = "WEEK";
+    private String periodLabel = "Tuần này";
+    private String previousPeriodLabel = "kỳ trước";
     private final List<CategorySales> categorySales = new ArrayList<>();
-    private final List<DishSales> leastSoldDishes = new ArrayList<>();
+    private final List<CategorySales> leastSoldCategories = new ArrayList<>();
     private final List<TableTurnover> busiestTables = new ArrayList<>();
 
     public BigDecimal getTodayRevenue() {
@@ -170,8 +173,32 @@ public class ManagerDashboard {
         return categorySales;
     }
 
-    public List<DishSales> getLeastSoldDishes() {
-        return leastSoldDishes;
+    public String getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(String period) {
+        this.period = period;
+    }
+
+    public String getPeriodLabel() {
+        return periodLabel;
+    }
+
+    public void setPeriodLabel(String periodLabel) {
+        this.periodLabel = periodLabel;
+    }
+
+    public String getPreviousPeriodLabel() {
+        return previousPeriodLabel;
+    }
+
+    public void setPreviousPeriodLabel(String previousPeriodLabel) {
+        this.previousPeriodLabel = previousPeriodLabel;
+    }
+
+    public List<CategorySales> getLeastSoldCategories() {
+        return leastSoldCategories;
     }
 
     public List<TableTurnover> getBusiestTables() {

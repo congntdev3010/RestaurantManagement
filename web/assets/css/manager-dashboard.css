@@ -8,8 +8,11 @@ body.manager-dashboard-page { min-height: 100vh; background: #f7f4ef; color: #33
 .dashboard-heading h1, .section-heading h2 { margin: 0; color: #49161d; font-family: 'Playfair Display', Georgia, serif; }
 .dashboard-heading h1 { font-size: clamp(29px, 3vw, 38px); }
 .dashboard-subtitle { margin: 8px 0 0; color: #857779; font-size: 14px; }
-.today-badge { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #eaded1; border-radius: 99px; background: #fffdf9; color: #725d56; font-size: 13px; font-weight: 700; }
-.today-badge i { color: #9c6720; }
+.dashboard-period-filter { display: flex; align-items: center; gap: 11px; padding: 8px 10px 8px 14px; border: 1px solid #eaded1; border-radius: 13px; background: #fffdf9; box-shadow: 0 8px 25px #4b2b1a0a; }
+.dashboard-period-filter label { display: inline-flex; align-items: center; gap: 8px; color: #725d56; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.dashboard-period-filter label i { color: #9c6720; }
+.dashboard-period-filter select { min-width: 145px; height: 40px; padding: 0 12px; border: 1px solid #eaded1; border-radius: 9px; background: #fffdf9; color: #49161d; font: inherit; }
+.dashboard-period-filter select:focus-visible { outline: 3px solid #9c672033; border-color: #9c6720; }
 .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .summary-card, .report-card { min-width: 0; border: 1px solid #eaded1; border-radius: 16px; background: #fffdf9; box-shadow: 0 8px 25px #4b2b1a0a; }
 .summary-card { padding: 20px; }
@@ -49,7 +52,9 @@ body.manager-dashboard-page { min-height: 100vh; background: #f7f4ef; color: #33
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 15px; }
 .section-heading h2 { font-size: 24px; }
 .section-period { padding-bottom: 3px; color: #958789; font-size: 12px; }
+.section-description { margin: 7px 0 0; color: #958789; font-size: 12px; line-height: 1.5; }
 .category-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.least-category-grid { margin-top: 15px; }
 .report-card { padding: 20px; }
 .report-card h3 { margin: 0 0 12px; color: #49161d; font-size: 16px; }
 .dish-ranking, .least-list { margin: 0; padding: 0; list-style: none; }
@@ -70,5 +75,5 @@ body.manager-dashboard-page { min-height: 100vh; background: #f7f4ef; color: #33
 .least-quantity { color: #7c2028; font-size: 13px; font-weight: 700; white-space: nowrap; }
 @media (max-width: 1120px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 980px) { .insight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .manager-dashboard { width: calc(100% - 32px); padding-top: 26px; } .category-grid, .insight-grid { grid-template-columns: 1fr; } .dashboard-heading { align-items: flex-start; flex-direction: column; } .section-heading { align-items: flex-start; flex-direction: column; gap: 6px; } }
+@media (max-width: 760px) { .manager-dashboard { width: calc(100% - 32px); padding-top: 26px; } .category-grid, .insight-grid { grid-template-columns: 1fr; } .dashboard-heading { align-items: flex-start; flex-direction: column; } .dashboard-period-filter { width: 100%; justify-content: space-between; } .section-heading { align-items: flex-start; flex-direction: column; gap: 10px; } }
 @media (max-width: 480px) { .summary-grid { grid-template-columns: 1fr; gap: 11px; } .summary-card { padding: 17px; } .dashboard-heading h1 { font-size: 29px; } }

@@ -30,7 +30,8 @@ public class ManagerDashboardServlet extends HttpServlet {
         }
 
         try (ManagerDashboardDAO dashboardDao = new ManagerDashboardDAO()) {
-            request.setAttribute("dashboard", dashboardDao.getDashboard());
+            request.setAttribute("dashboard",
+                    dashboardDao.getDashboard(request.getParameter("period")));
             request.getRequestDispatcher("/WEB-INF/views/reservation/manager-dashboard.jsp")
                     .forward(request, response);
         } catch (SQLException e) {
