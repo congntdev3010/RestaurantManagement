@@ -45,22 +45,46 @@
 }
 
 .revenue-card {
+    position: relative;
+    overflow: hidden;
     display: flex;
     min-height: 136px;
     flex-direction: column;
     justify-content: center;
-    gap: 8px;
+    gap: 7px;
     padding: 22px 24px;
     border: 1px solid #ecded3;
+    border-top: 3px solid #d89b36;
     border-radius: 16px;
-    background: #fff;
+    background: linear-gradient(145deg, #fff 25%, #fffaf3);
     box-shadow: 0 8px 22px rgba(74, 22, 32, .04);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.revenue-card:hover,
+.category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(74, 22, 32, .1);
 }
 
 .revenue-card span {
     color: #7d6a64;
     font-size: .9rem;
     font-weight: 650;
+}
+
+.revenue-card .revenue-icon {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border-radius: 13px;
+    background: #f8edda;
+    color: #a56a17;
+    font-size: 1.05rem;
 }
 
 .revenue-card strong {
@@ -74,8 +98,27 @@
 }
 
 .revenue-today {
-    border-color: #b97a4e;
-    background: linear-gradient(135deg, #fff, #fff7ed);
+    border-top-color: #7c2028;
+    background: linear-gradient(145deg, #fff 15%, #faecea);
+}
+
+.revenue-today .revenue-icon {
+    background: #f4dddd;
+    color: #7c2028;
+}
+
+.revenue-grid .revenue-card:nth-child(2) {
+    border-top-color: #d89b36;
+}
+
+.revenue-grid .revenue-card:nth-child(3) {
+    border-top-color: #527d66;
+    background: linear-gradient(145deg, #fff 25%, #eff6f0);
+}
+
+.revenue-grid .revenue-card:nth-child(3) .revenue-icon {
+    background: #e2eee4;
+    color: #527d66;
 }
 
 .dish-report {
@@ -113,17 +156,23 @@
 
 .category-card {
     min-width: 0;
+    position: relative;
+    overflow: hidden;
     padding: 20px;
     border: 1px solid #ecded3;
+    border-top: 3px solid #d89b36;
     border-radius: 16px;
     background: #fff;
     box-shadow: 0 8px 22px rgba(74, 22, 32, .04);
+    transition: transform .2s ease, box-shadow .2s ease;
 }
 
 .category-card h3 {
     margin: 0 0 16px;
     color: #4a1620;
     font-size: 1.15rem;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0e5dc;
 }
 
 .category-content {
@@ -160,6 +209,12 @@
     align-items: center;
     gap: 8px;
     font-size: .86rem;
+    padding: 4px 0;
+    border-bottom: 1px solid #f6f0eb;
+}
+
+.top-dishes li:last-child {
+    border-bottom: 0;
 }
 
 .dish-rank {
@@ -172,6 +227,21 @@
     color: #6e332e;
     font-size: .75rem;
     font-weight: 750;
+}
+
+.top-dishes li:nth-child(1) .dish-rank {
+    background: #f8e9be;
+    color: #8b5a08;
+}
+
+.top-dishes li:nth-child(2) .dish-rank {
+    background: #ece9e6;
+    color: #625a54;
+}
+
+.top-dishes li:nth-child(3) .dish-rank {
+    background: #f3dfd1;
+    color: #90512d;
 }
 
 .dish-name {
@@ -188,8 +258,9 @@
 
 .least-dish {
     padding: 14px;
+    border: 1px solid #f0ddd2;
     border-radius: 12px;
-    background: #fbf5f0;
+    background: linear-gradient(145deg, #fff8f2, #f8ece5);
 }
 
 .least-dish-info {

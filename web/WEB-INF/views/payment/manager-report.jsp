@@ -20,16 +20,19 @@
 
             <section class="revenue-grid" aria-label="Doanh thu">
                 <article class="revenue-card revenue-today">
+                    <span class="revenue-icon"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i></span>
                     <span>Doanh thu hôm nay</span>
                     <strong><fmt:formatNumber value="${revenueSummary.today}" pattern="#,##0"/> đ</strong>
                     <small><c:out value="${reportDate}"/></small>
                 </article>
                 <article class="revenue-card">
+                    <span class="revenue-icon"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i></span>
                     <span>Doanh thu tháng này</span>
                     <strong><fmt:formatNumber value="${revenueSummary.month}" pattern="#,##0"/> đ</strong>
                     <small>Từ đầu tháng đến hôm nay</small>
                 </article>
                 <article class="revenue-card">
+                    <span class="revenue-icon"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></span>
                     <span>Doanh thu năm nay</span>
                     <strong><fmt:formatNumber value="${revenueSummary.year}" pattern="#,##0"/> đ</strong>
                     <small>Từ đầu năm đến hôm nay</small>
