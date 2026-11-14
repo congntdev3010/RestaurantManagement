@@ -26,7 +26,10 @@ public class ManageReviewsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if (manager(request, response) == null) return;
         try (ReviewDAO dao = new ReviewDAO()) {
-            request.setAttribute("pendingReviews", dao.findPending());
+            request.setAttribute("reviews", dao.findAll());
+            request.setAttribute("averageRating", dao.averageRating());
+            request.setAttribute("totalReviews", dao.totalCount());
+            request.setAttribute("pendingCount", dao.pendingCount());
             request.getRequestDispatcher("/WEB-INF/views/review/manage-reviews.jsp").forward(request, response);
         } catch (SQLException ex) {
             getServletContext().log("Could not load review moderation", ex);
@@ -40,10 +43,17 @@ public class ManageReviewsServlet extends HttpServlet {
         int id; try { id = Integer.parseInt(request.getParameter("reviewId")); } catch (Exception ex) { id = -1; }
         String action = request.getParameter("action");
         String status = "approve".equals(action) ? "APPROVED" : "reject".equals(action) ? "REJECTED" : "";
-        String message = "approve".equals(action) ? "Đã duyệt đánh giá." : "Đã từ chối đánh giá.";
-        if (status.isEmpty()) message = "Thao tác không hợp lệ.";
-        else try (ReviewDAO dao = new ReviewDAO()) {
-            if (id < 1 || !dao.setStatus(id, status, actor.getUserId())) message = "Đánh giá không còn ở trạng thái chờ duyệt.";
+        String message = "Thao tác không hợp lệ.";
+        try (ReviewDAO dao = new ReviewDAO()) {
+            if (id < 1) {
+                message = "Mã đánh giá không hợp lệ.";
+            } else if ("delete".equals(action)) {
+                message = dao.delete(id) ? "Đã xóa đánh giá." : "Không tìm thấy đánh giá cần xóa.";
+            } else if (!status.isEmpty()) {
+                message = dao.setStatus(id, status, actor.getUserId())
+                        ? ("APPROVED".equals(status) ? "Đã duyệt đánh giá." : "Đã từ chối đánh giá.")
+                        : "Đánh giá không còn ở trạng thái chờ duyệt.";
+            }
         } catch (SQLException ex) {
             getServletContext().log("Could not moderate restaurant review", ex);
             message = "Chưa thể cập nhật đánh giá lúc này.";

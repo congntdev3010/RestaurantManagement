@@ -18,6 +18,34 @@ public class ReviewDAO extends DBContext {
         return findByStatus("PENDING");
     }
 
+    public List<RestaurantReview> findAll() throws SQLException {
+        requireConnection();
+        List<RestaurantReview> rows = new ArrayList<>();
+        String sql = "SELECT r.review_id,r.history_id,r.customer_id,r.rating,r.review_text,r.status,r.created_at, "
+                + "COALESCE(NULLIF(u.full_name,''),u.username) customer_name,t.table_name "
+                + "FROM RestaurantReviews r JOIN Users u ON u.user_id=r.customer_id "
+                + "JOIN ServiceHistory h ON h.history_id=r.history_id LEFT JOIN RestaurantTables t ON t.table_id=h.table_id "
+                + "WHERE r.is_deleted=0 ORDER BY CASE WHEN r.status='PENDING' THEN 0 ELSE 1 END,r.created_at DESC,r.review_id DESC";
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) rows.add(read(rs));
+        }
+        return rows;
+    }
+
+    public int totalCount() throws SQLException {
+        requireConnection();
+        try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM RestaurantReviews WHERE is_deleted=0"); ResultSet rs = ps.executeQuery()) {
+            rs.next(); return rs.getInt(1);
+        }
+    }
+
+    public int pendingCount() throws SQLException {
+        requireConnection();
+        try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM RestaurantReviews WHERE status='PENDING' AND is_deleted=0"); ResultSet rs = ps.executeQuery()) {
+            rs.next(); return rs.getInt(1);
+        }
+    }
+
     private List<RestaurantReview> findByStatus(String status) throws SQLException {
         requireConnection();
         List<RestaurantReview> rows = new ArrayList<>();
@@ -25,7 +53,7 @@ public class ReviewDAO extends DBContext {
                 + "COALESCE(NULLIF(u.full_name,''),u.username) customer_name,t.table_name "
                 + "FROM RestaurantReviews r JOIN Users u ON u.user_id=r.customer_id "
                 + "JOIN ServiceHistory h ON h.history_id=r.history_id LEFT JOIN RestaurantTables t ON t.table_id=h.table_id "
-                + "WHERE r.status=? ORDER BY r.created_at DESC,r.review_id DESC";
+                + "WHERE r.status=? AND r.is_deleted=0 ORDER BY r.created_at DESC,r.review_id DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, status);
             try (ResultSet rs = ps.executeQuery()) { while (rs.next()) rows.add(read(rs)); }
@@ -35,14 +63,14 @@ public class ReviewDAO extends DBContext {
 
     public double averageRating() throws SQLException {
         requireConnection();
-        try (PreparedStatement ps = connection.prepareStatement("SELECT AVG(CAST(rating AS DECIMAL(4,2))) FROM RestaurantReviews WHERE status='APPROVED'")) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT AVG(CAST(rating AS DECIMAL(4,2))) FROM RestaurantReviews WHERE status='APPROVED' AND is_deleted=0")) {
             try (ResultSet rs = ps.executeQuery()) { rs.next(); return rs.getDouble(1); }
         }
     }
 
     public int approvedCount() throws SQLException {
         requireConnection();
-        try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM RestaurantReviews WHERE status='APPROVED'")) {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT COUNT(*) FROM RestaurantReviews WHERE status='APPROVED' AND is_deleted=0")) {
             try (ResultSet rs = ps.executeQuery()) { rs.next(); return rs.getInt(1); }
         }
     }
@@ -74,6 +102,15 @@ public class ReviewDAO extends DBContext {
         String sql = "UPDATE RestaurantReviews SET status=?,reviewed_at=SYSDATETIME(),reviewed_by=? WHERE review_id=? AND status='PENDING'";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, status); ps.setInt(2, managerId); ps.setInt(3, reviewId);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
+    public boolean delete(int reviewId) throws SQLException {
+        requireConnection();
+        // Keep a tombstone so the unique history_id permanently blocks another review.
+        try (PreparedStatement ps = connection.prepareStatement("UPDATE RestaurantReviews SET is_deleted=1 WHERE review_id=? AND is_deleted=0")) {
+            ps.setInt(1, reviewId);
             return ps.executeUpdate() == 1;
         }
     }
