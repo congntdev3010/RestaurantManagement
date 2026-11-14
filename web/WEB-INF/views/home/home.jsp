@@ -36,6 +36,10 @@
             .michelin-stars { justify-content: center; }
             .michelin-badge { margin-left: auto; margin-right: auto; }
         }
+        .home-review { padding: 36px 6vw; background: #f4ebe0; text-align: center; }
+        .home-review a { display: inline-flex; align-items: center; gap: 12px; padding: 15px 24px; border: 1px solid #d9b37a; border-radius: 999px; background: #fffdf9; color: #4a1620; text-decoration: none; font-weight: 700; box-shadow: 0 10px 28px rgba(74,22,32,.1); transition: transform .2s ease; }
+        .home-review a:hover { transform: translateY(-2px); }
+        .home-review .home-review-stars { color: #bd8424; letter-spacing: .08em; }
 
         /* ===== Không gian ===== */
         .space-section { padding: 88px 6vw; background: linear-gradient(180deg, #fbf6f0 0%, #f4ebe0 100%); }
@@ -106,6 +110,10 @@
             </div>
             <% } %>
         </div>
+    </section>
+
+    <section class="home-review">
+        <a href="${pageContext.request.contextPath}/review"><i class="fa-regular fa-comment-dots" aria-hidden="true"></i> Đánh giá nhà hàng <span class="home-review-stars">★</span> ${empty averageRating ? '0.0' : averageRating} · ${reviewCount} nhận xét</a>
     </section>
 
     <!-- Chứng nhận Michelin -->
