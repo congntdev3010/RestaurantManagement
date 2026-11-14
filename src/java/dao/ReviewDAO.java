@@ -62,7 +62,7 @@ public class ReviewDAO extends DBContext {
     public boolean submit(int historyId, int customerId, int rating, String text) throws SQLException {
         requireConnection();
         String sql = "INSERT INTO RestaurantReviews(history_id,customer_id,rating,review_text) "
-                + "SELECT history_id,loyalty_customer_id,?,?,? FROM ServiceHistory WHERE history_id=? AND loyalty_customer_id=?";
+                + "SELECT history_id,loyalty_customer_id,?,? FROM ServiceHistory WHERE history_id=? AND loyalty_customer_id=?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, rating); ps.setString(2, text); ps.setInt(3, historyId); ps.setInt(4, customerId);
             return ps.executeUpdate() == 1;
