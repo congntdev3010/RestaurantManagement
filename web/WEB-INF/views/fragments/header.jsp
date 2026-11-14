@@ -266,6 +266,10 @@
         </a>
         <% } %>
         <% if (isManager) { %>
+        <a class="sidebar-link <%= currentURI.contains("manager-report") ? "active" : "" %>"
+           href="${pageContext.request.contextPath}/manager-report" title="Báo cáo doanh thu" aria-label="Báo cáo doanh thu">
+            <i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Báo cáo doanh thu</span>
+        </a>
         <a class="sidebar-link <%= currentURI.contains("manage-reviews") ? "active" : "" %>"
            href="${pageContext.request.contextPath}/manage-reviews" title="Duyệt đánh giá" aria-label="Duyệt đánh giá">
             <i class="fa-solid fa-star" aria-hidden="true"></i><span>Duyệt đánh giá</span>

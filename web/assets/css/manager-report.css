@@ -1,0 +1,245 @@
+.manager-report-page {
+    min-height: 100vh;
+    background: #f8f5f1;
+    color: #382d2a;
+}
+
+.report-shell {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 38px 34px 56px;
+}
+
+.report-heading {
+    margin-bottom: 26px;
+}
+
+.report-eyebrow {
+    margin: 0 0 8px;
+    color: #98734f;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .14em;
+}
+
+.report-heading h1,
+.section-heading h2 {
+    margin: 0;
+    color: #4a1620;
+}
+
+.report-heading h1 {
+    font-size: clamp(1.8rem, 3vw, 2.45rem);
+}
+
+.report-heading > p:last-child {
+    margin: 8px 0 0;
+    color: #756864;
+}
+
+.revenue-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.revenue-card {
+    display: flex;
+    min-height: 136px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding: 22px 24px;
+    border: 1px solid #ecded3;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(74, 22, 32, .04);
+}
+
+.revenue-card span {
+    color: #7d6a64;
+    font-size: .9rem;
+    font-weight: 650;
+}
+
+.revenue-card strong {
+    color: #4a1620;
+    font-size: clamp(1.35rem, 2.5vw, 1.9rem);
+    font-variant-numeric: tabular-nums;
+}
+
+.revenue-card small {
+    color: #9a8b85;
+}
+
+.revenue-today {
+    border-color: #b97a4e;
+    background: linear-gradient(135deg, #fff, #fff7ed);
+}
+
+.dish-report {
+    border-top: 1px solid #e8dcd4;
+    padding-top: 28px;
+}
+
+.section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.section-heading h2 {
+    font-size: clamp(1.35rem, 2vw, 1.75rem);
+}
+
+.report-period {
+    padding: 7px 12px;
+    border: 1px solid #eadbd0;
+    border-radius: 999px;
+    background: #fff;
+    color: #78645c;
+    font-size: .8rem;
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.category-card {
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid #ecded3;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(74, 22, 32, .04);
+}
+
+.category-card h3 {
+    margin: 0 0 16px;
+    color: #4a1620;
+    font-size: 1.15rem;
+}
+
+.category-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(180px, .8fr);
+    gap: 18px;
+}
+
+.category-content h4 {
+    margin: 0 0 12px;
+    color: #715e57;
+    font-size: .84rem;
+}
+
+.category-content h4 .fa-arrow-trend-up {
+    color: #46856a;
+}
+
+.category-content h4 .fa-arrow-trend-down {
+    color: #bc7453;
+}
+
+.top-dishes ol {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.top-dishes li {
+    display: grid;
+    grid-template-columns: 25px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    font-size: .86rem;
+}
+
+.dish-rank {
+    display: grid;
+    width: 23px;
+    height: 23px;
+    place-items: center;
+    border-radius: 50%;
+    background: #f4ede7;
+    color: #6e332e;
+    font-size: .75rem;
+    font-weight: 750;
+}
+
+.dish-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.top-dishes li strong,
+.least-dish-info strong {
+    color: #55413b;
+    font-size: .8rem;
+    white-space: nowrap;
+}
+
+.least-dish {
+    padding: 14px;
+    border-radius: 12px;
+    background: #fbf5f0;
+}
+
+.least-dish-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: .88rem;
+}
+
+.least-dish-info strong {
+    color: #9a543b;
+}
+
+.no-dishes,
+.report-empty {
+    color: #8a7a73;
+    font-size: .88rem;
+}
+
+.report-empty {
+    padding: 28px;
+    border: 1px dashed #e2d2c8;
+    border-radius: 14px;
+    background: #fff;
+    text-align: center;
+}
+
+@media (max-width: 1000px) {
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .report-shell {
+        padding: 26px 18px 40px;
+    }
+
+    .revenue-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+
+    .revenue-card {
+        min-height: 112px;
+        padding: 18px 20px;
+    }
+
+    .category-content {
+        grid-template-columns: 1fr;
+    }
+}
