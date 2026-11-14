@@ -44,7 +44,7 @@ public class ReviewServlet extends HttpServlet {
             } else if (dao.hasReview(historyId, customer.getUserId())) {
                 message = "Hóa đơn này đã có đánh giá.";
             } else if (dao.submit(historyId, customer.getUserId(), rating, reviewText)) {
-                message = "Cảm ơn bạn! Đánh giá đang chờ quản lý duyệt.";
+                message = "Cảm ơn bạn đã đánh giá!";
             } else {
                 message = "Không tìm thấy hóa đơn hợp lệ của tài khoản này.";
             }

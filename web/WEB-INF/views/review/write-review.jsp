@@ -17,6 +17,5 @@
 <label><input type="radio" name="rating" value="1"><span aria-label="1 sao">★</span></label>
 </div><div class="review-rating-hint">1 sao · Chưa hài lòng <span>Rất hài lòng · 5 sao</span></div></fieldset>
 <label class="review-comment-label" for="reviewText">Lời nhắn của bạn</label><textarea id="reviewText" name="reviewText" maxlength="1000" required rows="6" placeholder="Món ăn, không gian, cách phục vụ..."></textarea>
-<p class="review-moderation-note">Đánh giá sẽ được quản lý xem qua trước khi hiển thị công khai.</p>
 <button type="submit" class="review-submit">Gửi đánh giá</button></form>
 </c:otherwise></c:choose></section></main></body></html>

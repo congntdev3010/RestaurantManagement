@@ -20,7 +20,6 @@
 .review-comment-label { display: block; margin-bottom: 9px; }
 .review-write-form textarea { box-sizing: border-box; width: 100%; min-height: 150px; padding: 14px 16px; border: 1px solid #dfd1c3; border-radius: 12px; background: #fff; color: #33231f; font: inherit; line-height: 1.6; resize: vertical; }
 .review-write-form textarea:focus { outline: 2px solid #d9b37a; border-color: transparent; }
-.review-moderation-note { color: #947e70; font-size: .88rem; line-height: 1.6; }
 .review-submit { margin-top: 8px; border: 0; border-radius: 10px; padding: 13px 22px; background: #4a1620; color: #fff8ed; font: 700 1rem 'DM Sans', sans-serif; cursor: pointer; }
 .review-submit:hover { background: #65232d; }
 .review-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 8px 0 28px; }
