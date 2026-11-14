@@ -10,7 +10,11 @@
 <form method="post" action="${pageContext.request.contextPath}/review" class="review-write-form">
 <input type="hidden" name="historyId" value="${bill.historyId}">
 <fieldset class="review-rating"><legend>Bạn chấm bữa ăn này bao nhiêu sao?</legend><div class="review-rating-stars">
-<c:forEach begin="1" end="5" var="star"><label><input type="radio" name="rating" value="${star}" required><span aria-label="${star} sao">★</span></label></c:forEach>
+<label><input type="radio" name="rating" value="5" required><span aria-label="5 sao">★</span></label>
+<label><input type="radio" name="rating" value="4"><span aria-label="4 sao">★</span></label>
+<label><input type="radio" name="rating" value="3"><span aria-label="3 sao">★</span></label>
+<label><input type="radio" name="rating" value="2"><span aria-label="2 sao">★</span></label>
+<label><input type="radio" name="rating" value="1"><span aria-label="1 sao">★</span></label>
 </div><div class="review-rating-hint">1 sao · Chưa hài lòng <span>Rất hài lòng · 5 sao</span></div></fieldset>
 <label class="review-comment-label" for="reviewText">Lời nhắn của bạn</label><textarea id="reviewText" name="reviewText" maxlength="1000" required rows="6" placeholder="Món ăn, không gian, cách phục vụ..."></textarea>
 <p class="review-moderation-note">Đánh giá sẽ được quản lý xem qua trước khi hiển thị công khai.</p>
