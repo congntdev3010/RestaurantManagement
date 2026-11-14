@@ -268,10 +268,6 @@
                 var leaveUrl = '${pageContext.request.contextPath}/payment?tableId=${bill.tableId}&action=leave';
                 document.querySelectorAll('a[href*="/manage-tables"], a[href*="/payment"]').forEach(function (link) {
                     link.addEventListener('click', function (event) {
-                        if (!confirm('Rời màn thanh toán sẽ bỏ voucher và tích điểm đang gắn. Bạn có muốn tiếp tục?')) {
-                            event.preventDefault();
-                            return;
-                        }
                         event.preventDefault();
                         window.location.href = leaveUrl;
                     });

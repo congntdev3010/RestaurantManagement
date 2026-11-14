@@ -186,6 +186,13 @@
             var qr = document.getElementById('qrFields');
             var received = document.getElementById('cashReceived');
             var amount = Number(method.dataset.total);
+            var timer = null;
+            function stopPolling() {
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
+            }
             function refresh() {
                 var isCash = method.value === 'CASH';
                 cash.hidden = !isCash;
@@ -196,7 +203,54 @@
                     Math.max(0, Number(received.value || 0) - amount).toLocaleString('vi-VN') + ' đ';
             }
             received.addEventListener('input', refresh);
-            method.addEventListener('change', refresh);
+            method.addEventListener('change', function () {
+                stopPolling();
+                if (method.value === 'QR') {
+                    if (qr.dataset.configured !== 'true' || !qr.dataset.account || !qr.dataset.name) {
+                        method.value = 'CASH';
+                        alert('QR chưa được cấu hình.');
+                        refresh();
+                        return;
+                    }
+                    var reference = '${qrReference}';
+                    if (!reference) {
+                        method.value = 'CASH';
+                        alert('Bill chưa sẵn sàng tạo QR.');
+                        refresh();
+                        return;
+                    }
+                    document.getElementById('paymentReferenceText').textContent = reference;
+                    document.getElementById('paymentQrImage').src =
+                        'https://img.vietqr.io/image/' + encodeURIComponent(qr.dataset.bank) + '-'
+                        + encodeURIComponent(qr.dataset.account) + '-compact2.png?amount='
+                        + Math.round(amount) + '&addInfo=' + encodeURIComponent(reference)
+                        + '&accountName=' + encodeURIComponent(qr.dataset.name);
+                    function poll() {
+                        fetch('${pageContext.request.contextPath}/payment-status?mergedId=${mergedId}&reference='
+                                + encodeURIComponent(reference), {credentials: 'same-origin', cache: 'no-store'})
+                            .then(function (response) {
+                                if (!response.ok) throw new Error('status');
+                                return response.json();
+                            })
+                            .then(function (status) {
+                                if (status.paid) {
+                                    stopPolling();
+                                    window.location.href = '${pageContext.request.contextPath}/service-history?id=' + status.historyId;
+                                } else if (status.review) {
+                                    stopPolling();
+                                    alert('Đã nhận chuyển khoản nhưng cần đối soát. Không chuyển lại tiền.');
+                                } else if (status.payable !== null && Number(status.payable) !== amount) {
+                                    stopPolling();
+                                    alert('Bill đã thay đổi. Vui lòng tải lại màn hình.');
+                                    window.location.reload();
+                                }
+                            }).catch(function () {});
+                    }
+                    poll();
+                    timer = setInterval(poll, 2000);
+                }
+                refresh();
+            });
             refresh();
         }());
     </script>

@@ -1,6 +1,7 @@
 package controller.payment;
 
 import dao.PaymentDAO;
+import dao.MergedBillDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -32,6 +33,41 @@ public class PaymentStatusServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
+        String reference = request.getParameter("reference");
+        if (reference == null || reference.trim().isEmpty()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        reference = normalizeReference(reference.trim());
+
+        String mergedIdValue = request.getParameter("mergedId");
+        if (mergedIdValue != null && !mergedIdValue.trim().isEmpty()) {
+            int mergedId;
+            try {
+                mergedId = Integer.parseInt(mergedIdValue);
+            } catch (NumberFormatException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            if (mergedId < 1) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            try (MergedBillDAO dao = new MergedBillDAO()) {
+                TableBill current = dao.bill(mergedId);
+                Integer historyId = dao.paidHistory(mergedId, reference);
+                boolean review = dao.needsReview(mergedId);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().print("{\"paid\":" + (historyId != null)
+                        + ",\"historyId\":" + (historyId == null ? "null" : historyId)
+                        + ",\"review\":" + review
+                        + ",\"payable\":" + (current == null ? "null" : current.getPayableAmount().toPlainString()) + "}");
+                return;
+            } catch (SQLException e) {
+                throw new ServletException("Không thể kiểm tra trạng thái QR bill gộp.", e);
+            }
+        }
+
         int tableId;
         try {
             tableId = Integer.parseInt(request.getParameter("tableId"));
@@ -39,12 +75,10 @@ public class PaymentStatusServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
-        String reference = request.getParameter("reference");
-        if (tableId < 1 || reference == null || reference.trim().isEmpty()) {
+        if (tableId < 1) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
-        reference = normalizeReference(reference.trim());
 
         boolean paid;
         TableBill receipt = null;
