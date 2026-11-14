@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.sql.SQLException;
 import model.PaidBill;
 import model.User;
+import dao.ReviewDAO;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Lịch sử thanh toán của khách thành viên đang đăng nhập: các hóa đơn đã gắn
@@ -37,7 +40,17 @@ public class MyPaymentsServlet extends HttpServlet {
         }
 
         try (ServiceHistoryDAO dao = new ServiceHistoryDAO()) {
-            request.setAttribute("bills", dao.findForCustomer(user.getUserId()));
+            java.util.List<PaidBill> bills = dao.findForCustomer(user.getUserId());
+            request.setAttribute("bills", bills);
+            try (ReviewDAO reviewDAO = new ReviewDAO()) {
+                Set<Integer> reviewedBills = new HashSet<>();
+                for (PaidBill bill : bills) {
+                    if (reviewDAO.hasReview(bill.getHistoryId(), user.getUserId())) reviewedBills.add(bill.getHistoryId());
+                }
+                request.setAttribute("reviewedBills", reviewedBills);
+            }
+            request.setAttribute("reviewMessage", session.getAttribute("reviewMessage"));
+            session.removeAttribute("reviewMessage");
             String idParam = request.getParameter("id");
             if (idParam != null) {
                 int id = parseInt(idParam);
