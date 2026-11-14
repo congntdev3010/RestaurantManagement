@@ -8,6 +8,13 @@
         || "Server".equalsIgnoreCase(roleName)
         || "Receptionist".equalsIgnoreCase(roleName)
         || "Chef".equalsIgnoreCase(roleName);
+    String staffName = user == null ? "" : user.getFullName();
+    if (staffName == null || staffName.trim().isEmpty()) {
+        staffName = user == null ? "" : user.getUsername();
+    }
+    if (staffName == null || staffName.trim().isEmpty()) staffName = "nhân viên";
+    staffName = staffName.replace("&", "&amp;").replace("<", "&lt;")
+        .replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
 %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -15,7 +22,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trang chủ - Việt À la carte</title>
-    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/home.css?v=1.0">
+    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/assets/css/home.css?v=1.3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* ===== Michelin ===== */
@@ -78,6 +85,31 @@
     <!-- Nhúng Header -->
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
+    <% if (isRestaurantStaff) { %>
+    <main class="staff-home">
+        <section class="staff-welcome" aria-labelledby="staff-welcome-title">
+            <div class="staff-welcome-brand">
+                <span class="staff-welcome-icon"><i class="fa-solid fa-leaf" aria-hidden="true"></i></span>
+                <span>VIỆT À LA CARTE <span class="staff-welcome-brand-dot" aria-hidden="true">·</span> KHÔNG GIAN LÀM VIỆC</span>
+            </div>
+            <div class="staff-welcome-rule" aria-hidden="true"></div>
+            <p class="staff-welcome-eyebrow">RẤT VUI ĐƯỢC ĐỒNG HÀNH CÙNG BẠN</p>
+            <h1 id="staff-welcome-title">Xin chào,<br><span><%= staffName %>!</span></h1>
+            <% if ("Admin".equalsIgnoreCase(roleName)) { %>
+                <p class="staff-welcome-message">Cảm ơn bạn đã giữ cho đội ngũ vận hành suôn sẻ. Chúc bạn một ngày làm việc hiệu quả!</p>
+            <% } else if ("Manager".equalsIgnoreCase(roleName)) { %>
+                <p class="staff-welcome-message">Một ngày mới để chăm chút trải nghiệm của thực khách. Chúc bạn điều hành mọi việc thật thuận lợi!</p>
+            <% } else if ("Server".equalsIgnoreCase(roleName)) { %>
+                <p class="staff-welcome-message">Chúc bạn một ca làm việc thật suôn sẻ và mang đến những trải nghiệm đáng nhớ cho thực khách.</p>
+            <% } else if ("Receptionist".equalsIgnoreCase(roleName)) { %>
+                <p class="staff-welcome-message">Mỗi lời chào là khởi đầu cho một bữa ăn đáng nhớ. Chúc bạn một ca làm việc vui vẻ!</p>
+            <% } else if ("Chef".equalsIgnoreCase(roleName)) { %>
+                <p class="staff-welcome-message">Chúc bạn một ca bếp đầy cảm hứng và mang hương vị Việt đến từng bàn ăn.</p>
+            <% } %>
+            <div class="staff-welcome-note"><i class="fa-regular fa-compass" aria-hidden="true"></i><span>Chọn chức năng từ thanh điều hướng bên trái để bắt đầu.</span></div>
+        </section>
+    </main>
+    <% } else { %>
     <!-- Hero Banner -->
     <section class="hero-section">
         <div class="hero-content">
@@ -188,6 +220,7 @@
         </div>
         <div class="footer-copy">© <%= java.time.Year.now().getValue() %> Việt À la carte. Bảo lưu mọi quyền.</div>
     </footer>
+    <% } %>
 
 </body>
 </html>

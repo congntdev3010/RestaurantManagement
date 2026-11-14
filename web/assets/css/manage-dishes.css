@@ -61,11 +61,6 @@
     background: #fdfaf6;
 }
 
-.manage-heading .button-primary {
-    text-decoration: none;
-    white-space: nowrap;
-}
-
 .dish-form-section > summary {
     list-style: none;
     cursor: pointer;
@@ -78,6 +73,14 @@
 .dish-form-section > summary h2::before {
     content: '▸ ';
     color: #d89b36;
+}
+
+/* Tên món dùng font giao diện có hỗ trợ đầy đủ dấu tiếng Việt. */
+.dish-form-section > summary .dish-edit-name {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-size: .8em;
+    font-weight: 600;
+    overflow-wrap: anywhere;
 }
 
 .dish-form-section[open] > summary h2::before {
