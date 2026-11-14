@@ -36,13 +36,40 @@
                 </select>
             </form>
 
-            <section class="payment-table-grid" aria-label="Danh sách bàn chưa thanh toán">
+            <c:if test="${not empty paymentMessage}"><p role="alert"><c:out value="${paymentMessage}"/></p></c:if>
+            <c:if test="${not empty mergedBills}">
+                <h2 class="payment-section-title">Bill gộp đang chờ thanh toán</h2>
+                <section class="payment-table-grid" aria-label="Danh sách bill gộp">
+                    <c:forEach var="merged" items="${mergedBills}">
+                        <article class="payment-table-card merged-payment-card">
+                            <div class="payment-table-top">
+                                <div class="table-mark">Σ</div>
+                                <span class="unpaid-pill">Bill gộp</span>
+                            </div>
+                            <h2><c:out value="${merged.tableName}"/></h2>
+                            <p class="order-meta"><c:out value="${merged.orderCount}"/> order · <c:out value="${merged.items.size()}"/> món</p>
+                            <div class="payment-table-total">
+                                <span>Khách cần trả</span>
+                                <strong><fmt:formatNumber value="${merged.payableAmount}" pattern="#,##0"/> đ</strong>
+                            </div>
+                            <a class="payment-table-action" href="${pageContext.request.contextPath}/merged-payment?id=${merged.mergedBillId}">
+                                Mở bill gộp <span>→</span>
+                            </a>
+                        </article>
+                    </c:forEach>
+                </section>
+            </c:if>
+            <form action="${pageContext.request.contextPath}/merged-payment" method="post">
+                <input type="hidden" name="action" value="create">
+                <p>Chọn từ 2 đến 10 bàn có bill để thanh toán chung. Bàn chưa phục vụ hết món không thể thanh toán.</p>
+                <section class="payment-table-grid" aria-label="Danh sách bàn chưa thanh toán">
                 <c:set var="shown" value="0"/>
                 <c:forEach var="table" items="${paymentTables}">
                     <c:set var="bill" value="${paymentBills[table.tableId]}"/>
                     <c:if test="${not empty bill and (paymentFilter eq 'ALL' or bill.readyForPayment)}">
                         <c:set var="shown" value="${shown + 1}"/>
                         <article class="payment-table-card">
+                            <label><input type="checkbox" name="tableId" value="${table.tableId}"> Gộp bill bàn <c:out value="${table.tableName}"/></label>
                             <div class="payment-table-top">
                                 <div class="table-mark"><i class="fa-solid fa-receipt" aria-hidden="true"></i></div>
                                 <span class="unpaid-pill">Chưa thanh toán</span>
@@ -91,6 +118,8 @@
                     </div>
                 </c:if>
             </section>
+                <button type="submit" class="payment-table-action">Gộp các bill đã chọn</button>
+            </form>
         </main>
     <script>
     (function () {

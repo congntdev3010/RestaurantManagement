@@ -1,6 +1,7 @@
 package controller.payment;
 
 import dao.LoyaltyDAO;
+import dao.MergedBillDAO;
 import dao.OrderDAO;
 import dao.PaymentDAO;
 import dao.RestaurantTableDAO;
@@ -53,6 +54,21 @@ public class PaymentServlet extends HttpServlet {
             if (tableId < 1) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 return;
+            }
+            if ("leave".equals(request.getParameter("action"))) {
+                try (LoyaltyDAO loyalty = new LoyaltyDAO(); VoucherDAO voucher = new VoucherDAO()) {
+                    loyalty.clearBillLink(tableId);
+                    voucher.clearTableVoucher(tableId);
+                }
+                response.sendRedirect(request.getContextPath() + "/payment");
+                return;
+            }
+            try (MergedBillDAO merged = new MergedBillDAO()) {
+                Integer group = merged.activeBillForTable(tableId);
+                if (group != null) {
+                    response.sendRedirect(request.getContextPath() + "/merged-payment?id=" + group);
+                    return;
+                }
             }
             TableBill bill = pay.getTableBill(tableId);
             if (bill == null) {
@@ -114,6 +130,17 @@ public class PaymentServlet extends HttpServlet {
         String message;
         String type = "error";
         try (OrderDAO orderDao = new OrderDAO(); PaymentDAO payDao = new PaymentDAO(); LoyaltyDAO loyalty = new LoyaltyDAO(); VoucherDAO voucher = new VoucherDAO()) {
+            if (tableId > 0) {
+                try (MergedBillDAO merged = new MergedBillDAO()) {
+                    Integer group = merged.activeBillForTable(tableId);
+                    if (group != null) {
+                        response.sendRedirect(request.getContextPath() + "/merged-payment?id=" + group);
+                        return;
+                    }
+                } catch (SQLException e) {
+                    throw new ServletException("Không thể kiểm tra bill gộp của bàn.", e);
+                }
+            }
             TableBill bill = tableId > 0 ? payDao.getTableBill(tableId) : null;
             model.LoyaltySettings settings = loyalty.getSettings();
             if (bill == null) {
@@ -254,16 +281,27 @@ public class PaymentServlet extends HttpServlet {
             tables = tableDao.getAllTables();
         }
         java.util.List<Integer> openTableIds = orderDao.getOpenTableIds();
-        for (Integer tid : openTableIds) {
-            TableBill bill = payDao.getTableBill(tid);
+        java.util.List<TableBill> mergedBills;
+        try (MergedBillDAO merged = new MergedBillDAO()) {
+            mergedBills = merged.activeBills();
+            for (Integer tid : openTableIds) {
+                if (merged.activeBillForTable(tid) != null) continue;
+                TableBill bill = payDao.getTableBill(tid);
             if (bill != null) {
-                bills.put(tid, bill);
+                    bills.put(tid, bill);
             }
+        }
+        }
+        HttpSession flash = request.getSession(false);
+        if (flash != null) {
+            request.setAttribute("paymentMessage", flash.getAttribute("paymentMessage"));
+            flash.removeAttribute("paymentMessage");
         }
         request.setAttribute("paymentTables", tables);
         request.setAttribute("paymentBills", bills);
+        request.setAttribute("mergedBills", mergedBills);
         request.setAttribute("paymentFilter", filter);
-        request.setAttribute("unpaidTableCount", bills.size());
+        request.setAttribute("unpaidTableCount", bills.size() + mergedBills.size());
     }
 
     private User currentUser(HttpServletRequest request) {

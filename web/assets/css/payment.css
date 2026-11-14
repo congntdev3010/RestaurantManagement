@@ -45,6 +45,8 @@ select:focus, input:focus { border-color: #9c6720; outline: 3px solid #9c672022;
 .filter-label { display: block; margin-bottom: 3px; color: #9c6720; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
 .payment-filter select { width: 230px; height: 42px; }
 .payment-table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(245px, 1fr)); gap: 16px; margin-top: 22px; }
+.payment-section-title { margin: 28px 0 0; color: #49161d; font-size: 23px; }
+.merged-payment-card { border-color: #c99a55; background: linear-gradient(145deg, #fffdf9, #fff7e8); }
 .payment-table-card { padding: 21px; border: 1px solid #eaded1; border-radius: 17px; background: #fffdf9; box-shadow: 0 8px 25px #4b2b1a0a; }
 .payment-table-top { display: flex; align-items: center; justify-content: space-between; }
 .table-mark { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 11px; background: #f8eadb; color: #9c6720; }

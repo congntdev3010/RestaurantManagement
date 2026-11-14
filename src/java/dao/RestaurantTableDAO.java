@@ -168,6 +168,11 @@ public class RestaurantTableDAO extends DBContext {
                     psLoyalty.setInt(1, tableId);
                     psLoyalty.executeUpdate();
                 }
+                try (PreparedStatement psVoucher = connection.prepareStatement(
+                        "DELETE FROM TableBillVoucher WHERE table_id = ?")) {
+                    psVoucher.setInt(1, tableId);
+                    psVoucher.executeUpdate();
+                }
 
                 connection.commit();
                 return true;

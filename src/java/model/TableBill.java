@@ -7,6 +7,7 @@ import java.util.List;
 
 public class TableBill {
     private int tableId; private String tableName;
+    private int mergedBillId;
     private int orderCount;
     private int unfinishedItemCount;
     // Số đơn đang chờ nhân viên duyệt: KHÔNG chặn thanh toán, chỉ để báo cho lễ tân.
@@ -39,6 +40,8 @@ public class TableBill {
 
     public int getTableId() { return tableId; } public String getTableName() { return tableName; } public void setTableName(String tableName) { this.tableName = tableName; }
     public void setTableId(int tableId) { this.tableId = tableId; }
+    public int getMergedBillId() { return mergedBillId; }
+    public void setMergedBillId(int mergedBillId) { this.mergedBillId = mergedBillId; }
     public int getOrderCount() { return orderCount; }
     public void setOrderCount(int orderCount) { this.orderCount = orderCount; }
     public int getUnfinishedItemCount() { return unfinishedItemCount; }
