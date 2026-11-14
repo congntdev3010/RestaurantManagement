@@ -15,11 +15,124 @@ body {
     color: #2c2c2c;
 }
 
+/* Trang chào dành riêng cho nhân viên; sidebar dùng chung nằm trong header.jsp. */
+.staff-home {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 36px clamp(18px, 4vw, 64px);
+    background:
+        radial-gradient(circle at 90% 6%, rgba(216, 155, 54, .13), transparent 38%),
+        radial-gradient(circle at 4% 94%, rgba(66, 18, 23, .06), transparent 44%),
+        #faf6f0;
+}
+
+.staff-welcome {
+    position: relative;
+    width: min(100%, 860px);
+    overflow: hidden;
+    padding: clamp(32px, 5vw, 64px);
+    border: 1px solid #eadbd0;
+    border-radius: 18px;
+    background: #fffdf9;
+    box-shadow: 0 24px 65px rgba(66, 18, 23, .10);
+}
+
+.staff-welcome::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #421217, #d89b36 58%, #f0d59a);
+}
+
+.staff-welcome-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #694b3f;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    line-height: 1.6;
+}
+
+.staff-welcome-icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    place-items: center;
+    border-radius: 11px;
+    background: #421217;
+    color: #d89b36;
+    font-size: 19px;
+}
+
+.staff-welcome-brand-dot { color: #b98128; }
+.staff-welcome-rule { width: 100%; height: 1px; margin: 32px 0 36px; background: #f0e6df; }
+
+.staff-welcome-eyebrow {
+    margin: 0 0 14px;
+    color: #916023;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .16em;
+}
+
+.staff-welcome h1 {
+    margin: 0 0 22px;
+    color: #421217;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(36px, 4.4vw, 58px);
+    line-height: 1.18;
+    overflow-wrap: anywhere;
+}
+
+.staff-welcome h1 span { color: #8b3c32; }
+
+.staff-welcome-message {
+    max-width: 53ch;
+    margin: 0;
+    color: #574742;
+    font-size: clamp(16px, 1.7vw, 18px);
+    line-height: 1.7;
+}
+
+.staff-welcome-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 38px;
+    padding: 17px 19px;
+    border-left: 3px solid #d89b36;
+    border-radius: 0 8px 8px 0;
+    background: #faf4e9;
+    color: #5a4234;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.staff-welcome-note i { margin-top: 2px; color: #9b651d; }
+
+@media (max-width: 600px) {
+    .staff-home { padding: 20px 14px; }
+    .staff-welcome { padding: 30px 24px; }
+    .staff-welcome-brand { font-size: 10px; letter-spacing: .06em; }
+    .staff-welcome-rule { margin: 24px 0 28px; }
+    .staff-welcome-note { margin-top: 28px; }
+}
+
 /* Hero Section */
 .hero-section {
     position: relative;
     height: auto;
-    min-height: 85vh;
+    min-height: calc(100vh - 65px);
+    min-height: calc(100dvh - 65px);
     flex: 1;
     background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.55)), 
                 url('../images/login.jpg') center/cover no-repeat;

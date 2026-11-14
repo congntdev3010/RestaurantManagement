@@ -144,6 +144,15 @@ public class ServiceHistoryDAO extends DBContext {
         }
     }
 
+    public Integer findMergedHistoryId(int mergedBillId) throws SQLException {
+        requireConnection();
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT history_id FROM ServiceHistory WHERE merged_bill_id = ?")) {
+            ps.setInt(1, mergedBillId);
+            try (ResultSet rs = ps.executeQuery()) { return rs.next() ? rs.getInt(1) : null; }
+        }
+    }
+
     private void requireConnection() throws SQLException {
         if (connection == null) {
             throw new SQLException("Database connection is unavailable.");

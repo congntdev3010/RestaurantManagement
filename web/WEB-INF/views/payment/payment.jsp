@@ -14,7 +14,7 @@
     <body class="payment-page">
         <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
         <main class="payment-shell">
-            <a class="back-link" href="${pageContext.request.contextPath}/payment">← Về danh sách thanh toán</a>
+            <a class="back-link" href="${pageContext.request.contextPath}/payment?tableId=${bill.tableId}&action=leave">← Về danh sách thanh toán</a>
             <section class="payment-card">
                 <header class="payment-header">
                     <div>
@@ -265,6 +265,13 @@
 
         <script>
             (function () {
+                var leaveUrl = '${pageContext.request.contextPath}/payment?tableId=${bill.tableId}&action=leave';
+                document.querySelectorAll('a[href*="/manage-tables"], a[href*="/payment"]').forEach(function (link) {
+                    link.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        window.location.href = leaveUrl;
+                    });
+                });
                 var form = document.getElementById('paymentForm');
                 if (!form)
                     return;
