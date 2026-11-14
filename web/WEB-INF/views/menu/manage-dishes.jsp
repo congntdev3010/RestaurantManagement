@@ -12,14 +12,13 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quản lý thực đơn - Việt À la carte</title>
     <link rel="stylesheet" href="${ctx}/assets/css/manage-news.css">
-    <link rel="stylesheet" href="${ctx}/assets/css/manage-dishes.css?v=1.1">
+    <link rel="stylesheet" href="${ctx}/assets/css/manage-dishes.css?v=1.2">
 </head>
 <body>
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 <main class="manage-page">
     <header class="manage-heading">
         <div><p class="manage-eyebrow">QUẢN TRỊ NHÀ HÀNG</p><h1>Quản lý thực đơn</h1></div>
-        <a class="button-primary" href="#dish-form" onclick="document.getElementById('dish-form').open = true">+ Thêm món mới</a>
     </header>
 
     <c:if test="${not empty manageMessage}">
@@ -29,7 +28,7 @@
     <!-- ===== FORM THÊM / SỬA ===== -->
     <details class="news-list-section dish-form-section" id="dish-form" ${openForm ? 'open' : ''}>
         <summary class="section-heading">
-            <h2>${formIsUpdate ? 'Sửa món' : 'Thêm món mới'}<c:if test="${formIsUpdate}">: <c:out value="${formItem.dishName}"/></c:if></h2>
+            <h2>${formIsUpdate ? 'Sửa món' : 'Thêm món mới'}<c:if test="${formIsUpdate}">: <span class="dish-edit-name"><c:out value="${formItem.dishName}"/></span></c:if></h2>
             <c:if test="${formIsUpdate}"><a href="${ctx}/manage-dishes">Thoát chỉnh sửa</a></c:if>
         </summary>
         <c:if test="${not empty formError}"><p class="manage-message is-error" role="alert"><c:out value="${formError}"/></p></c:if>
