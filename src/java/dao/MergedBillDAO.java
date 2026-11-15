@@ -401,7 +401,7 @@ public class MergedBillDAO extends DBContext {
                     + "loyalty_customer_id, loyalty_points_used, loyalty_discount, loyalty_points_earned, voucher_id, voucher_discount_percent, voucher_discount) "
                     + "SELECT ?, ?, MAX(o.customer_name), MAX(o.customer_phone), MAX(o.customer_email), "
                     + "MIN(CASE WHEN r.reservation_date IS NOT NULL THEN DATEADD(SECOND, DATEDIFF(SECOND,'00:00:00',r.reservation_time),CAST(r.reservation_date AS DATETIME2)) END), "
-                    + "MAX(r.checked_in_at), SYSDATETIME(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
+                    + "MAX(r.checked_in_at), SYSDATETIME(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
                     + "FROM Orders o LEFT JOIN Reservations r ON r.reservation_id = o.reservation_id "
                     + "JOIN MergedBillTables mt ON mt.table_id = o.table_id AND mt.active = 1 "
                     + "WHERE mt.merged_bill_id = ? AND o.order_status = 'OPEN'", Statement.RETURN_GENERATED_KEYS)) {
