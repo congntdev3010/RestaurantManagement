@@ -370,8 +370,13 @@ body.has-staff-sidebar {
     gap: 5px;
     min-height: 0;
     overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     padding-top: 18px;
-    margin-bottom: 96px;
+}
+
+.staff-sidebar-nav::-webkit-scrollbar {
+    display: none;
 }
 
 .sidebar-profile {
