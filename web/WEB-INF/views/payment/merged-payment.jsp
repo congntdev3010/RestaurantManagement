@@ -27,7 +27,17 @@
             <div class="payment-grid">
                 <section class="bill-panel">
                     <h2>Chi tiết bill</h2>
-                    <p class="customer">Các bàn: <strong><c:out value="${bill.tableName}"/></strong></p>
+                    <p class="customer">
+                        <c:if test="${not empty bill.customerName}">
+                            <strong><c:out value="${bill.customerName}"/></strong>
+                            <c:if test="${not empty bill.customerPhone}"> · <c:out value="${bill.customerPhone}"/></c:if>
+                            <c:if test="${not empty bill.customerEmail}"> · <c:out value="${bill.customerEmail}"/></c:if>
+                        </c:if>
+                        <span class="member-tag ${bill.hasLoyaltyCustomer ? 'is-member' : ''}">
+                            <c:out value="${bill.hasLoyaltyCustomer ? 'Thành viên' : 'Vãng lai'}"/>
+                        </span>
+                    </p>
+                    <p class="muted">Các bàn: <strong><c:out value="${bill.tableName}"/></strong></p>
                     <c:if test="${not empty bill.checkedInAt}">
                         <p class="muted">Mở bàn: <c:out value="${bill.checkedInAt}"/></p>
                     </c:if>
@@ -48,6 +58,18 @@
                             <span>Tổng bill</span>
                             <strong><fmt:formatNumber value="${bill.totalAmount}" pattern="#,##0"/> đ</strong>
                         </div>
+                        <c:if test="${bill.discountAmount gt 0}">
+                            <div class="bill-sum-row discount">
+                                <span>Giảm giá bằng điểm (<c:out value="${bill.pointsToUse}"/> điểm)</span>
+                                <strong>- <fmt:formatNumber value="${bill.discountAmount}" pattern="#,##0"/> đ</strong>
+                            </div>
+                        </c:if>
+                        <c:if test="${bill.voucherDiscount gt 0}">
+                            <div class="bill-sum-row discount">
+                                <span>Giảm giá voucher (<fmt:formatNumber value="${bill.voucherPercent}" maxFractionDigits="2"/>%)</span>
+                                <strong>- <fmt:formatNumber value="${bill.voucherDiscount}" pattern="#,##0"/> đ</strong>
+                            </div>
+                        </c:if>
                     </div>
                     <div class="bill-payable">
                         <span>Khách cần trả</span>
@@ -57,7 +79,7 @@
 
                 <section class="pay-panel">
                     <c:if test="${not empty paymentMessage}">
-                        <div class="pay-alert error"><c:out value="${paymentMessage}"/></div>
+                        <div class="pay-alert ${paymentMessageType eq 'success' ? 'success' : 'error'}"><c:out value="${paymentMessage}"/></div>
                     </c:if>
                     <c:if test="${bill.pendingOrder}">
                         <p class="warning">Có order mới chờ duyệt. Order này sẽ bị hủy khi thanh toán.</p>
@@ -70,7 +92,7 @@
                         <c:choose>
                             <c:when test="${bill.hasVoucher}">
                                 <div class="loyalty-customer"><div><div class="name">Mã <c:out value="${bill.voucherCode}"/></div>
-                                    <div class="sub">Giảm <fmt:formatNumber value="${bill.voucherPercent}" maxFractionDigits="2"/>%</div></div>
+                                    <div class="sub">Giảm <fmt:formatNumber value="${bill.voucherPercent}" maxFractionDigits="2"/>% tổng hóa đơn</div></div>
                                     <div class="loyalty-balance"><strong>- <fmt:formatNumber value="${bill.voucherDiscount}" pattern="#,##0"/> đ</strong></div></div>
                                 <form action="${pageContext.request.contextPath}/merged-payment" method="post">
                                     <input type="hidden" name="action" value="clearVoucher"><input type="hidden" name="id" value="${mergedId}">
@@ -80,8 +102,8 @@
                             <c:otherwise>
                                 <form action="${pageContext.request.contextPath}/merged-payment" method="post">
                                     <input type="hidden" name="action" value="applyVoucher"><input type="hidden" name="id" value="${mergedId}">
-                                    <label for="voucherCode">Nhập mã voucher</label>
-                                    <div class="loyalty-row"><input id="voucherCode" name="voucherCode" maxlength="8" required>
+                                    <label for="voucherCode">Nhập mã voucher <span class="loyalty-hint">(8 ký tự, khách nhận qua Gmail)</span></label>
+                                    <div class="loyalty-row"><input id="voucherCode" name="voucherCode" type="text" maxlength="8" pattern="[A-Za-z0-9]{8}" autocomplete="off" placeholder="Ví dụ: K7M2QX9P" required style="text-transform: uppercase">
                                         <button class="btn-sm btn-primary-sm" type="submit">Áp dụng</button></div>
                                 </form>
                             </c:otherwise>
@@ -102,17 +124,26 @@
                             </c:when>
                             <c:otherwise>
                                 <div class="loyalty-customer"><div><div class="name"><c:out value="${bill.loyaltyCustomerName}"/></div>
-                                    <div class="sub"><c:out value="${bill.loyaltyCustomerPhone}"/></div></div>
-                                    <div class="loyalty-balance"><strong>${bill.loyaltyBalance}</strong><span>điểm</span></div></div>
+                                    <div class="sub">Thành viên
+                                        <c:if test="${not empty bill.loyaltyCustomerPhone}"> · <c:out value="${bill.loyaltyCustomerPhone}"/></c:if>
+                                        <c:if test="${not empty bill.loyaltyCustomerEmail}"> · <c:out value="${bill.loyaltyCustomerEmail}"/></c:if>
+                                    </div></div>
+                                    <div class="loyalty-balance"><strong><fmt:formatNumber value="${bill.loyaltyBalance}" pattern="#,##0"/></strong><span>điểm hiện có</span></div></div>
                                 <form action="${pageContext.request.contextPath}/merged-payment" method="post">
                                     <input type="hidden" name="action" value="setLoyaltyPoints"><input type="hidden" name="id" value="${mergedId}">
-                                    <label for="loyaltyPoints">Số điểm muốn dùng (tối đa ${maxLoyaltyPoints})</label>
+                                    <label for="loyaltyPoints">Số điểm muốn dùng <span class="loyalty-hint">(tối đa <c:out value="${maxLoyaltyPoints}"/> điểm)</span></label>
                                     <div class="loyalty-row"><input id="loyaltyPoints" name="points" type="number" min="0" max="${maxLoyaltyPoints}" value="${bill.pointsToUse}" required>
                                         <button class="btn-sm btn-ghost" type="button" onclick="document.getElementById('loyaltyPoints').value='${maxLoyaltyPoints}'">Tối đa</button>
                                         <button class="btn-sm btn-primary-sm" type="submit">Áp dụng</button></div>
                                 </form>
-                                <div class="loyalty-summary"><div class="minus"><span>Giảm giá bằng điểm</span>
-                                    <strong>- <fmt:formatNumber value="${bill.discountAmount}" pattern="#,##0"/> đ</strong></div></div>
+                                <div class="loyalty-summary">
+                                    <div class="minus"><span>Giảm giá bằng điểm</span>
+                                        <strong>- <fmt:formatNumber value="${bill.discountAmount}" pattern="#,##0"/> đ</strong>
+                                    </div>
+                                    <div class="plus"><span>Điểm được cộng sau thanh toán</span>
+                                        <strong>+ <fmt:formatNumber value="${bill.pointsToEarn}" pattern="#,##0"/> điểm</strong>
+                                    </div>
+                                </div>
                                 <form action="${pageContext.request.contextPath}/merged-payment" method="post">
                                     <input type="hidden" name="action" value="clearLoyalty"><input type="hidden" name="id" value="${mergedId}">
                                     <button class="btn-link" type="submit">Bỏ gắn tài khoản</button>

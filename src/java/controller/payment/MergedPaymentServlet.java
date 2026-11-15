@@ -55,7 +55,9 @@ public class MergedPaymentServlet extends HttpServlet {
             req.setAttribute("sepayWebhookConfigured", token != null && !token.trim().isEmpty() && actor != null && !actor.trim().isEmpty());
             HttpSession session = req.getSession();
             req.setAttribute("paymentMessage", session.getAttribute("mergedPaymentMessage"));
+            req.setAttribute("paymentMessageType", session.getAttribute("mergedPaymentMessageType"));
             session.removeAttribute("mergedPaymentMessage");
+            session.removeAttribute("mergedPaymentMessageType");
             req.getRequestDispatcher("/WEB-INF/views/payment/merged-payment.jsp").forward(req, resp);
         } catch (SQLException e) { throw new ServletException("Không tải được bill gộp.", e); }
     }
@@ -92,6 +94,7 @@ public class MergedPaymentServlet extends HttpServlet {
                 TableBill bill = dao.bill(id);
                 if (bill == null) { resp.sendRedirect(req.getContextPath() + "/payment"); return; }
                 String message;
+                boolean success = false;
                 if ("linkLoyalty".equals(action)) {
                     try (LoyaltyDAO loyalty = new LoyaltyDAO()) {
                         LoyaltyDAO.Customer customer = loyalty.findCustomer(req.getParameter("customerKey"));
@@ -99,6 +102,7 @@ public class MergedPaymentServlet extends HttpServlet {
                         else {
                             dao.setLoyalty(id, customer.getUserId(), 0, user.getUserId());
                             message = "Đã gắn tài khoản khách hàng vào bill gộp.";
+                            success = true;
                         }
                     }
                 } else if ("setLoyaltyPoints".equals(action)) {
@@ -109,17 +113,22 @@ public class MergedPaymentServlet extends HttpServlet {
                         else {
                             dao.setLoyalty(id, bill.getLoyaltyCustomerId(), points, user.getUserId());
                             message = "Đã cập nhật số điểm sử dụng.";
+                            success = true;
                         }
                     }
                 } else if ("clearLoyalty".equals(action)) {
-                    dao.clearLoyalty(id); message = "Đã bỏ gắn tài khoản customer.";
+                    dao.clearLoyalty(id); message = "Đã bỏ gắn tài khoản customer."; success = true;
                 } else if ("applyVoucher".equals(action)) {
                     message = dao.applyVoucher(id, req.getParameter("voucherCode"), user.getUserId());
-                    if (message == null) message = "Đã áp dụng voucher cho bill gộp.";
+                    if (message == null) {
+                        message = "Đã áp dụng voucher cho bill gộp.";
+                        success = true;
+                    }
                 } else {
-                    dao.clearVoucher(id); message = "Đã bỏ mã voucher.";
+                    dao.clearVoucher(id); message = "Đã bỏ mã voucher."; success = true;
                 }
                 req.getSession().setAttribute("mergedPaymentMessage", message);
+                req.getSession().setAttribute("mergedPaymentMessageType", success ? "success" : "error");
                 resp.sendRedirect(req.getContextPath() + "/merged-payment?id=" + id);
                 return;
             }
