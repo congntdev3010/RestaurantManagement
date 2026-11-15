@@ -164,6 +164,7 @@ public class MergedBillDAO extends DBContext {
                 }
             }
         }
+        bill.setPayableAmount(bill.getTotalAmount().subtract(bill.getVoucherDiscount()));
         try (PreparedStatement ps = connection.prepareStatement(
                 "SELECT l.customer_id, u.full_name, u.phone, u.email, u.loyalty_points, l.points_to_use, "
                 + "s.earn_spend_amount, s.earn_points, s.redeem_value_per_point "
