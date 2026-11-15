@@ -392,7 +392,7 @@ public class MergedBillDAO extends DBContext {
             try (PreparedStatement ps = connection.prepareStatement(
                     "INSERT INTO ServiceHistory(table_id, merged_bill_id, customer_name, customer_phone, customer_email, "
                     + "reservation_time, checked_in_at, paid_at, payment_method, total_amount, cash_received, cash_change, paid_by, "
-                    + "loyalty_customer_id, loyalty_points_used, loyalty_discount, loyalty_points_earned, voucher_discount_percent, voucher_discount) "
+                    + "loyalty_customer_id, loyalty_points_used, loyalty_discount, loyalty_points_earned, voucher_id, voucher_discount_percent, voucher_discount) "
                     + "SELECT ?, ?, MAX(o.customer_name), MAX(o.customer_phone), MAX(o.customer_email), "
                     + "MIN(CASE WHEN r.reservation_date IS NOT NULL THEN DATEADD(SECOND, DATEDIFF(SECOND,'00:00:00',r.reservation_time),CAST(r.reservation_date AS DATETIME2)) END), "
                     + "MAX(r.checked_in_at), SYSDATETIME(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
@@ -408,9 +408,11 @@ public class MergedBillDAO extends DBContext {
                 ps.setInt(9, liveBill.getPointsToUse());
                 ps.setBigDecimal(10, liveBill.getDiscountAmount());
                 ps.setInt(11, liveBill.getPointsToEarn());
-                ps.setBigDecimal(12, liveBill.getVoucherPercent());
-                ps.setBigDecimal(13, liveBill.getVoucherDiscount());
-                ps.setInt(14, id);
+                if (liveBill.isHasVoucher()) ps.setInt(12, liveBill.getVoucherId());
+                else ps.setNull(12, java.sql.Types.INTEGER);
+                ps.setBigDecimal(13, liveBill.getVoucherPercent());
+                ps.setBigDecimal(14, liveBill.getVoucherDiscount());
+                ps.setInt(15, id);
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) { if (!rs.next()) throw new SQLException("Không lưu được hóa đơn."); historyId = rs.getInt(1); }
             }
