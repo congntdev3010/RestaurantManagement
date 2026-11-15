@@ -206,8 +206,19 @@ public class LoyaltyDAO extends DBContext {
         if (connection == null) {
             return list;
         }
-        String sql = "SELECT TOP 200 txn_id, txn_type, points, balance_after, bill_amount, money_value, note, created_at "
-                + "FROM LoyaltyTransactions WHERE user_id = ? ORDER BY created_at DESC, txn_id DESC";
+        String sql = "SELECT TOP 200 lt.txn_id, lt.txn_type, lt.points, lt.balance_after, lt.bill_amount, lt.money_value, "
+            + "CASE "
+            + "WHEN h.table_id IS NOT NULL AND rt.table_name IS NOT NULL "
+            + "AND lt.note = N'Tích điểm từ hóa đơn bàn ' + CONVERT(NVARCHAR(20), h.table_id) "
+            + "THEN N'Tích điểm từ hóa đơn bàn ' + rt.table_name "
+            + "WHEN h.table_id IS NOT NULL AND rt.table_name IS NOT NULL "
+            + "AND lt.note = N'Dùng điểm giảm giá hóa đơn bàn ' + CONVERT(NVARCHAR(20), h.table_id) "
+            + "THEN N'Dùng điểm giảm giá hóa đơn bàn ' + rt.table_name "
+            + "ELSE lt.note END AS note, lt.created_at "
+            + "FROM LoyaltyTransactions lt "
+            + "LEFT JOIN ServiceHistory h ON h.history_id = lt.history_id "
+            + "LEFT JOIN RestaurantTables rt ON rt.table_id = h.table_id "
+            + "WHERE lt.user_id = ? ORDER BY lt.created_at DESC, lt.txn_id DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {

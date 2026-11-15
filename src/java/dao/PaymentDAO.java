@@ -317,6 +317,10 @@ public class PaymentDAO extends DBContext implements AutoCloseable {
             }
             int used = bill.getPointsToUse();
             int earned = bill.getPointsToEarn();
+            String tableName = bill.getTableName();
+            if (tableName == null || tableName.trim().isEmpty()) {
+                tableName = String.valueOf(bill.getTableId());
+            }
             BigDecimal spend = null;
             int earnPoints = 0;
             BigDecimal redeem = null;
@@ -336,7 +340,7 @@ public class PaymentDAO extends DBContext implements AutoCloseable {
                 }
                 insertLoyaltyTxn(customerId, historyId, "REDEEM", -used, balance, bill.getTotalAmount(),
                         bill.getDiscountAmount(), spend, earnPoints, redeem,
-                        "Dùng điểm giảm giá hóa đơn bàn " + bill.getTableId(), actorId);
+                    "Dùng điểm giảm giá hóa đơn bàn " + tableName, actorId);
             }
             if (earned > 0) {
                 Integer balance = changePoints(customerId, earned, 0);
@@ -346,7 +350,7 @@ public class PaymentDAO extends DBContext implements AutoCloseable {
                 }
                 insertLoyaltyTxn(customerId, historyId, "EARN", earned, balance, bill.getTotalAmount(),
                         bill.getPayableAmount(), spend, earnPoints, redeem,
-                        "Tích điểm từ hóa đơn bàn " + bill.getTableId(), actorId);
+                    "Tích điểm từ hóa đơn bàn " + tableName, actorId);
             }
         }
         try (PreparedStatement del = connection.prepareStatement("DELETE FROM TableBillLoyalty WHERE table_id = ?")) {

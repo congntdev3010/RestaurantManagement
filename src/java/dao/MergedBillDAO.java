@@ -538,6 +538,11 @@ public class MergedBillDAO extends DBContext {
 
     private void insertLoyaltyTxn(TableBill bill, int historyId, String type, int points, int balance,
             BigDecimal moneyValue, BigDecimal spend, int earnPoints, BigDecimal redeem, int actorId) throws SQLException {
+        String tableNames = bill.getTableName();
+        if (tableNames == null || tableNames.trim().isEmpty()) {
+            tableNames = "bill gộp";
+        }
+        String note = "REDEEM".equals(type) ? "Dùng điểm giảm giá hóa đơn bàn " : "Tích điểm từ hóa đơn bàn ";
         try (PreparedStatement ps = connection.prepareStatement(
                 "INSERT INTO LoyaltyTransactions(user_id,history_id,txn_type,points,balance_after,bill_amount,money_value,"
                 + "earn_spend_amount,earn_points,redeem_value_per_point,note,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")) {
@@ -551,7 +556,7 @@ public class MergedBillDAO extends DBContext {
             ps.setBigDecimal(8, spend);
             ps.setInt(9, earnPoints);
             ps.setBigDecimal(10, redeem);
-            ps.setString(11, "Bill gộp");
+            ps.setNString(11, note + tableNames);
             ps.setInt(12, actorId);
             ps.executeUpdate();
         }
