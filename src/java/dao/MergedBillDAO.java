@@ -13,6 +13,7 @@ import model.TableBill;
 
 /** Bill gộp theo các bàn đang phục vụ, order mới tự được tính khi đã duyệt. */
 public class MergedBillDAO extends DBContext {
+    public static final BigDecimal MIN_QR_AMOUNT = BigDecimal.valueOf(2000);
     private String error;
     public String getError() { return error; }
     public static String reference(int id, int version) { return "RMG" + id + "V" + version; }
@@ -263,6 +264,11 @@ public class MergedBillDAO extends DBContext {
                 if (!rs.next()) { connection.rollback(); return null; }
                 TableBill current = bill(id);
                 if (current == null || !current.isReadyForPayment()) { connection.rollback(); return null; }
+                if (current.getPayableAmount() == null
+                        || current.getPayableAmount().compareTo(MIN_QR_AMOUNT) < 0) {
+                    connection.rollback();
+                    return null;
+                }
                 int v = rs.getInt(1);
                 BigDecimal amount = rs.getBigDecimal(2);
                 if (amount == null || amount.compareTo(current.getPayableAmount()) != 0) {

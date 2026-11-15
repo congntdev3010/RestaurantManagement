@@ -45,7 +45,10 @@ public class MergedPaymentServlet extends HttpServlet {
                         ? bill.getTotalAmount().subtract(bill.getVoucherDiscount()).divideToIntegralValue(redeem).intValue() : 0;
                 req.setAttribute("maxLoyaltyPoints", Math.min(bill.getLoyaltyBalance(), max));
             }
-            req.setAttribute("qrReference", bill.isReadyForPayment() ? dao.issueQr(id) : "");
+            req.setAttribute("qrReference", bill.isReadyForPayment()
+                    && bill.getPayableAmount() != null
+                    && bill.getPayableAmount().compareTo(MergedBillDAO.MIN_QR_AMOUNT) >= 0
+                    ? dao.issueQr(id) : "");
             req.setAttribute("paymentQrImageUrl", getServletContext().getInitParameter("paymentQrImageUrl"));
             req.setAttribute("paymentBankCode", getServletContext().getInitParameter("paymentBankCode"));
             req.setAttribute("paymentAccountNumber", getServletContext().getInitParameter("paymentAccountNumber"));
