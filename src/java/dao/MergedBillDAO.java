@@ -202,7 +202,7 @@ public class MergedBillDAO extends DBContext {
     public String applyVoucher(int id, String rawCode, int actorId) throws SQLException {
         String code = VoucherDAO.normalizeCode(rawCode);
         if (code == null) return "Mã voucher phải gồm đúng 8 ký tự chữ hoặc số.";
-        int primary = tables(id).get(0);
+        int primary = primaryTable(id);
         try (PreparedStatement ps = connection.prepareStatement(
                 "SELECT voucher_id, status FROM Vouchers WHERE code = ?")) {
             ps.setString(1, code);
@@ -224,7 +224,7 @@ public class MergedBillDAO extends DBContext {
     }
 
     public boolean setLoyalty(int id, int customerId, int points, int actorId) throws SQLException {
-        int primary = tables(id).get(0);
+        int primary = primaryTable(id);
         try (PreparedStatement ps = connection.prepareStatement(
                 "MERGE TableBillLoyalty AS t USING (SELECT ? AS table_id) AS s ON t.table_id=s.table_id "
                 + "WHEN MATCHED THEN UPDATE SET customer_id=?, points_to_use=?, set_by=?, updated_at=SYSDATETIME() "
@@ -233,6 +233,12 @@ public class MergedBillDAO extends DBContext {
             ps.setInt(5, primary); ps.setInt(6, customerId); ps.setInt(7, points); ps.setInt(8, actorId);
             return ps.executeUpdate() > 0;
         }
+    }
+
+    private int primaryTable(int id) throws SQLException {
+        List<Integer> ids = tables(id);
+        if (ids.isEmpty()) throw new SQLException("Bill gộp không còn mở.");
+        return ids.get(0);
     }
 
     public void clearVoucher(int id) throws SQLException {
@@ -319,7 +325,9 @@ public class MergedBillDAO extends DBContext {
         }
         boolean valid = currentVersion == version && current != null && current.compareTo(amount) == 0;
         TableBill live = valid ? bill(id) : null;
-        valid = valid && live != null && live.isReadyForPayment() && live.getPayableAmount().compareTo(amount) == 0;
+        valid = valid && amount.compareTo(MIN_QR_AMOUNT) >= 0
+                && live != null && live.isReadyForPayment()
+                && live.getPayableAmount().compareTo(amount) == 0;
         // REVIEW trước, để khoản tiền đã tới không bị bỏ quên khi dữ liệu thay đổi.
         try (PreparedStatement ps = connection.prepareStatement(
                 "INSERT INTO MergedBillTransfers(merged_bill_id,provider_transaction_id,payment_reference,amount,transfer_status) "
@@ -388,9 +396,10 @@ public class MergedBillDAO extends DBContext {
             BigDecimal payable = liveBill.getPayableAmount();
             if (hasPendingQrTransfer(id) && !"QR".equals(method)) throw new SQLException("Bill có khoản chuyển cần đối soát, không thể thanh toán lần nữa.");
             if ("QR".equals(method)) {
-                if (ref == null || !ref.equals(reference(id, version)) || qrAmount == null
+                if (payable == null || payable.compareTo(MIN_QR_AMOUNT) < 0
+                        || ref == null || !ref.equals(reference(id, version)) || qrAmount == null
                         || qrAmount.compareTo(payable) != 0 || expected == null || expected.compareTo(payable) != 0)
-                    throw new SQLException("QR hoặc số tiền đã thay đổi; cần đối soát khoản chuyển trước khi thanh toán.");
+                    throw new SQLException("QR chỉ áp dụng cho bill từ 2.000đ và phải đúng số tiền hiện tại.");
             } else if (received == null || received.compareTo(payable) < 0 || expected == null || expected.compareTo(payable) != 0) {
                 throw new SQLException("Tổng bill vừa đổi hoặc tiền khách đưa chưa đủ; tải lại hóa đơn.");
             }
